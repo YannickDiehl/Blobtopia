@@ -21,11 +21,23 @@ export async function createCityFromLayout () {
   try {
     // Try new key first, fall back to legacy key
     const raw = localStorage.getItem(EDITOR_STORAGE_KEY) || localStorage.getItem('globtopia-city-layout')
-    if (raw) layoutData = JSON.parse(raw)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      // Only use cached data if it has a reasonable number of placements
+      // (protects against stale/corrupt data from old sessions on same port)
+      if (parsed && parsed.placements && parsed.placements.length > 100) {
+        layoutData = parsed
+      } else {
+        console.warn('[city] Stale localStorage data (' + ((parsed && parsed.placements) ? parsed.placements.length : 0) + ' placements), clearing cache')
+        localStorage.removeItem(EDITOR_STORAGE_KEY)
+        localStorage.removeItem('globtopia-city-layout')
+      }
+    }
   } catch (e) {
-    // no layout
+    localStorage.removeItem(EDITOR_STORAGE_KEY)
+    localStorage.removeItem('globtopia-city-layout')
   }
-  // Auto-load from public/ if localStorage is empty
+  // Auto-load from public/ if localStorage is empty or invalid
   if (!layoutData || !layoutData.placements || layoutData.placements.length === 0) {
     try {
       let resp = await fetch('/blobtopia-city.json').catch(() => null)

@@ -7,6 +7,8 @@ import { getEraForTick } from '@/config/timeline-eras'
 // ── Static Glob Data (loaded once) ──────────────────────────────────────
 let globsStatic = []   // full static data per glob
 let globIndex = []     // ordered glob IDs (matches compact tick array order)
+// Forward-fill cache: last known latent traits per glob (DB writes traits every ~7 ticks)
+const lastKnownTraits = {}
 
 async function loadStaticData() {
   const [staticRes, indexRes] = await Promise.all([
@@ -69,7 +71,7 @@ function expandTickSnapshot(tickData) {
         protest_readiness: s[5],
         last_vote: null,
       },
-      latent_traits: s[8] || {},
+      latent_traits: (() => { if (s[8] && Object.keys(s[8]).length > 0) { lastKnownTraits[id] = s[8]; return s[8] } return lastKnownTraits[id] || {} })(),
       emotion: {
         valence: 0, arousal: 0,
         label: s[7] || 'gelassen',

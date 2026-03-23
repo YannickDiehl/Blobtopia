@@ -476,6 +476,8 @@ export default {
     width: 400px
     max-height: calc(100vh - 28rem)
     overflow: hidden
+    display: flex
+    flex-direction: column
 
 // ═══ Header ═══
 .interaction-header
