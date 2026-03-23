@@ -1,0 +1,228 @@
+import { CHAT_API, DATA_BASE } from '@/config/api'
+import { buildSystemPrompt } from '@/lib/build-system-prompt'
+
+// Cache for static glob data (loaded once)
+let globStaticMap = null
+let changeSummaries = null
+
+/**
+ * Determine the blob's current activity from the schedule and hour.
+ * The schedule is on the adapted blob object as server_schedule (set by blob-adapter.js).
+ */
+function resolveActivity(rootState, blob) {
+  var hour = rootState.simulation.hour != null ? rootState.simulation.hour : 14
+  var schedule = (blob && blob.server_schedule) || null
+  var activity = 'Leisure'
+  if (schedule && schedule.entries) {
+    for (var i = schedule.entries.length - 1; i >= 0; i--) {
+      if (hour >= schedule.entries[i].hour) {
+        activity = schedule.entries[i].activity
+        break
+      }
+    }
+  }
+  return { activity: activity, hour: hour }
+}
+
+async function getGlobStatic(globId) {
+  if (!globStaticMap) {
+    try {
+      const res = await fetch(DATA_BASE + '/globs-static.json')
+      const data = await res.json()
+      globStaticMap = {}
+      for (const g of data) { globStaticMap[g.id] = g }
+    } catch (e) {
+      console.warn('Failed to load glob static data for chat:', e)
+      return null
+    }
+  }
+  return globStaticMap[globId] || null
+}
+
+async function getChangeSummary(globId, tick) {
+  if (!changeSummaries) {
+    try {
+      const res = await fetch(DATA_BASE + '/change-summaries.json')
+      changeSummaries = await res.json()
+    } catch (e) {
+      console.warn('Failed to load change summaries:', e)
+      changeSummaries = {}
+    }
+  }
+  var entries = changeSummaries[globId]
+  if (!entries || entries.length === 0) return null
+  // Find the nearest summary at or before the current tick
+  var best = null
+  for (var i = 0; i < entries.length; i++) {
+    if (entries[i].tick <= tick) best = entries[i]
+    else break
+  }
+  return best ? best.summary : null
+}
+
+export const chat = {
+  namespaced: true
+  , state: () => ({
+    sessions: {}
+    , activeBlobId: null
+    , isLoading: false
+    , error: null
+  })
+  , getters: {
+    activeSession(state) {
+      if (!state.activeBlobId) return null
+      return state.sessions[state.activeBlobId] || null
+    }
+    , activeMessages(state, getters) {
+      const session = getters.activeSession
+      return session ? session.messages : []
+    }
+    , chatActive(state) {
+      return !!state.activeBlobId
+    }
+    , activeBlob(state) {
+      const session = state.sessions[state.activeBlobId]
+      return session ? session.blob : null
+    }
+  }
+  , mutations: {
+    START_SESSION(state, { blobId, tick, blobName, blob }) {
+      if (!state.sessions[blobId]) {
+        state.sessions = {
+          ...state.sessions
+          , [blobId]: { messages: [], tick, blobName, blob: blob || null, ended: false }
+        }
+      }
+      state.activeBlobId = blobId
+      state.error = null
+    }
+    , ADD_MESSAGE(state, { blobId, message }) {
+      const session = state.sessions[blobId]
+      if (session) { session.messages.push(message) }
+    }
+    , SET_LOADING(state, loading) { state.isLoading = loading }
+    , SET_ERROR(state, error) { state.error = error }
+    , END_SESSION(state, blobId) {
+      const session = state.sessions[blobId]
+      if (session) { session.ended = true }
+    }
+    , CLOSE_CHAT(state) { state.activeBlobId = null }
+  }
+  , actions: {
+    async startInterview({ commit, state, rootState }, { blobId, tick, blobName, blob }) {
+      commit('START_SESSION', { blobId, tick, blobName, blob })
+
+      const session = state.sessions[blobId]
+      if (session && session.messages.length > 0) return
+
+      commit('SET_LOADING', true)
+      commit('SET_ERROR', null)
+      try {
+        // Build system prompt client-side from glob data
+        const staticGlob = await getGlobStatic(blobId)
+        const tpy = (rootState.simulation.timelineMeta && rootState.simulation.timelineMeta.ticks_per_year) || 365
+        const cs = await getChangeSummary(blobId, tick || 0)
+        const ctx = resolveActivity(rootState, blob)
+        const systemPrompt = buildSystemPrompt(blob || {}, staticGlob || {}, tick || 0, tpy, cs, ctx.activity, ctx.hour)
+
+        const headers = { 'Content-Type': 'application/json' }
+        const token = localStorage.getItem('globtopia_chat_token')
+        if (token) headers['Authorization'] = 'Bearer ' + token
+
+        const res = await fetch(CHAT_API, {
+          method: 'POST'
+          , headers
+          , body: JSON.stringify({
+            glob_id: blobId
+            , tick: tick || null
+            , system_prompt: systemPrompt
+            , messages: []
+          })
+        })
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.error || 'Server error ' + res.status)
+        }
+
+        const data = await res.json()
+        commit('ADD_MESSAGE', {
+          blobId
+          , message: { role: 'assistant', content: data.reply }
+        })
+      } catch (e) {
+        commit('SET_ERROR', e.message)
+        console.warn('Chat greeting failed:', e)
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    }
+
+    , async sendMessage({ commit, state, rootState }, text) {
+      const blobId = state.activeBlobId
+      if (!blobId) return
+      const session = state.sessions[blobId]
+      if (!session || session.ended) return
+
+      commit('ADD_MESSAGE', { blobId, message: { role: 'user', content: text } })
+
+      const apiMessages = session.messages.map(m => ({
+        role: m.role, content: m.content
+      }))
+
+      commit('SET_LOADING', true)
+      commit('SET_ERROR', null)
+      try {
+        // Build system prompt client-side
+        const staticGlob = await getGlobStatic(blobId)
+        const tpy = (rootState.simulation.timelineMeta && rootState.simulation.timelineMeta.ticks_per_year) || 365
+        const cs = await getChangeSummary(blobId, session.tick || 0)
+        const ctx = resolveActivity(rootState, session.blob)
+        const systemPrompt = buildSystemPrompt(
+          session.blob || {}, staticGlob || {}, session.tick || 0, tpy, cs, ctx.activity, ctx.hour
+        )
+
+        const headers = { 'Content-Type': 'application/json' }
+        const token = localStorage.getItem('globtopia_chat_token')
+        if (token) headers['Authorization'] = 'Bearer ' + token
+
+        const res = await fetch(CHAT_API, {
+          method: 'POST'
+          , headers
+          , body: JSON.stringify({
+            glob_id: blobId
+            , tick: session.tick || null
+            , system_prompt: systemPrompt
+            , messages: apiMessages
+          })
+        })
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.error || 'Server error ' + res.status)
+        }
+
+        const data = await res.json()
+        commit('ADD_MESSAGE', {
+          blobId
+          , message: { role: 'assistant', content: data.reply }
+        })
+      } catch (e) {
+        commit('SET_ERROR', e.message)
+        console.warn('Chat send failed:', e)
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    }
+
+    , endInterview({ commit, state }) {
+      if (state.activeBlobId) {
+        commit('END_SESSION', state.activeBlobId)
+      }
+    }
+
+    , closeChat({ commit }) {
+      commit('CLOSE_CHAT')
+    }
+  }
+}

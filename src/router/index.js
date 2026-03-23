@@ -1,0 +1,74 @@
+import _get from 'lodash/get'
+import Vue from 'vue'
+import Router from 'vue-router'
+import About from '@/pages/about'
+import Simulation from '@/pages/simulation'
+import CityEditor from '@/pages/city-editor'
+const Dashboard = () => import('@/pages/dashboard')
+
+Vue.use(Router)
+
+let shownIntro = false
+
+const parseProps = (route) => {
+  return {
+    ...route.params
+    , showConfig: !!route.query.cfg
+    , showIntro: route.query.intro | 0
+    , generationIndex: route.params.generationIndex
+    , hideControls: route.name === 'about'
+    , hideSettings: route.name === 'about'
+  }
+}
+
+const router = new Router({
+  routes: [
+    {
+      path: '/'
+      , redirect: { name: 'simulation', params: { generationIndex: '0' } }
+    }
+    , {
+      path: '/s/:generationIndex'
+      , name: 'simulation'
+      , component: Simulation
+      , props: parseProps
+      , beforeEnter(to, from, next) {
+        if (shownIntro){
+          return next()
+        }
+        shownIntro = true
+        next({ ...to, query: { intro: 1 }, replace: true })
+      }
+    }
+    // Backward compatibility: redirect old routes to unified view
+    , {
+      path: '/s/:generationIndex/viewer'
+      , redirect: to => ({
+        name: 'simulation'
+        , params: { generationIndex: to.params.generationIndex }
+      })
+    }
+    , {
+      path: '/s/:generationIndex/dashboard'
+      , name: 'dashboard'
+      , component: Dashboard
+      , props: true
+    }
+    , {
+      path: '/s/:generationIndex/about'
+      , name: 'about'
+      , component: About
+    }
+    , {
+      path: '/editor'
+      , name: 'editor'
+      , component: CityEditor
+    }
+    , {
+      path: '*'
+      , redirect: { name: 'simulation', params: { generationIndex: '0' } }
+    }
+  ]
+})
+
+export default router

@@ -1,0 +1,87 @@
+{
+  "name": "globtopia-static",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Globtopia — statische Client-Side Version (Option D)",
+  "scripts": {
+    "export": "node scripts/export-timeline.js",
+    "dev": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@mdi/font": "^4.1.95",
+    "@wildpeaks/three-webpack-plugin": "^2.0.0",
+    "babel-plugin-component": "^1.1.1",
+    "buefy": "^0.8.2",
+    "bulma": "^0.7.1",
+    "chart.js": "^2.7.3",
+    "chartjs-plugin-annotation": "^0.5.7",
+    "chroma-js": "^2.0.4",
+    "copilot": "^0.0.2",
+    "fast-xml-parser": "^5.5.6",
+    "lodash": "^4.17.10",
+    "osmtogeojson": "^3.0.0-beta.5",
+    "three": "^0.111.0",
+    "three-orbit-controls": "^82.1.0",
+    "vue": "^2.5.17",
+    "vue-chartjs": "^3.4.0",
+    "vue-router": "^3.0.2",
+    "vue-slider-component": "^3.0.38",
+    "vuex": "^3.1.1",
+    "vuex-router-sync": "^5.0.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.2.0",
+    "@vue/cli-plugin-eslint": "^3.2.0",
+    "@vue/cli-service": "^3.2.0",
+    "babel-eslint": "^10.0.1",
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^17.3.1",
+    "eslint": "^6.2.1",
+    "eslint-plugin-vue": "^5.0.0-0",
+    "express": "^5.2.1",
+    "pug": "^2.0.3",
+    "pug-plain-loader": "^1.0.0",
+    "sass": "^1.22.10",
+    "sass-loader": "^7.3.1",
+    "vue-template-compiler": "^2.5.17"
+  },
+  "resolutions": {
+    "webpack": "4.29.6"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "rules": {
+      "generator-star-spacing": "off",
+      "comma-style": [
+        2,
+        "first"
+      ],
+      "space-in-parens": 0,
+      "space-before-blocks": 0,
+      "padded-blocks": 0,
+      "space-before-function-paren": 0
+    },
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}

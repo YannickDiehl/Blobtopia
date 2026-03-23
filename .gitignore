@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.DS_Store
+.env
+
+# Generated timeline data (run `npm run export` to regenerate)
+public/data/timeline/ticks/
+public/data/timeline/globs/
+public/data/timeline/stats/
+public/data/timeline/tweets.json
+public/data/timeline/globs-static.json
+public/data/timeline/glob-index.json
+public/data/timeline/buildings.json
+.vercel
+
+# 3D models (binary, tracked via Vercel upload)
+public/models/
+src/assets/models/
+*.glb
