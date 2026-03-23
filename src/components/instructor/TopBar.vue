@@ -47,6 +47,9 @@
 
     button.top-btn(@click="$emit('toggle-command-palette')", title="Command Palette (Cmd+K)")
       b-icon(icon="magnify", size="is-small")
+
+    button.top-btn(@click="goToAbout", title="Über Blobtopia")
+      b-icon(icon="information-outline", size="is-small")
 </template>
 
 <script>
@@ -90,6 +93,12 @@ export default {
       , hour: 'hour'
       , tick: 'tick'
     })
+  }
+  , methods: {
+    goToAbout() {
+      const gen = this.$route.params.generationIndex || '0'
+      this.$router.push({ name: 'about', params: { generationIndex: gen } })
+    }
   }
 }
 </script>

@@ -108,7 +108,7 @@ export default {
           : `J${t.year}/M${t.month || ''}/T${t.day || ''}`
         return {
           ...t
-          , _key: t.id || `${t.glob_id || t.author_id}-${t.tick}-${i}`
+          , _key: t.id || `${t.blob_id || t.glob_id || t.author_id}-${t.tick}-${i}`
           , _district: district
           , _text: text
           , _timeLabel: timeLabel

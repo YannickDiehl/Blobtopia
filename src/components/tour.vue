@@ -7,7 +7,8 @@
       h6.title.is-size-6 Eine simulierte Gesellschaft
       br
     p.
-      Bevor wir loslegen, schauen wir uns kurz um...
+      Blobtopia ist eine Stadt mit 500 Einwohner*innen in fünf Distrikten.
+      Deine Aufgabe: Erforsche diese Gesellschaft wie ein/e echte/r Sozialforscher*in.
     template(#controls="props")
       .level.is-mobile
         .level-left
@@ -19,25 +20,33 @@
 
   TourStep(:step="2")
     TypewriterTextTransition
-      p Das hier ist Blobtopia. Eine Stadt mit 500 Einwohner*innen in fünf Distrikten.
+      p.
+        Du siehst die Stadt von oben. Die farbigen Bereiche sind die fünf Distrikte.
+        Die kleinen Figuren sind Blobs — Bürger*innen mit eigenen Meinungen, Einstellungen und Emotionen.
   TourStep(:step="3")
     TypewriterTextTransition
-      p Klicke auf einen Blob, um seine Details zu sehen — Distrikt, Einkommen, Einstellungen.
+      p.
+        Klicke auf einen Blob und wähle „Interview führen". Du kannst direkt mit den
+        Einwohner*innen sprechen — stelle Fragen zu ihrem Leben, ihrer Meinung und ihren Sorgen.
   TourStep(:step="4")
     TypewriterTextTransition
       p.
-        Jeder Blob hat politische Einstellungen: Zufriedenheit, L-R-Selbsteinschätzung und
-        Vertrauen in Institutionen. Diese verändern sich über die Zeit.
+        Im Feed rechts siehst du, was die Blobs tweeten. Ihre Tweets spiegeln aktuelle
+        Stimmungen und Reaktionen auf Ereignisse wider.
   TourStep(:step="5")
     TypewriterTextTransition
       p.
-        Die Dozent*in kann Events auslösen — Wahlen, Wirtschaftskrisen, Skandale —
-        und beobachten, wie die Gesellschaft reagiert.
-  TourStep(button-text="Blobtopia erkunden!", is-last, :step="6")
+        Nutze die Zeitleiste unten, um durch 22 Jahre Blobtopia-Geschichte zu reisen.
+        Beobachte, wie Events — Wahlen, Krisen, Skandale — die Gesellschaft verändern.
+  TourStep(:step="6")
     TypewriterTextTransition
       p.
-        Rechts oben findest du Steuerungen und BlobFeed.
-        Im Statistik-Tab siehst du Distrikt-Vergleiche.
+        Du kannst die inneren Werte der Blobs nicht direkt sehen.
+        Nutze Interviews, Tweets und Beobachtung, um die Gesellschaft zu verstehen —
+        genau wie in der echten empirischen Sozialforschung.
+  TourStep(button-text="Blobtopia erforschen!", is-last, :step="7")
+    TypewriterTextTransition
+      p Viel Spaß beim Erforschen von Blobtopia!
       p (Mehr Details auf der Info-Seite)
 </template>
 

@@ -3,6 +3,7 @@
   .container
     .section
       .content
+        b-button.back-btn(type="is-text", icon-left="arrow-left", @click="$router.back()") Zurück zur Simulation
         h1.title.is-size-2.has-text-primary Blobtopia
         h2.subtitle.is-size-5 Eine simulierte Gesellschaft für die Methodenlehre
 
@@ -10,10 +11,14 @@
 
         p.
           Blobtopia ist eine virtuelle Gesellschaft mit 500 Einwohner*innen (Blobs),
-          die in fünf Distrikten leben. Jeder Blob hat demografische Merkmale
-          (Einkommen, Bildung, Alter), politische Einstellungen (Zufriedenheit,
-          L-R-Selbsteinschätzung, Vertrauen) und latente Konstrukte (Efficacy, Sozialkapital,
-          Autoritarismus, Politikverdrossenheit, Materialismus).
+          die in fünf Distrikten leben. Die Simulation umfasst 22 Jahre Geschichte
+          mit Wahlen, Krisen und gesellschaftlichen Veränderungen.
+
+        p.
+          Wie in der echten Sozialforschung kannst du die inneren Werte der Blobs
+          nicht direkt sehen. Stattdessen erforschst du die Gesellschaft durch
+          Interviews (direkte Gespräche mit den Blobs), Tweets (BlobFeed) und
+          Beobachtung über die Zeit.
 
         h3.title.is-size-4 Die fünf Distrikte
 
@@ -34,22 +39,27 @@
             .tag.is-medium.district-tag(style="background-color: #999999; color: #fff") Industriezone
             p Arbeiterklasse, geringes Bildungsniveau
 
-        h3.title.is-size-4 Interaktion
+        h3.title.is-size-4 So erforschst du Blobtopia
 
         ul
-          li Klicke auf einen Blob, um seine Details zu sehen
-          li Nutze die Steuerung rechts oben für Pause/Resume und Events
-          li Im Statistik-Tab findest du Distrikt-Vergleiche und L-R-Selbsteinschätzung-Verteilungen
-          li BlobFeed zeigt, was die Blobs gerade denken
-          li Die Dozent*in kann Events auslösen (Wahlen, Wirtschaftskrisen, Skandale)
+          li #[strong Interviews:] Klicke auf einen Blob und wähle „Interview führen" — stelle Fragen zu Leben, Meinungen und Sorgen
+          li #[strong BlobFeed:] Im Feed rechts siehst du Tweets der Blobs — sie spiegeln Stimmungen und Reaktionen auf Events wider
+          li #[strong Zeitleiste:] Reise durch 22 Jahre Geschichte und beobachte, wie Events die Gesellschaft verändern
+          li #[strong Dashboard:] Im Statistik-Tab findest du Distrikt-Vergleiche und Entwicklungen über die Zeit
 
         h3.title.is-size-4 Für die Methodenlehre
 
         p.
-          Blobtopia dient als Datenquelle für empirische Übungen.
-          Die latenten Konstrukte (z.B. Politische Efficacy) können
-          nicht direkt beobachtet werden, sondern nur über ihre Indikatoren
-          gemessen werden — genau wie in der echten Sozialforschung.
+          Blobtopia dient als lebendige Datenquelle für empirische Übungen.
+          Die latenten Konstrukte der Blobs (z.B. Politische Efficacy, Sozialkapital,
+          Autoritarismus) können nicht direkt beobachtet werden — genau wie in der
+          echten Sozialforschung. Studierende müssen durch Befragung und Beobachtung
+          herausfinden, was die Blobs denken und fühlen.
+
+        p.
+          Die Blobs antworten in Interviews individuell basierend auf ihren Eigenschaften,
+          ihrer aktuellen Stimmung und den Ereignissen in Blobtopia. Sie bleiben dabei
+          konsequent in ihrer Rolle — wie echte Befragte.
 </template>
 
 <script>

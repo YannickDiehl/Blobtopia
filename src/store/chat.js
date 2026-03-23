@@ -1,8 +1,8 @@
 import { CHAT_API, DATA_BASE } from '@/config/api'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
 
-// Cache for static glob data (loaded once)
-let globStaticMap = null
+// Cache for static blob data (loaded once)
+let blobStaticMap = null
 let changeSummaries = null
 
 /**
@@ -24,19 +24,19 @@ function resolveActivity(rootState, blob) {
   return { activity: activity, hour: hour }
 }
 
-async function getGlobStatic(globId) {
-  if (!globStaticMap) {
+async function getBlobStatic(blobId) {
+  if (!blobStaticMap) {
     try {
-      const res = await fetch(DATA_BASE + '/globs-static.json')
+      const res = await fetch(DATA_BASE + '/blobs-static.json')
       const data = await res.json()
-      globStaticMap = {}
-      for (const g of data) { globStaticMap[g.id] = g }
+      blobStaticMap = {}
+      for (const g of data) { blobStaticMap[g.id] = g }
     } catch (e) {
-      console.warn('Failed to load glob static data for chat:', e)
+      console.warn('Failed to load blob static data for chat:', e)
       return null
     }
   }
-  return globStaticMap[globId] || null
+  return blobStaticMap[blobId] || null
 }
 
 async function getChangeSummary(globId, tick) {
@@ -118,22 +118,22 @@ export const chat = {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
       try {
-        // Build system prompt client-side from glob data
-        const staticGlob = await getGlobStatic(blobId)
+        // Build system prompt client-side from blob data
+        const staticBlob = await getBlobStatic(blobId)
         const tpy = (rootState.simulation.timelineMeta && rootState.simulation.timelineMeta.ticks_per_year) || 365
         const cs = await getChangeSummary(blobId, tick || 0)
         const ctx = resolveActivity(rootState, blob)
-        const systemPrompt = buildSystemPrompt(blob || {}, staticGlob || {}, tick || 0, tpy, cs, ctx.activity, ctx.hour)
+        const systemPrompt = buildSystemPrompt(blob || {}, staticBlob || {}, tick || 0, tpy, cs, ctx.activity, ctx.hour)
 
         const headers = { 'Content-Type': 'application/json' }
-        const token = localStorage.getItem('globtopia_chat_token')
+        const token = localStorage.getItem('blobtopia_chat_token')
         if (token) headers['Authorization'] = 'Bearer ' + token
 
         const res = await fetch(CHAT_API, {
           method: 'POST'
           , headers
           , body: JSON.stringify({
-            glob_id: blobId
+            blob_id: blobId
             , tick: tick || null
             , system_prompt: systemPrompt
             , messages: []
@@ -174,23 +174,23 @@ export const chat = {
       commit('SET_ERROR', null)
       try {
         // Build system prompt client-side
-        const staticGlob = await getGlobStatic(blobId)
+        const staticBlob = await getBlobStatic(blobId)
         const tpy = (rootState.simulation.timelineMeta && rootState.simulation.timelineMeta.ticks_per_year) || 365
         const cs = await getChangeSummary(blobId, session.tick || 0)
         const ctx = resolveActivity(rootState, session.blob)
         const systemPrompt = buildSystemPrompt(
-          session.blob || {}, staticGlob || {}, session.tick || 0, tpy, cs, ctx.activity, ctx.hour
+          session.blob || {}, staticBlob || {}, session.tick || 0, tpy, cs, ctx.activity, ctx.hour
         )
 
         const headers = { 'Content-Type': 'application/json' }
-        const token = localStorage.getItem('globtopia_chat_token')
+        const token = localStorage.getItem('blobtopia_chat_token')
         if (token) headers['Authorization'] = 'Bearer ' + token
 
         const res = await fetch(CHAT_API, {
           method: 'POST'
           , headers
           , body: JSON.stringify({
-            glob_id: blobId
+            blob_id: blobId
             , tick: session.tick || null
             , system_prompt: systemPrompt
             , messages: apiMessages

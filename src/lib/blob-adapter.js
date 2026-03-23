@@ -47,8 +47,8 @@ export function initDistrictMetadata(districts) {
  * that the WorldViewer can render.
  */
 export function snapshotToGeneration(snapshot) {
-  // Server sends "globs" — accept both keys for compatibility
-  const rawBlobs = snapshot && (snapshot.globs || snapshot.blobs)
+  // Accept both keys for compatibility (prefer "blobs", fall back to "globs")
+  const rawBlobs = snapshot && (snapshot.blobs || snapshot.globs)
   if (!rawBlobs) {
     return null
   }
@@ -127,8 +127,8 @@ function adaptBlob(blob) {
  * Aggregate real statistics from snapshot data.
  */
 export function snapshotToStatistics(snapshot) {
-  // Server sends "globs" — accept both keys for compatibility
-  const rawBlobs = snapshot && (snapshot.globs || snapshot.blobs)
+  // Accept both keys for compatibility (prefer "blobs", fall back to "globs")
+  const rawBlobs = snapshot && (snapshot.blobs || snapshot.globs)
   if (!rawBlobs) {
     return null
   }

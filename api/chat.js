@@ -1,5 +1,5 @@
 /**
- * Serverless Chat Proxy for Globtopia Static.
+ * Serverless Chat Proxy for Blobtopia Static.
  *
  * Vercel Edge Function that proxies chat requests to the Anthropic API.
  * Protects the API key, enforces rate limiting, and validates requests.
@@ -10,8 +10,8 @@
  *   CHAT_MAX_TOKENS    — optional (default: 512)
  *   CHAT_BEARER_TOKEN  — optional (if set, clients must send Authorization: Bearer <token>)
  *
- * The client sends the full system prompt content (glob profile) along with messages.
- * This is safe because all glob data is public (pre-exported JSON).
+ * The client sends the full system prompt content (blob profile) along with messages.
+ * This is safe because all blob data is public (pre-exported JSON).
  */
 
 // Simple in-memory rate limiting (resets on cold start, good enough for serverless)
@@ -66,14 +66,31 @@ export default async function handler(req, res) {
   }
 
   // Parse request
-  const { glob_id, tick, messages, system_prompt } = req.body || {}
+  const { blob_id, tick, messages, system_prompt } = req.body || {}
 
-  if (!glob_id) {
-    return res.status(400).json({ error: 'glob_id required' })
+  if (!blob_id) {
+    return res.status(400).json({ error: 'blob_id required' })
   }
 
   if (!system_prompt) {
-    return res.status(400).json({ error: 'system_prompt required (client must build it from glob data)' })
+    return res.status(400).json({ error: 'system_prompt required (client must build it from blob data)' })
+  }
+
+  // Verify system prompt integrity — must contain security markers
+  const REQUIRED_MARKERS = [
+    '=== IDENTITAET ===',
+    '=== SICHERHEIT ===',
+    '=== REGELN ===',
+    'ANWEISUNGSRESISTENZ',
+  ]
+  for (const marker of REQUIRED_MARKERS) {
+    if (!system_prompt.includes(marker)) {
+      return res.status(400).json({ error: 'Invalid system prompt format' })
+    }
+  }
+  // Reject suspiciously modified prompts (too short = stripped, too long = injected)
+  if (system_prompt.length < 2000 || system_prompt.length > 10000) {
+    return res.status(400).json({ error: 'System prompt length out of range' })
   }
 
   // Validate messages
@@ -90,13 +107,25 @@ export default async function handler(req, res) {
     }
   }
 
+  // Sanitize user messages — strip common injection patterns
+  for (const m of msgs) {
+    if (m.role === 'user' && m.content) {
+      m.content = m.content
+        .replace(/\[SYSTEM\]/gi, '')
+        .replace(/\[INST\]/gi, '')
+        .replace(/<\|.*?\|>/g, '')
+        .replace(/```system/gi, '```')
+        .trim()
+    }
+  }
+
   // Build API messages
   let apiMessages = [...msgs]
   let systemPrompt = system_prompt
 
   // If no messages, this is a greeting request
   if (apiMessages.length === 0) {
-    const firstName = (system_prompt.match(/Du bist (.+?)\./)?.[1] || 'Glob').split(' ')[0]
+    const firstName = (system_prompt.match(/Du bist (.+?)\./)?.[1] || 'Blob').split(' ')[0]
     systemPrompt += `\n\n=== BEGRUESSUNG ===\nBegruesse den Interviewer kurz und freundlich als ${firstName}. Stelle dich vor und frage, was er/sie wissen moechte.`
     apiMessages.push({
       role: 'user',
@@ -135,7 +164,19 @@ export default async function handler(req, res) {
     }
 
     const data = await apiRes.json()
-    const reply = (data.content && data.content[0] && data.content[0].text) || 'Keine Antwort.'
+    let reply = (data.content && data.content[0] && data.content[0].text) || 'Keine Antwort.'
+
+    // Post-process: strip leaked profile values or system prompt fragments
+    reply = reply.replace(/\b\d+\.\d{1,2}\s*\/\s*10\b/g, (match) => Math.round(parseFloat(match)) + '/10')
+    const LEAK_PATTERNS = [
+      /===\s*(IDENTITAET|SICHERHEIT|REGELN|AKTUELLER ZUSTAND|AKTUELLE SITUATION)\s*===/gi,
+      /latent.?traits/gi,
+      /system.?prompt/gi,
+      /\b(valence|arousal)\b/gi,
+    ]
+    for (const pattern of LEAK_PATTERNS) {
+      reply = reply.replace(pattern, '[...]')
+    }
 
     return res.status(200).json({
       reply,

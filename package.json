@@ -1,8 +1,8 @@
 {
-  "name": "globtopia-static",
+  "name": "blobtopia-static",
   "version": "1.0.0",
   "private": true,
-  "description": "Globtopia — statische Client-Side Version (Option D)",
+  "description": "Blobtopia — statische Client-Side Version (Option D)",
   "scripts": {
     "export": "node scripts/export-timeline.js",
     "dev": "vue-cli-service serve",

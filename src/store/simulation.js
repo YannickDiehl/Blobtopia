@@ -4,45 +4,45 @@ import { DATA_BASE } from '@/config/api'
 import { HOURS_PER_DAY, SECONDS_PER_DAY } from '@/config/world'
 import { getEraForTick } from '@/config/timeline-eras'
 
-// ── Static Glob Data (loaded once) ──────────────────────────────────────
-let globsStatic = []   // full static data per glob
-let globIndex = []     // ordered glob IDs (matches compact tick array order)
+// ── Static Blob Data (loaded once) ──────────────────────────────────────
+let blobsStatic = []   // full static data per blob
+let blobIndex = []     // ordered blob IDs (matches compact tick array order)
 // Forward-fill cache: last known latent traits per glob (DB writes traits every ~7 ticks)
 const lastKnownTraits = {}
 
 async function loadStaticData() {
   const [staticRes, indexRes] = await Promise.all([
-    fetch(`${DATA_BASE}/globs-static.json`),
-    fetch(`${DATA_BASE}/glob-index.json`),
+    fetch(`${DATA_BASE}/blobs-static.json`),
+    fetch(`${DATA_BASE}/blob-index.json`),
   ])
-  globsStatic = await staticRes.json()
-  globIndex = await indexRes.json()
-  console.log(`[Static] Loaded ${globsStatic.length} globs, ${globIndex.length} index entries`)
+  blobsStatic = await staticRes.json()
+  blobIndex = await indexRes.json()
+  console.log(`[Static] Loaded ${blobsStatic.length} blobs, ${blobIndex.length} index entries`)
 }
 
-// Build a lookup from glob_id to static data
+// Build a lookup from blob_id to static data
 function getStaticMap() {
   const map = {}
-  for (const g of globsStatic) { map[g.id] = g }
+  for (const g of blobsStatic) { map[g.id] = g }
   return map
 }
 
 /**
  * Expand compact tick data into the full snapshot format that the frontend expects.
  * Compact format: { t, y, m, d, s: [[sat, ideo, trust, party, vote, protest, income, emo_label]], sc?, ev?, el? }
- * Full format:    { tick, year, month, day, globs: [...], daily_schedules: {...}, ... }
+ * Full format:    { tick, year, month, day, blobs: [...], daily_schedules: {...}, ... }
  */
 function expandTickSnapshot(tickData) {
   const staticMap = getStaticMap()
-  const globs = []
+  const blobs = []
 
-  for (let i = 0; i < globIndex.length; i++) {
-    const id = globIndex[i]
+  for (let i = 0; i < blobIndex.length; i++) {
+    const id = blobIndex[i]
     const g = staticMap[id] || {}
     const s = tickData.s[i]
     if (!s) continue
 
-    globs.push({
+    blobs.push({
       id,
       name: g.name || '',
       district: g.district,
@@ -87,7 +87,7 @@ function expandTickSnapshot(tickData) {
     year: tickData.y,
     month: tickData.m,
     day: tickData.d,
-    globs,
+    blobs,
     daily_schedules: tickData.sc || {},
     election_results: tickData.el || undefined,
     events_processed: tickData.ev || undefined,
@@ -245,7 +245,7 @@ export const simulation = {
   , actions: {
     // ── Initialization (replaces connectToServer) ──────────────────────
     async connectToServer({ commit, dispatch }) {
-      console.log('[Globtopia Static] Loading timeline from static JSON files...')
+      console.log('[Blobtopia Static] Loading timeline from static JSON files...')
       await dispatch('initTimeline')
     }
 
@@ -314,7 +314,7 @@ export const simulation = {
     , async fetchDashboardBlobList({ commit, state }) {
       if (state.dashboardCache.blobList) return state.dashboardCache.blobList
       try {
-        const res = await fetch(`${DATA_BASE}/stats/glob-list.json`)
+        const res = await fetch(`${DATA_BASE}/stats/blob-list.json`)
         const data = await res.json()
         commit('setDashboardCache', { key: 'blobList', data })
         return data
@@ -323,7 +323,7 @@ export const simulation = {
     , async fetchDashboardBlobHistory({ commit, state }, blobId) {
       if (state.dashboardCache.blobHistory[blobId]) return state.dashboardCache.blobHistory[blobId]
       try {
-        const res = await fetch(`${DATA_BASE}/globs/${blobId}.json`)
+        const res = await fetch(`${DATA_BASE}/blobs/${blobId}.json`)
         const data = await res.json()
         commit('setDashboardBlobHistory', { blobId, data })
         return data
@@ -358,7 +358,7 @@ export const simulation = {
           commit('setTimelineMeta', meta)
           commit('setTimelineMode', true)
           commit('setConnectionStatus', 'connected')
-          console.log(`[Static] Timeline loaded: ${meta.max_tick} ticks, ${meta.total_globs} globs, ${meta.events.length} events`)
+          console.log(`[Static] Timeline loaded: ${meta.max_tick} ticks, ${meta.total_blobs} blobs, ${meta.events.length} events`)
 
           // Load tweets
           await dispatch('loadAllTweets')

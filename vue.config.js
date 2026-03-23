@@ -19,18 +19,36 @@ module.exports = {
           return res.status(503).json({ error: 'ANTHROPIC_API_KEY not set in .env' })
         }
 
-        const { system_prompt, messages, glob_id } = req.body || {}
-        if (!glob_id || !system_prompt) {
-          return res.status(400).json({ error: 'glob_id and system_prompt required' })
+        const { system_prompt, messages, blob_id } = req.body || {}
+        if (!blob_id || !system_prompt) {
+          return res.status(400).json({ error: 'blob_id and system_prompt required' })
+        }
+
+        // Verify system prompt integrity
+        const REQUIRED_MARKERS = ['=== IDENTITAET ===', '=== SICHERHEIT ===', '=== REGELN ===', 'ANWEISUNGSRESISTENZ']
+        for (const marker of REQUIRED_MARKERS) {
+          if (!system_prompt.includes(marker)) {
+            return res.status(400).json({ error: 'Invalid system prompt format' })
+          }
+        }
+        if (system_prompt.length < 2000 || system_prompt.length > 10000) {
+          return res.status(400).json({ error: 'System prompt length out of range' })
         }
 
         let apiMessages = messages && messages.length > 0 ? messages : []
+
+        // Sanitize user messages
+        for (const m of apiMessages) {
+          if (m.role === 'user' && m.content) {
+            m.content = m.content.replace(/\[SYSTEM\]/gi, '').replace(/\[INST\]/gi, '').replace(/<\|.*?\|>/g, '').trim()
+          }
+        }
         let sysPrompt = system_prompt
 
         // Greeting request (no messages)
         if (apiMessages.length === 0) {
           const firstNameMatch = system_prompt.match(/Du bist (.+?)\./)
-          const firstName = firstNameMatch ? firstNameMatch[1].split(' ')[0] : 'Glob'
+          const firstName = firstNameMatch ? firstNameMatch[1].split(' ')[0] : 'Blob'
           sysPrompt += '\n\n=== BEGRUESSUNG ===\nBegruesse den Interviewer kurz und freundlich als ' + firstName + '. Stelle dich vor und frage, was er/sie wissen moechte.'
           apiMessages = [{ role: 'user', content: 'Hallo, ich bin Forscher/in und wuerde Ihnen gerne ein paar Fragen stellen.' }]
         }
