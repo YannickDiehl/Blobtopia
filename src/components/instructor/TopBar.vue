@@ -45,6 +45,10 @@
     button.top-btn(:class="{ active: showFeed }", @click="$emit('toggle-feed')", title="BlobFeed ein-/ausblenden")
       b-icon(icon="rss", size="is-small")
 
+    //- Newspaper toggle
+    button.top-btn(:class="{ active: showNewspaper }", @click="$emit('toggle-newspaper')", title="Zeitung ein-/ausblenden (N)")
+      b-icon(icon="newspaper", size="is-small")
+
     button.top-btn(@click="$emit('toggle-command-palette')", title="Command Palette (Cmd+K)")
       b-icon(icon="magnify", size="is-small")
 
@@ -62,6 +66,7 @@ export default {
   , components: { FloatingPanel }
   , props: {
     showFeed: Boolean
+    , showNewspaper: Boolean
   }
   , computed: {
     connectionClass(){

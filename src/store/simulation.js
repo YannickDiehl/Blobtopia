@@ -179,6 +179,8 @@ const initialState = {
   // Blobtopia-specific state
   , allTweets: []
   , tweets: []
+  , allNewspapers: []
+  , newspapers: []
   , tweetPollingTimer: null
   , demographics: null
   , dashboardCache: {
@@ -211,6 +213,7 @@ export const simulation = {
     , month: state => state.month
     , day: state => state.day
     , tweets: state => state.tweets
+    , newspapers: state => state.newspapers
     , demographics: state => state.demographics
     , isLiveMode: state => state.isLiveMode
     , tickIntervalMs: state => state.tickIntervalMs
@@ -273,6 +276,18 @@ export const simulation = {
       }
     }
     , fetchTweets() {} // no live tweet polling
+
+    // ── Newspaper Loading ─────────────────────────────────────────────
+    , async loadAllNewspapers({ commit }) {
+      try {
+        const res = await fetch(`${DATA_BASE}/newspapers.json`)
+        const data = await res.json()
+        commit('setAllNewspapers', data || [])
+        console.log(`[Static] ${(data || []).length} newspaper issues loaded`)
+      } catch (e) {
+        console.warn('[Static] Failed to load newspapers:', e)
+      }
+    }
 
     // ── Dashboard Data (from static JSON files) ────────────────────────
     , async fetchDashboardAttitudes({ commit, state }) {
@@ -360,8 +375,11 @@ export const simulation = {
           commit('setConnectionStatus', 'connected')
           console.log(`[Static] Timeline loaded: ${meta.max_tick} ticks, ${meta.total_blobs} blobs, ${meta.events.length} events`)
 
-          // Load tweets
-          await dispatch('loadAllTweets')
+          // Load tweets and newspapers
+          await Promise.all([
+            dispatch('loadAllTweets'),
+            dispatch('loadAllNewspapers'),
+          ])
 
           // Load first tick
           await dispatch('fetchTick', 0)
@@ -543,6 +561,9 @@ export const simulation = {
       if (state.allTweets.length > 0) {
         state.tweets = state.allTweets.filter(t => t.tick <= tick).slice().reverse()
       }
+      if (state.allNewspapers.length > 0) {
+        state.newspapers = state.allNewspapers.filter(n => n.tick <= tick)
+      }
     }
     , setGenerationIndex(state, idx){
       state.currentGenerationIndex = idx | 0
@@ -568,6 +589,9 @@ export const simulation = {
     }
     , setTweets(state, tweets){
       state.tweets = tweets
+    }
+    , setAllNewspapers(state, newspapers){
+      state.allNewspapers = newspapers
     }
     , setTweetPollingTimer(state, timer){
       state.tweetPollingTimer = timer

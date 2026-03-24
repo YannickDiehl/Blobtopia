@@ -3,7 +3,9 @@
   //- TopBar
   TopBar(
     :show-feed="showFeed"
+    , :show-newspaper="showNewspaper"
     , @toggle-feed="showFeed = !showFeed"
+    , @toggle-newspaper="showNewspaper = !showNewspaper"
     , @toggle-pause="toggleServerPause"
     , @toggle-command-palette="showCommandPalette = true"
     , @fire-event="fireEvent"
@@ -62,6 +64,15 @@
   transition(name="slide-right")
     BlobFeed(v-if="showFeed", :tweets="tweets")
 
+  //- Newspaper Overlay
+  transition(name="fade")
+    NewspaperOverlay(
+      v-if="showNewspaper"
+      , :issues="newspapers"
+      , @close="showNewspaper = false"
+      , @select-blob="onNewspaperSelectBlob"
+    )
+
   //- Timeline Bar (bottom)
   TimelineBar(v-if="timelineMode")
 
@@ -86,6 +97,7 @@ import LiveMetrics from './LiveMetrics'
 import SpotlightOverlay from './SpotlightOverlay'
 import CommandPalette from './CommandPalette'
 import TimelineBar from '@/components/timeline/TimelineBar'
+import NewspaperOverlay from './NewspaperOverlay'
 
 export default {
   name: 'InstructorLayout'
@@ -99,6 +111,7 @@ export default {
     , SpotlightOverlay
     , CommandPalette
     , TimelineBar
+    , NewspaperOverlay
   }
   , provide(){
     return {
@@ -113,6 +126,7 @@ export default {
     , selectedBuilding: null
     , showCommandPalette: false
     , showFeed: false
+    , showNewspaper: false
     , cursorHidden: false
     , cursorTimer: null
   })
@@ -149,6 +163,7 @@ export default {
       , isPaused: 'isPaused'
       , timelineMode: 'timelineMode'
       , tweets: 'tweets'
+      , newspapers: 'newspapers'
       , connectionStatus: 'connectionStatus'
     })
   }
@@ -216,6 +231,14 @@ export default {
         this.$store.commit('simulation/setSpotlightTarget', { type: 'blob', id: blob.id })
       }
     }
+    , onNewspaperSelectBlob(blobId) {
+      this.showNewspaper = false
+      const gen = this.getCurrentGeneration()
+      if (gen) {
+        const blob = gen.blobs.find(b => b.id === blobId)
+        if (blob) this.onTapBlob({ blob })
+      }
+    }
     , onTapBuilding(buildingInfo){
       this._lastTapTime = Date.now()
       this.selectedBuilding = buildingInfo
@@ -261,10 +284,17 @@ export default {
       // Escape
       if (e.key === 'Escape') {
         e.preventDefault()
+        if (this.showNewspaper) { this.showNewspaper = false; return }
         if (this.showCommandPalette) { this.showCommandPalette = false; return }
         if (this.spotlightActive) { this.deactivateSpotlight(); return }
         if (this.selectedBlob) { this.onCloseInteraction(); return }
         if (this.selectedBuilding) { this.selectedBuilding = null; return }
+        return
+      }
+
+      // Newspaper toggle
+      if (e.key === 'n' || e.key === 'N') {
+        this.showNewspaper = !this.showNewspaper
         return
       }
 
