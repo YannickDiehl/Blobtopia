@@ -168,7 +168,13 @@ export default {
     })
   }
   , watch: {
-    uiMode(){
+    generation(newGen) {
+      if (this.selectedBlob && newGen && newGen.blobs) {
+        const updated = newGen.blobs.find(b => b.id === this.selectedBlob.id)
+        if (updated) this.selectedBlob = updated
+      }
+    }
+    , uiMode(){
       // Resize 3D after CSS transition completes
       setTimeout(() => this.fixLayout(), 350)
     }
