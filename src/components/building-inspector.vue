@@ -6,10 +6,23 @@
         b-icon(:icon="buildingIcon", size="is-small")
       .header-text
         .building-name {{ displayName }}
-        .building-subtitle {{ building.districtName || 'Zentrum' }} · {{ functionalLabel }}
-      b-icon.close-btn(icon="close", size="is-small", @click.native="$emit('close')")
+        .building-subtitle(v-if="inspectorUnlocked") {{ building.districtName || 'Zentrum' }} · {{ functionalLabel }}
+      .header-actions
+        span.action-btn.lock-btn(@click="onLockClick")
+          b-icon(:icon="inspectorUnlocked ? 'lock-open-variant' : 'lock'", size="is-small")
+        .password-popover(v-if="showPasswordInput")
+          input.password-input(
+            type="password"
+            , v-model="passwordAttempt"
+            , :placeholder="passwordError ? 'Falsch' : 'Passwort'"
+            , :class="{ 'has-error': passwordError }"
+            , @keydown.enter="tryUnlock"
+            , @keydown.esc="showPasswordInput = false"
+            , ref="passwordInput"
+          )
+        b-icon.close-btn(icon="close", size="is-small", @click.native="$emit('close')")
 
-    .inspector-section
+    .inspector-section(v-if="inspectorUnlocked")
       .info-grid
         .info-item
           .info-label Typ
@@ -31,7 +44,7 @@
           .blob-dot(:style="{ backgroundColor: districtColor(occ.blob.district) }")
           .blob-info
             span.blob-name {{ occ.blob.name || 'Blob #' + occ.blob.id.substring(0, 6) }}
-            span.blob-detail {{ occ.reason }}
+            span.blob-detail(v-if="inspectorUnlocked") {{ occ.reason }}
 
     .inspector-section(v-if="residents.length > 0")
       h4 Bewohner ({{ residents.length }})
@@ -48,7 +61,7 @@
             .blob-dot(:style="{ backgroundColor: districtColor(blob.district) }")
             .blob-info
               span.blob-name {{ blob.name || 'Blob #' + blob.id.substring(0, 6) }}
-              span.blob-detail {{ blob.age_label }} · {{ blob.education_label }}
+              span.blob-detail(v-if="inspectorUnlocked") {{ blob.age_label }} · {{ blob.education_label }}
 
     .inspector-section(v-if="workers.length > 0")
       h4 Arbeitsplatz für ({{ workers.length }})
@@ -57,7 +70,7 @@
           .blob-dot(:style="{ backgroundColor: districtColor(blob.district) }")
           .blob-info
             span.blob-name {{ blob.name || 'Blob #' + blob.id.substring(0, 6) }}
-            span.blob-detail {{ blob.education_label }} · {{ blob.party_name }}
+            span.blob-detail(v-if="inspectorUnlocked") {{ blob.education_label }} · {{ blob.party_name }}
 
     .inspector-section(v-if="lunchGuests.length > 0")
       h4 Mittagsgäste ({{ lunchGuests.length }})
@@ -95,6 +108,14 @@ export default {
   , props: {
     building: { type: Object, required: true }
     , timelineMode: { type: Boolean, default: false }
+  }
+  , data() {
+    return {
+      inspectorUnlocked: localStorage.getItem('blobtopia_inspector_unlocked') === 'true'
+      , showPasswordInput: false
+      , passwordAttempt: ''
+      , passwordError: false
+    }
   }
   , computed: {
     displayName(){
@@ -197,7 +218,33 @@ export default {
     }
   }
   , methods: {
-    districtColor(d) {
+    onLockClick() {
+      if (this.inspectorUnlocked) {
+        this.inspectorUnlocked = false
+        localStorage.removeItem('blobtopia_inspector_unlocked')
+      } else {
+        this.showPasswordInput = !this.showPasswordInput
+        this.passwordError = false
+        this.passwordAttempt = ''
+        this.$nextTick(() => {
+          if (this.$refs.passwordInput) this.$refs.passwordInput.focus()
+        })
+      }
+    }
+    , tryUnlock() {
+      var correct = process.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
+      if (this.passwordAttempt === correct) {
+        this.inspectorUnlocked = true
+        this.passwordError = false
+        this.showPasswordInput = false
+        this.passwordAttempt = ''
+        localStorage.setItem('blobtopia_inspector_unlocked', 'true')
+      } else {
+        this.passwordError = true
+        this.passwordAttempt = ''
+      }
+    }
+    , districtColor(d) {
       return DISTRICT_COLORS_HEX[d] || '#666'
     }
   }
@@ -256,9 +303,52 @@ export default {
       color: $grey
       margin-top: 1px
 
+  .header-actions
+    display: flex
+    align-items: center
+    gap: 0.3rem
+    margin-left: auto
+    flex-shrink: 0
+
+  .action-btn
+    cursor: pointer
+    color: $grey
+    display: inline-flex
+    align-items: center
+    padding: 2px
+    &:hover
+      color: $grey-lighter
+    &.lock-btn
+      color: rgba(255, 255, 255, 0.35)
+      &:hover
+        color: rgba(255, 255, 255, 0.6)
+
+  .password-popover
+    display: flex
+    align-items: center
+
+    .password-input
+      width: 90px
+      height: 22px
+      background: rgba(255, 255, 255, 0.08)
+      border: 1px solid rgba(255, 255, 255, 0.2)
+      border-radius: 4px
+      color: $grey-lighter
+      padding: 0 0.4rem
+      font-size: 0.7rem
+      outline: none
+      font-family: inherit
+      &:focus
+        border-color: $primary
+      &.has-error
+        border-color: #e74c3c
+        &::placeholder
+          color: #e74c3c
+      &::placeholder
+        color: $grey
+
   .close-btn
     cursor: pointer
-    margin-left: auto
     color: $grey
     &:hover
       color: $grey-lighter
