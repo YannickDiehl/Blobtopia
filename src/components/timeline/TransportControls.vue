@@ -1,15 +1,5 @@
 <template lang="pug">
 .transport-controls
-  //- Speed selector
-  FloatingPanel(size="is-small", direction="up")
-    template(#activator)
-      button.step-btn.speed-selector {{ speedLabel }}
-    .speed-menu
-      .speed-item(:class="{ active: playbackSpeed === 1 }", @click="setSpeed(1)") 1× Gemütlich
-      .speed-item(:class="{ active: playbackSpeed === 3 }", @click="setSpeed(3)") 3× Schnell
-      .speed-item(:class="{ active: playbackSpeed === 7 }", @click="setSpeed(7)") 7× Woche/Sek
-      .speed-item(:class="{ active: playbackSpeed === 10 }", @click="setSpeed(10)") 10× Turbo
-
   //- Step controls with Play/Pause in the center
   .step-controls
     button.step-btn(@click="stepBy(-365)", title="1 Jahr zurück (Shift+←)")
@@ -34,14 +24,24 @@
     button.step-btn(@click="stepBy(365)", title="1 Jahr vor (Shift+→)")
       b-icon(icon="chevron-double-right", size="is-small")
 
-  //- Event nav
-  .event-nav
-    button.step-btn.event-btn(@click="jumpEvent(-1)", title="Vorheriges Event (Shift+E)")
-      b-icon(icon="skip-previous", size="is-small")
-      span Event
-    button.step-btn.event-btn(@click="jumpEvent(1)", title="Nächstes Event (E)")
-      span Event
-      b-icon(icon="skip-next", size="is-small")
+  //- Right group: Event nav + Speed selector
+  .right-controls
+    .event-nav
+      button.step-btn.event-btn(@click="jumpEvent(-1)", title="Vorheriges Event (Shift+E)")
+        b-icon(icon="skip-previous", size="is-small")
+        span Event
+      button.step-btn.event-btn(@click="jumpEvent(1)", title="Nächstes Event (E)")
+        span Event
+        b-icon(icon="skip-next", size="is-small")
+
+    FloatingPanel(size="is-small", direction="up")
+      template(#activator)
+        button.step-btn.speed-selector {{ speedLabel }}
+      .speed-menu
+        .speed-item(:class="{ active: playbackSpeed === 1 }", @click="setSpeed(1)") 1× Gemütlich
+        .speed-item(:class="{ active: playbackSpeed === 3 }", @click="setSpeed(3)") 3× Schnell
+        .speed-item(:class="{ active: playbackSpeed === 7 }", @click="setSpeed(7)") 7× Woche/Sek
+        .speed-item(:class="{ active: playbackSpeed === 10 }", @click="setSpeed(10)") 10× Turbo
 </template>
 
 <script>
@@ -138,10 +138,15 @@ export default {
     font-size: 0.7rem
     padding: 0 6px
 
+.right-controls
+  display: flex
+  align-items: center
+  gap: 0.5rem
+  margin-left: auto
+
 .event-nav
   display: flex
   gap: 4px
-  margin-left: auto
 
 .event-btn
   min-width: auto
