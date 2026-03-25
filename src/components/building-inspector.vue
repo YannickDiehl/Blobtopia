@@ -78,6 +78,7 @@
 
 <script>
 import { DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
+import { visualPositions } from '@/blobs/visual-positions'
 
 const FUNCTIONAL_LABELS = {
   apartment: 'Mehrfamilienhaus', rowhouse: 'Reihenhaus', villa: 'Villa'
@@ -164,20 +165,25 @@ export default {
       return this.blobs.filter(c => c.lunch_spot_id === this.building.id).slice(0, 12)
     }
     , leisureVisitors(){
-      if (!this.building.id) return []
-      return this.blobs.filter(c => c.leisure_spot_id === this.building.id).slice(0, 12)
+      if (!this.building.id || !this.building.x) return []
+      const bx = this.building.x, bz = this.building.z
+      return this.blobs.filter(c => {
+        if (c.leisure_spot_id !== this.building.id) return false
+        const vp = visualPositions.get(c.id)
+        if (!vp) return false
+        const dx = vp.x - bx, dz = vp.z - bz
+        return dx * dx + dz * dz <= 36 * 36
+      }).slice(0, 12)
     }
     , currentOccupants(){
-      // Show blobs that are currently AT this building based on their position
       if (!this.building.id || !this.building.x) return []
       const bx = this.building.x, bz = this.building.z
       const results = []
       for (const c of this.blobs) {
-        const cx = (c.pos ? c.pos[0] : 0) * 4
-        const cz = (c.pos ? c.pos[1] : 0) * 4
-        const dx = cx - bx, dz = cz - bz
-        if (dx * dx + dz * dz > 40 * 40) continue
-        // Determine why they're here
+        const vp = visualPositions.get(c.id)
+        if (!vp) continue
+        const dx = vp.x - bx, dz = vp.z - bz
+        if (dx * dx + dz * dz > 36 * 36) continue
         let reason = ''
         if (c.home_building_id === this.building.id) reason = 'Bewohner'
         else if (c.workplace_id === this.building.id) reason = 'Arbeitet hier'

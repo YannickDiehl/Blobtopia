@@ -7,6 +7,18 @@
       .header-text
         .blob-name(v-if="blob.name") {{ blob.name }}
       .header-actions
+        span.action-btn.lock-btn(v-if="mode === 'inspect'", @click="onLockClick")
+          b-icon(:icon="inspectorUnlocked ? 'lock-open-variant' : 'lock'", size="is-small")
+        .password-popover(v-if="showPasswordInput")
+          input.password-input(
+            type="password"
+            , v-model="passwordAttempt"
+            , :placeholder="passwordError ? 'Falsch' : 'Passwort'"
+            , :class="{ 'has-error': passwordError }"
+            , @keydown.enter="tryUnlock"
+            , @keydown.esc="showPasswordInput = false"
+            , ref="passwordInput"
+          )
         span.action-btn(v-if="mode === 'inspect'", @click="startChat")
           b-icon(icon="forum", size="is-small")
         span.action-btn(v-if="mode === 'chat'", @click="mode = 'inspect'")
@@ -18,128 +30,129 @@
     transition(name="mode-fade", mode="out-in")
       //- ═══ INSPECT MODE ═══
       .inspect-body(v-if="mode === 'inspect'", key="inspect")
-        .inspector-section
-          h4 Demografie
-          .info-grid
-            .info-item
-              .info-label Wohnort
-              .info-value {{ blob.district_name }}
-            .info-item
-              .info-label Alter
-              .info-value {{ blob.age_label }}
-            .info-item
-              .info-label Beruf
-              .info-value {{ blob.job || '–' }}
-            .info-item
-              .info-label Bildung
-              .info-value {{ blob.education_label }}
-            .info-item
-              .info-label Einkommen
-              .info-value {{ blob.income_label || (Math.round(blob.income) + ' €') }}
-            .info-item
-              .info-label Partei
-              .info-value {{ blob.party_name }}
+        .inspector-data(v-if="inspectorUnlocked")
+          .inspector-section
+            h4 Demografie
+            .info-grid
+              .info-item
+                .info-label Wohnort
+                .info-value {{ blob.district_name }}
+              .info-item
+                .info-label Alter
+                .info-value {{ blob.age_label }}
+              .info-item
+                .info-label Beruf
+                .info-value {{ blob.job || '–' }}
+              .info-item
+                .info-label Bildung
+                .info-value {{ blob.education_label }}
+              .info-item
+                .info-label Einkommen
+                .info-value {{ blob.income_label || (Math.round(blob.income) + ' €') }}
+              .info-item
+                .info-label Partei
+                .info-value {{ blob.party_name }}
 
-        .inspector-section(v-if="blob.home_building_id || blob.workplace_id")
-          h4 Orte
-          .info-grid
-            .info-item(v-if="blob.home_building_id")
-              .info-label Wohnung
-              .info-value \#{{ blob.home_building_id }}
-            .info-item(v-if="blob.workplace_id")
-              .info-label Arbeit
-              .info-value \#{{ blob.workplace_id }}
-            .info-item(v-if="blob.lunch_spot_id")
-              .info-label Mittagessen
-              .info-value \#{{ blob.lunch_spot_id }}
-            .info-item(v-if="blob.leisure_spot_id")
-              .info-label Freizeit
-              .info-value \#{{ blob.leisure_spot_id }}
+          .inspector-section(v-if="blob.home_building_id || blob.workplace_id")
+            h4 Orte
+            .info-grid
+              .info-item(v-if="blob.home_building_id")
+                .info-label Wohnung
+                .info-value \#{{ blob.home_building_id }}
+              .info-item(v-if="blob.workplace_id")
+                .info-label Arbeit
+                .info-value \#{{ blob.workplace_id }}
+              .info-item(v-if="blob.lunch_spot_id")
+                .info-label Mittagessen
+                .info-value \#{{ blob.lunch_spot_id }}
+              .info-item(v-if="blob.leisure_spot_id")
+                .info-label Freizeit
+                .info-value \#{{ blob.leisure_spot_id }}
 
-        .inspector-section(v-if="blob.attitudes")
-          h4 Einstellungen
-          .bar-item
-            .bar-label Zufriedenheit
-            .bar-track
-              .bar-fill(:style="{ width: (blob.attitudes.political_satisfaction / 10 * 100) + '%', backgroundColor: satisfactionColor }")
-            .bar-value {{ Math.round(blob.attitudes.political_satisfaction * 10) / 10 }}
-          .bar-item
-            .bar-label L-R
-            .bar-track.lr-track
-              .lr-marker(:style="{ left: ((blob.attitudes.ideology - 1) / 9 * 100) + '%' }")
-            .bar-value {{ blob.attitudes.ideology.toFixed(1) }}
-          .bar-item
-            .bar-label Vertrauen
-            .bar-track
-              .bar-fill(:style="{ width: (blob.attitudes.institutional_trust / 10 * 100) + '%', backgroundColor: '#5c9ded' }")
-            .bar-value {{ Math.round(blob.attitudes.institutional_trust * 10) / 10 }}
+          .inspector-section(v-if="blob.attitudes")
+            h4 Einstellungen
+            .bar-item
+              .bar-label Zufriedenheit
+              .bar-track
+                .bar-fill(:style="{ width: (blob.attitudes.political_satisfaction / 10 * 100) + '%', backgroundColor: satisfactionColor }")
+              .bar-value {{ Math.round(blob.attitudes.political_satisfaction * 10) / 10 }}
+            .bar-item
+              .bar-label L-R
+              .bar-track.lr-track
+                .lr-marker(:style="{ left: ((blob.attitudes.ideology - 1) / 9 * 100) + '%' }")
+              .bar-value {{ blob.attitudes.ideology.toFixed(1) }}
+            .bar-item
+              .bar-label Vertrauen
+              .bar-track
+                .bar-fill(:style="{ width: (blob.attitudes.institutional_trust / 10 * 100) + '%', backgroundColor: '#5c9ded' }")
+              .bar-value {{ Math.round(blob.attitudes.institutional_trust * 10) / 10 }}
 
-        .inspector-section(v-if="blob.attitudes && blob.attitudes.policy_economy != null")
-          h4 Policy-Positionen
-          .bar-item(v-for="p in policyItems", :key="p.label")
-            .bar-label {{ p.label }}
-            .bar-track
-              .bar-fill(:style="{ width: (p.value / 10 * 100) + '%', backgroundColor: '#a29bfe' }")
-            .bar-value {{ Math.round(p.value * 10) / 10 }}
+          .inspector-section(v-if="blob.attitudes && blob.attitudes.policy_economy != null")
+            h4 Policy-Positionen
+            .bar-item(v-for="p in policyItems", :key="p.label")
+              .bar-label {{ p.label }}
+              .bar-track
+                .bar-fill(:style="{ width: (p.value / 10 * 100) + '%', backgroundColor: '#a29bfe' }")
+              .bar-value {{ Math.round(p.value * 10) / 10 }}
 
-        .inspector-section(v-if="blob.political_state")
-          h4 Politisches Verhalten
-          .info-grid
-            .info-item
-              .info-label Wähler*in
-              .info-value {{ blob.political_state.will_vote ? 'Ja' : 'Nein' }}
-            .info-item
-              .info-label Protestbereitschaft
-              .info-value {{ Math.round(blob.political_state.protest_readiness * 100) }}%
+          .inspector-section(v-if="blob.political_state")
+            h4 Politisches Verhalten
+            .info-grid
+              .info-item
+                .info-label Wähler*in
+                .info-value {{ blob.political_state.will_vote ? 'Ja' : 'Nein' }}
+              .info-item
+                .info-label Protestbereitschaft
+                .info-value {{ Math.round(blob.political_state.protest_readiness * 100) }}%
 
-        .inspector-section.collapsible(v-if="blob.latent_traits")
-          h4.clickable(@click="showLatent = !showLatent")
-            span Latente Konstrukte
-            b-icon(:icon="showLatent ? 'chevron-up' : 'chevron-down'", size="is-small")
-          transition(name="collapse")
-            .latent-content(v-if="showLatent")
-              .latent-group
-                h5 Pol. Efficacy
-                .mini-bar(v-for="item in efficacyItems", :key="item.label")
-                  span.mini-label {{ item.label }}
-                  .mini-track
-                    .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
-                  span.mini-value {{ Math.round(item.value * 10) / 10 }}
-              .latent-group
-                h5 Sozialkapital
-                .mini-bar(v-for="item in socialItems", :key="item.label")
-                  span.mini-label {{ item.label }}
-                  .mini-track
-                    .mini-fill(:style="{ width: (item.value / (item.max || 10) * 100) + '%' }")
-                  span.mini-value {{ typeof item.value === 'number' ? Math.round(item.value * 10) / 10 : item.value }}
-              .latent-group
-                h5 Autoritarismus
-                .mini-bar(v-for="item in authItems", :key="item.label")
-                  span.mini-label {{ item.label }}
-                  .mini-track
-                    .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
-                  span.mini-value {{ Math.round(item.value * 10) / 10 }}
-              .latent-group
-                h5 Politikverdrossenheit
-                .mini-bar(v-for="item in alienationItems", :key="item.label")
-                  span.mini-label {{ item.label }}
-                  .mini-track
-                    .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
-                  span.mini-value {{ Math.round(item.value * 10) / 10 }}
-              .latent-group
-                h5 Materialismus/Postmat.
-                .mini-bar(v-for="item in materialismItems", :key="item.label")
-                  span.mini-label {{ item.label }}
-                  .mini-track
-                    .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
-                  span.mini-value {{ Math.round(item.value * 10) / 10 }}
-              .latent-group
-                h5 Populismus
-                .mini-bar(v-for="item in populismItems", :key="item.label")
-                  span.mini-label {{ item.label }}
-                  .mini-track
-                    .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
-                  span.mini-value {{ Math.round(item.value * 10) / 10 }}
+          .inspector-section.collapsible(v-if="blob.latent_traits")
+            h4.clickable(@click="showLatent = !showLatent")
+              span Latente Konstrukte
+              b-icon(:icon="showLatent ? 'chevron-up' : 'chevron-down'", size="is-small")
+            transition(name="collapse")
+              .latent-content(v-if="showLatent")
+                .latent-group
+                  h5 Pol. Efficacy
+                  .mini-bar(v-for="item in efficacyItems", :key="item.label")
+                    span.mini-label {{ item.label }}
+                    .mini-track
+                      .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
+                    span.mini-value {{ Math.round(item.value * 10) / 10 }}
+                .latent-group
+                  h5 Sozialkapital
+                  .mini-bar(v-for="item in socialItems", :key="item.label")
+                    span.mini-label {{ item.label }}
+                    .mini-track
+                      .mini-fill(:style="{ width: (item.value / (item.max || 10) * 100) + '%' }")
+                    span.mini-value {{ typeof item.value === 'number' ? Math.round(item.value * 10) / 10 : item.value }}
+                .latent-group
+                  h5 Autoritarismus
+                  .mini-bar(v-for="item in authItems", :key="item.label")
+                    span.mini-label {{ item.label }}
+                    .mini-track
+                      .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
+                    span.mini-value {{ Math.round(item.value * 10) / 10 }}
+                .latent-group
+                  h5 Politikverdrossenheit
+                  .mini-bar(v-for="item in alienationItems", :key="item.label")
+                    span.mini-label {{ item.label }}
+                    .mini-track
+                      .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
+                    span.mini-value {{ Math.round(item.value * 10) / 10 }}
+                .latent-group
+                  h5 Materialismus/Postmat.
+                  .mini-bar(v-for="item in materialismItems", :key="item.label")
+                    span.mini-label {{ item.label }}
+                    .mini-track
+                      .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
+                    span.mini-value {{ Math.round(item.value * 10) / 10 }}
+                .latent-group
+                  h5 Populismus
+                  .mini-bar(v-for="item in populismItems", :key="item.label")
+                    span.mini-label {{ item.label }}
+                    .mini-track
+                      .mini-fill(:style="{ width: (item.value / 10 * 100) + '%' }")
+                    span.mini-value {{ Math.round(item.value * 10) / 10 }}
 
         .inspector-section.interview-section
           b-button(
@@ -247,6 +260,10 @@ export default {
       , inputText: ''
       , showExport: false
       , showLatent: false
+      , inspectorUnlocked: localStorage.getItem('blobtopia_inspector_unlocked') === 'true'
+      , showPasswordInput: false
+      , passwordAttempt: ''
+      , passwordError: false
     }
   }
   , computed: {
@@ -386,7 +403,33 @@ export default {
     document.removeEventListener('keydown', this._escHandler)
   }
   , methods: {
-    startChat() {
+    onLockClick() {
+      if (this.inspectorUnlocked) {
+        this.inspectorUnlocked = false
+        localStorage.removeItem('blobtopia_inspector_unlocked')
+      } else {
+        this.showPasswordInput = !this.showPasswordInput
+        this.passwordError = false
+        this.passwordAttempt = ''
+        this.$nextTick(() => {
+          if (this.$refs.passwordInput) this.$refs.passwordInput.focus()
+        })
+      }
+    }
+    , tryUnlock() {
+      const correct = process.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
+      if (this.passwordAttempt === correct) {
+        this.inspectorUnlocked = true
+        this.passwordError = false
+        this.showPasswordInput = false
+        this.passwordAttempt = ''
+        localStorage.setItem('blobtopia_inspector_unlocked', 'true')
+      } else {
+        this.passwordError = true
+        this.passwordAttempt = ''
+      }
+    }
+    , startChat() {
       const tick = this.timelineMode ? (this.$store.getters['simulation/tick'] || 0) : null
       this.$store.dispatch('chat/startInterview', {
         blobId: this.blob.id
@@ -523,6 +566,34 @@ export default {
     padding: 2px
     &:hover
       color: $grey-lighter
+    &.lock-btn
+      color: rgba(255, 255, 255, 0.35)
+      &:hover
+        color: rgba(255, 255, 255, 0.6)
+
+  .password-popover
+    display: flex
+    align-items: center
+
+    .password-input
+      width: 90px
+      height: 22px
+      background: rgba(255, 255, 255, 0.08)
+      border: 1px solid rgba(255, 255, 255, 0.2)
+      border-radius: 4px
+      color: $grey-lighter
+      padding: 0 0.4rem
+      font-size: 0.7rem
+      outline: none
+      font-family: inherit
+      &:focus
+        border-color: $primary
+      &.has-error
+        border-color: #e74c3c
+        &::placeholder
+          color: #e74c3c
+      &::placeholder
+        color: $grey
 
 // ═══ Quick Stats ═══
 .quick-stats

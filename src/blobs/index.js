@@ -5,6 +5,7 @@ import { findPath, randomWalkableNear } from '@/lib/pathfinder'
 import { WORLD_SCALE, TRANSIT_SPEED } from '@/config/world'
 
 import { createBlob, cachedVisionCircle, cachedEnergyCircle, blobMaterialProps } from './blob-mesh'
+import { visualPositions } from './visual-positions'
 import { assignLocations, findNearestBuilding, resolveBuildingPos, findCivicBuilding, chooseOutdoorZone } from './blob-locations'
 import { getScheduledState } from './blob-schedule'
 import { snapToWalkable } from './blob-movement'
@@ -181,6 +182,10 @@ export default {
       // ══════════════════════════════════════════════════════════
       if (this.$store.state.simulation.timelineMode && this._locationsAssigned) {
         this._filmModeDraw(pos)
+        // Write visual position for building-inspector (film mode)
+        if (this.creature && this.creature.id) {
+          visualPositions.set(this.creature.id, { x: this._cx, z: this._cy })
+        }
         return  // Skip entire live-animation code path
       }
 
@@ -398,6 +403,11 @@ export default {
           while (diff < -Math.PI) diff += Math.PI * 2
           rot.y += diff * 0.05
         }
+      }
+
+      // Write visual position to shared cache for building-inspector
+      if (this.creature && this.creature.id) {
+        visualPositions.set(this.creature.id, { x: this._cx, z: this._cy })
       }
     })
   }
