@@ -487,7 +487,7 @@ export async function createCityFromLayout () {
       const isBridge = (modelName || '').startsWith('nature-bridge')
       const isPavement = (modelName || '').startsWith('pavement')
       const isPath = (modelName || '').startsWith('nature-path') || (modelName || '').startsWith('suburban-path') || isPavement
-      const yPos = isRoadTile ? 0.3 : isBridge ? 0.5 : isPath ? -0.08 : -0.3
+      const yPos = isRoadTile ? 0.8 : isBridge ? 0.5 : isPath ? -0.08 : -0.3
       obj.position.set(p.x, yPos, p.z)
       // Flatten pavement/path models so they lie flat on the ground
       if (isPath) {
@@ -505,7 +505,7 @@ export async function createCityFromLayout () {
         var roadGroundMat = new THREE.MeshLambertMaterial({ color: 0x444444 })
         var roadGroundPlane = new THREE.Mesh(roadGroundGeo, roadGroundMat)
         roadGroundPlane.rotation.x = -Math.PI / 2
-        roadGroundPlane.position.set(p.x, 0.05, p.z)
+        roadGroundPlane.position.set(p.x, 0.0, p.z)
         kenneyGroup.add(roadGroundPlane)
       }
 
@@ -527,7 +527,7 @@ export async function createCityFromLayout () {
         var capMat = new THREE.MeshLambertMaterial({ color: 0x444444 })
         var cap = new THREE.Mesh(capGeo, capMat)
         cap.rotation.x = -Math.PI / 2
-        cap.position.y = 0.32
+        cap.position.y = 0.82
         // Orient cap toward open end (away from the single neighbor)
         // deadEndMask: 0=isolated, 1=N, 2=E, 4=S, 8=W
         var capRotY = 0  // default: open toward south
