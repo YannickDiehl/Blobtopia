@@ -505,7 +505,7 @@ export async function createCityFromLayout () {
         var roadGroundMat = new THREE.MeshLambertMaterial({ color: 0x444444 })
         var roadGroundPlane = new THREE.Mesh(roadGroundGeo, roadGroundMat)
         roadGroundPlane.rotation.x = -Math.PI / 2
-        roadGroundPlane.position.set(p.x, 0.25, p.z)
+        roadGroundPlane.position.set(p.x, 0.05, p.z)
         kenneyGroup.add(roadGroundPlane)
       }
 
