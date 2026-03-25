@@ -11,6 +11,7 @@
 
 import { findPath } from '@/lib/pathfinder'
 import { resolveBuildingPos } from './blob-locations'
+import { walkableGrid } from '@/city'
 
 // ── Module-level path cache ──
 // Key: "x1,z1→x2,z2" (rounded to grid resolution for dedup)
@@ -49,7 +50,7 @@ const INDOOR_STATES = new Set(['SLEEPING', 'AT_WORK'])
  */
 const TRANSIT_STATES = new Set([
   'GO_TO_WORK', 'GO_TO_HOME', 'GO_TO_LUNCH',
-  'GO_TO_SHOP', 'GO_TO_SOCIAL', 'GO_TO_LEISURE', 'GO_TO_PROTEST'
+  'GO_TO_SHOP', 'GO_TO_SOCIAL', 'GO_TO_LEISURE', 'GO_TO_STROLL', 'GO_TO_PROTEST'
 ])
 
 /**
@@ -59,9 +60,10 @@ const TRANSIT_TARGET = {
   'GO_TO_WORK': 'workplace',
   'GO_TO_HOME': 'homeBuilding',
   'GO_TO_LUNCH': 'lunchSpot',
-  'GO_TO_SHOP': 'leisureSpot',
-  'GO_TO_SOCIAL': 'leisureSpot',
+  'GO_TO_SHOP': 'shopSpot',
+  'GO_TO_SOCIAL': 'socialSpot',
   'GO_TO_LEISURE': 'leisureSpot',
+  'GO_TO_STROLL': 'leisureSpot',   // stroll uses outdoor zone; fallback to leisure
   'GO_TO_PROTEST': 'leisureSpot',  // fallback; schedule building_id preferred
 }
 
@@ -72,9 +74,10 @@ const IDLE_LOCATION = {
   'AT_WORK': 'workplace',
   'AT_HOME': 'homeBuilding',
   'AT_LUNCH': 'lunchSpot',
-  'AT_SHOP': 'leisureSpot',
-  'AT_SOCIAL': 'leisureSpot',
+  'AT_SHOP': 'shopSpot',
+  'AT_SOCIAL': 'socialSpot',
   'AT_LEISURE': 'leisureSpot',
+  'AT_STROLL': 'leisureSpot',
   'AT_PROTEST': 'leisureSpot',
 }
 
@@ -123,9 +126,47 @@ export function computeHourPositions (schedule, locations, registry) {
       }
     }
 
+    // Snap outdoor positions to nearest road/Gehweg cell so blobs don't stand on grass
+    let fx = pos ? pos.x : 0
+    let fz = pos ? pos.z : 0
+    if (!indoor && walkableGrid.grid) {
+      const { grid, size, gridRes } = walkableGrid
+      const gx = Math.floor(fx / gridRes)
+      const gz = Math.floor(fz / gridRes)
+      if (gx >= 0 && gx < size && gz >= 0 && gz < size) {
+        const cv = grid[gz * size + gx]
+        if (cv !== 1 && cv !== 2) {
+          // BFS for nearest road (1) or Gehweg (2) cell
+          for (let r = 1; r <= 10; r++) {
+            let found = false
+            for (let dx = -r; dx <= r && !found; dx++) {
+              for (const dz of [-r, r]) {
+                const nx = gx + dx, nz = gz + dz
+                if (nx >= 0 && nx < size && nz >= 0 && nz < size) {
+                  const v = grid[nz * size + nx]
+                  if (v === 1 || v === 2) { fx = nx * gridRes + gridRes / 2; fz = nz * gridRes + gridRes / 2; found = true; break }
+                }
+              }
+            }
+            if (!found) {
+              for (let dz = -r + 1; dz < r && !found; dz++) {
+                for (const dx of [-r, r]) {
+                  const nx = gx + dx, nz = gz + dz
+                  if (nx >= 0 && nx < size && nz >= 0 && nz < size) {
+                    const v = grid[nz * size + nx]
+                    if (v === 1 || v === 2) { fx = nx * gridRes + gridRes / 2; fz = nz * gridRes + gridRes / 2; found = true; break }
+                  }
+                }
+              }
+            }
+            if (found) break
+          }
+        }
+      }
+    }
     positions[h] = {
-      x: pos ? pos.x : 0,
-      z: pos ? pos.z : 0,
+      x: fx,
+      z: fz,
       state,
       indoor
     }

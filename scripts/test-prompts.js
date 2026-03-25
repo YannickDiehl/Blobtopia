@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Comprehensive test suite for the enhanced Globtopia system prompt builder.
+ * Comprehensive test suite for the enhanced Blobtopia system prompt builder.
  * Tests with real blob data from the timeline export.
  *
  * Usage: node scripts/test-prompts.js
@@ -47,8 +47,8 @@ function assertNotContains(testName, haystack, needle) {
 
 // ── Load real data ─────────────────────────────────────────────────────
 function loadData() {
-  const staticData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'globs-static.json'), 'utf8'))
-  const globIndex = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'glob-index.json'), 'utf8'))
+  const staticData = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'blobs-static.json'), 'utf8'))
+  const blobIndex = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'blob-index.json'), 'utf8'))
   const block4000 = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'ticks/4000-4099.json'), 'utf8'))
   const tick4000 = block4000['4000']
 
@@ -56,8 +56,8 @@ function loadData() {
   for (const g of staticData) staticMap[g.id] = g
 
   // Build blob objects matching the frontend format
-  function blobAt(globId) {
-    const idx = globIndex.indexOf(globId)
+  function blobAt(blobId) {
+    const idx = blobIndex.indexOf(blobId)
     if (idx < 0 || !tick4000.s[idx]) return null
     const s = tick4000.s[idx]
     return {
@@ -83,7 +83,7 @@ function loadData() {
     }
   }
 
-  return { staticMap, globIndex, tick4000, blobAt }
+  return { staticMap, blobIndex, tick4000, blobAt }
 }
 
 // ── Main ───────────────────────────────────────────────────────────────

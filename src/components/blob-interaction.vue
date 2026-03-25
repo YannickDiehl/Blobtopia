@@ -29,13 +29,13 @@
               .info-value {{ blob.age_label }}
             .info-item
               .info-label Beruf
-              .info-value {{ blob.job || blob.education_label }}
+              .info-value {{ blob.job || '–' }}
             .info-item
               .info-label Bildung
               .info-value {{ blob.education_label }}
             .info-item
               .info-label Einkommen
-              .info-value {{ Math.round(blob.income) }} €
+              .info-value {{ blob.income_label || (Math.round(blob.income) + ' €') }}
             .info-item
               .info-label Partei
               .info-value {{ blob.party_name }}

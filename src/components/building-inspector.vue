@@ -86,7 +86,7 @@ const FUNCTIONAL_LABELS = {
   , park: 'Park', sports_facility: 'Sportanlage', library: 'Bibliothek'
   , university: 'Universität', parliament: 'Parlament'
   , media_center: 'Medienzentrum', marketplace: 'Marktplatz'
-  , central_square: 'Zentralplatz', residential: 'Wohngebäude'
+  , central_square: 'Zentralplatz', residential: 'Wohngebäude', school: 'Schule'
 }
 
 export default {
@@ -115,6 +115,7 @@ export default {
         , office: 'office-building', factory: 'factory', warehouse: 'package-variant'
         , shop: 'cart', cafe: 'coffee', restaurant: 'silverware-fork-knife'
         , bar: 'glass-cocktail', park: 'tree', sports_facility: 'soccer'
+        , school: 'school'
       }
       return icons[this.building.functional_type] || icons[this.building.type] || 'office-building'
     }

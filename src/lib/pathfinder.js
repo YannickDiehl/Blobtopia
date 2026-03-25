@@ -146,17 +146,18 @@ export function findPath (startX, startZ, endX, endZ, walkableGrid, maxSteps = 1
       if (nx < 0 || nx >= size || nz < 0 || nz >= size) continue
       const nk = key(nx, nz)
       const cellCost = grid[nk]
-      if (cellCost === 0) continue // blocked
+      if (cellCost === 0 || cellCost === 4) continue // blocked: 0=water/building, 4=grass
 
       // For diagonal moves, check that both cardinal neighbors are also walkable
       // (prevents corner-cutting through buildings)
       if (dir.dx !== 0 && dir.dz !== 0) {
-        if (grid[key(gx + dir.dx, gz)] === 0 || grid[key(gx, gz + dir.dz)] === 0) continue
+        const c1 = grid[key(gx + dir.dx, gz)], c2 = grid[key(gx, gz + dir.dz)]
+        if (c1 === 0 || c1 === 4 || c2 === 0 || c2 === 4) continue
       }
 
-      // Weighted cost: sidewalks/pavements preferred, roads as alternative
-      // Cost multiplier: 1→road, 2→deco/pavement, 3→building-entrance, 4→sidewalk
-      const COST_WEIGHT = [0, 1.5, 1.0, 4.0, 1.2]
+      // Weighted cost: Gehwege/Steinwege (deco=2) are cheapest, roads expensive, grass very expensive
+      // 0→blocked/water, 1→road, 2→Gehweg/Steinweg/deco, 3→building-entrance, 4→grass
+      const COST_WEIGHT = [0, 3.0, 0.5, 4.0, 10.0]
       const weight = COST_WEIGHT[cellCost] || 1.0
       const tentativeG = currentG + dir.cost * weight
       if (tentativeG < gScore[nk]) {
@@ -216,8 +217,9 @@ function snapToWalkable (gx, gz, grid, size, maxRadius = 20) {
       for (const dz of [-r, r]) {
         const nx = gx + dx
         const nz = gz + dz
-        if (nx >= 0 && nx < size && nz >= 0 && nz < size && grid[nz * size + nx] > 0) {
-          return { gx: nx, gz: nz }
+        if (nx >= 0 && nx < size && nz >= 0 && nz < size) {
+          const v = grid[nz * size + nx]
+          if (v === 1 || v === 2) return { gx: nx, gz: nz } // only road or Gehweg
         }
       }
     }
@@ -225,8 +227,9 @@ function snapToWalkable (gx, gz, grid, size, maxRadius = 20) {
       for (const dx of [-r, r]) {
         const nx = gx + dx
         const nz = gz + dz
-        if (nx >= 0 && nx < size && nz >= 0 && nz < size && grid[nz * size + nx] > 0) {
-          return { gx: nx, gz: nz }
+        if (nx >= 0 && nx < size && nz >= 0 && nz < size) {
+          const v = grid[nz * size + nx]
+          if (v === 1 || v === 2) return { gx: nx, gz: nz }
         }
       }
     }
@@ -260,7 +263,9 @@ export function randomWalkableNear (cx, cz, radius, walkableGrid, rng) {
       const nx = gcx + dx
       const nz = gcz + dz
       if (nx >= 0 && nx < size && nz >= 0 && nz < size && grid[nz * size + nx] > 0) {
-        const weight = grid[nz * size + nx] === 1 ? 4 : 1
+        // Gehwege/Steinwege (2) strongly preferred as wander targets, roads (1) acceptable
+        const cellVal = grid[nz * size + nx]
+        const weight = cellVal === 2 ? 10 : cellVal === 1 ? 2 : 1
         totalWeight += weight
         candidates.push({ gx: nx, gz: nz, weight })
       }

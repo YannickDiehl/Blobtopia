@@ -18,17 +18,17 @@ import {
 
 export async function createCityFromLayout () {
   let layoutData
+  const CITY_CACHE_VERSION = 6  // Bump when city data changes (walkable grid fix)
   try {
     // Try new key first, fall back to legacy key
     const raw = localStorage.getItem(EDITOR_STORAGE_KEY) || localStorage.getItem('globtopia-city-layout')
     if (raw) {
       const parsed = JSON.parse(raw)
-      // Only use cached data if it has a reasonable number of placements
-      // (protects against stale/corrupt data from old sessions on same port)
-      if (parsed && parsed.placements && parsed.placements.length > 100) {
+      // Only use cached data if it has enough placements AND matching version
+      if (parsed && parsed.placements && parsed.placements.length > 100 && parsed.version >= CITY_CACHE_VERSION) {
         layoutData = parsed
       } else {
-        console.warn('[city] Stale localStorage data (' + ((parsed && parsed.placements) ? parsed.placements.length : 0) + ' placements), clearing cache')
+        console.warn('[city] Cache outdated (version ' + (parsed && parsed.version) + ' < ' + CITY_CACHE_VERSION + '), clearing')
         localStorage.removeItem(EDITOR_STORAGE_KEY)
         localStorage.removeItem('globtopia-city-layout')
       }
@@ -243,12 +243,31 @@ export async function createCityFromLayout () {
     const tileSize = tileGrid.cellSize    // 32
     const tileMap = tileGrid.map          // string of R/B/D/. chars
 
-    // Phase 1: Roads (cost 1) and Deco (cost 2)
+    // Build lookup: tile position → model name (to distinguish pavement from trees/grass)
+    const tileModelLookup = {}
+    for (const p of placements) {
+      const tx = Math.floor(p.x / tileSize)
+      const tz = Math.floor(p.z / tileSize)
+      tileModelLookup[tz * tileCells + tx] = p.model || ''
+    }
+
+    // Phase 1: Roads (cost 1), Gehwege/Pavement (cost 2), other deco as grass (cost 4)
     for (let tz = 0; tz < tileCells; tz++) {
       for (let tx = 0; tx < tileCells; tx++) {
         const ch = tileMap[tz * tileCells + tx]
-        const cost = ch === 'R' ? 1 : ch === 'D' ? 2 : ch === 'W' ? 0 : 0 // W=water is blocked
-        if (cost === 0) continue
+        if (ch === 'W' || ch === 'B' || ch === '.') continue // water, building, empty → skip (blocked)
+
+        let cost
+        if (ch === 'R') {
+          cost = 1 // Road
+        } else if (ch === 'D') {
+          // Only pavement/path models are real Gehwege (cost 2); everything else is grass (cost 4)
+          const model = tileModelLookup[tz * tileCells + tx] || ''
+          const isPavement = model.startsWith('pavement') || model.startsWith('nature-path') || model.startsWith('suburban-path')
+          cost = isPavement ? 2 : 4
+        } else {
+          continue
+        }
 
         const worldX0 = tx * tileSize
         const worldZ0 = tz * tileSize
@@ -468,8 +487,12 @@ export async function createCityFromLayout () {
       const isBridge = (modelName || '').startsWith('nature-bridge')
       const isPavement = (modelName || '').startsWith('pavement')
       const isPath = (modelName || '').startsWith('nature-path') || (modelName || '').startsWith('suburban-path') || isPavement
-      const yPos = isRoadTile ? 0.3 : isBridge ? 0.5 : isPath ? 0.15 : -0.3
+      const yPos = isRoadTile ? 0.3 : isBridge ? 0.5 : isPath ? -0.08 : -0.3
       obj.position.set(p.x, yPos, p.z)
+      // Flatten pavement/path models so they lie flat on the ground
+      if (isPath) {
+        obj.scale.y = 0.5
+      }
       // Straßen-Rotation auf 90-Schritte snappen
       var rot = p.rotation || 0
       if (isRoadTile || isBridge) rot = Math.round(rot / (Math.PI / 2)) * (Math.PI / 2)
@@ -548,6 +571,7 @@ export async function createCityFromLayout () {
         , x: p.x
         , z: p.z
         , type
+        , label: p.label || type
         , district: info.district
         , functional_type: p.functional_type || type
       })

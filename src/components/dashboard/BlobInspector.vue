@@ -36,10 +36,10 @@
           .profile-value {{ selectedBlob.age }} J.
         .profile-item
           .profile-label Bildung
-          .profile-value {{ educationLabel(selectedBlob.education_level) }}
+          .profile-value {{ educationLabel(selectedBlob.education_level, selectedBlob) }}
         .profile-item
           .profile-label Einkommen
-          .profile-value {{ selectedBlob.income.toLocaleString('de-DE') }} EUR
+          .profile-value {{ selectedBlob.age < 18 ? '–' : selectedBlob.income.toLocaleString('de-DE') + ' EUR' }}
         .profile-item
           .profile-label Zuhause
           .profile-value {{ selectedBlob.home_building_id || 'Keine' }}
@@ -253,7 +253,8 @@ export default {
     , districtName(d) {
       return DISTRICT_NAMES[d] || `Distrikt ${d}`
     }
-    , educationLabel(level) {
+    , educationLabel(level, blob) {
+      if (blob && blob.age < 18) return 'Schulkind'
       return EDUCATION_LABELS[level] || '?'
     }
     , formatBlob(g) {

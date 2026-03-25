@@ -5,7 +5,7 @@ import { findPath, randomWalkableNear } from '@/lib/pathfinder'
 import { WORLD_SCALE, TRANSIT_SPEED } from '@/config/world'
 
 import { createBlob, cachedVisionCircle, cachedEnergyCircle, blobMaterialProps } from './blob-mesh'
-import { assignLocations, findNearestBuilding, resolveBuildingPos, findCivicBuilding } from './blob-locations'
+import { assignLocations, findNearestBuilding, resolveBuildingPos, findCivicBuilding, chooseOutdoorZone } from './blob-locations'
 import { getScheduledState } from './blob-schedule'
 import { snapToWalkable } from './blob-movement'
 import { computeHourPositions, interpolateAlongPath, getCachedPath } from './position-cache'
@@ -28,6 +28,7 @@ const MICRO_WALK_CONFIG = {
   'AT_SHOP':    { radius: 80,  intervalMs: 60000 },  // browsing around
   'AT_SOCIAL':  { radius: 100, intervalMs: 50000 },  // socializing, moving around
   'AT_LEISURE': { radius: 150, intervalMs: 45000 },  // strolling
+  'AT_STROLL':  { radius: 200, intervalMs: 30000 },  // walking outdoor zone route
   'AT_PROTEST': { radius: 80,  intervalMs: 50000 },  // moving in crowd
 }
 
@@ -35,7 +36,7 @@ const MICRO_WALK_CONFIG = {
 const SPEED_MAP = {
   'GO_TO_WORK': 1.4, 'GO_TO_HOME': 1.5, 'GO_TO_LUNCH': 0.9
   , 'GO_TO_SHOP': 0.8, 'GO_TO_SOCIAL': 0.7, 'GO_TO_LEISURE': 0.6
-  , 'GO_TO_PROTEST': 1.2
+  , 'GO_TO_STROLL': 0.5, 'GO_TO_PROTEST': 1.2
 }
 
 
@@ -83,7 +84,12 @@ export default {
     this._homeBuilding = null   // {x, z}
     this._workplace = null      // {x, z}
     this._lunchSpot = null      // {x, z} — where they go during lunch
-    this._leisureSpot = null    // {x, z} — park, bar, sports, etc.
+    this._leisureSpot = null    // {x, z} — outdoor zone for GO_TO_LEISURE
+    this._shopSpot = null       // {x, z} — nearest shop/supermarket for GO_TO_SHOP
+    this._socialSpot = null     // {x, z} — nearest café/bar for GO_TO_SOCIAL
+    this._leisureZone = null    // outdoor zone object (null = building-based leisure)
+    this._strollZone = null     // outdoor zone for strolling (chosen per stroll phase)
+    this._lunchOutdoor = false  // true if lunch is at an outdoor zone
     this._locationsAssigned = false
     this._lastScheduleId = null  // Track schedule changes for tick-based reassignment
     this._schedule = null       // individual daily schedule (array of {hour, state})
@@ -138,6 +144,10 @@ export default {
         this._workplace = locs.workplace
         this._lunchSpot = locs.lunchSpot
         this._leisureSpot = locs.leisureSpot
+        this._shopSpot = locs.shopSpot
+        this._socialSpot = locs.socialSpot
+        this._leisureZone = locs.leisureZone
+        this._lunchOutdoor = locs.lunchOutdoor
         this._schedule = locs.schedule
         this._wanderSpeed = locs.wanderSpeed
         this._wanderRadius = locs.wanderRadius
@@ -193,7 +203,8 @@ export default {
       const TRANSIT_FOR_IDLE = {
         'AT_WORK': 'GO_TO_WORK', 'AT_LUNCH': 'GO_TO_LUNCH'
         , 'AT_SHOP': 'GO_TO_SHOP', 'AT_SOCIAL': 'GO_TO_SOCIAL'
-        , 'AT_LEISURE': 'GO_TO_LEISURE', 'AT_PROTEST': 'GO_TO_PROTEST'
+        , 'AT_LEISURE': 'GO_TO_LEISURE', 'AT_STROLL': 'GO_TO_STROLL'
+        , 'AT_PROTEST': 'GO_TO_PROTEST'
       }
       if (targetState.startsWith('AT_') && this._dayState === TRANSIT_FOR_IDLE[targetState]) {
         // Already in transit to this destination — don't re-trigger
@@ -283,12 +294,13 @@ export default {
         const TRANSIT_TO_IDLE = {
           'GO_TO_WORK': 'AT_WORK', 'GO_TO_LUNCH': 'AT_LUNCH'
           , 'GO_TO_SHOP': 'AT_SHOP', 'GO_TO_SOCIAL': 'AT_SOCIAL'
-          , 'GO_TO_LEISURE': 'AT_LEISURE', 'GO_TO_PROTEST': 'AT_PROTEST'
+          , 'GO_TO_LEISURE': 'AT_LEISURE', 'GO_TO_STROLL': 'AT_STROLL'
+          , 'GO_TO_PROTEST': 'AT_PROTEST'
         }
         const idleState = TRANSIT_TO_IDLE[st]
         if (idleState) {
           this._dayState = idleState
-          this._idleCenter = { x: this._cx, z: this._cy }
+          this._setIdleCenter()
           this._path = []
           this._pathIndex = 0
         }
@@ -296,7 +308,14 @@ export default {
         // --- IDLE: micro-walks + sinusoidal drift ---
         this._microWalkTimer += dtSec * 1000 // accumulate in ms
 
-        const config = MICRO_WALK_CONFIG[st]
+        // Use outdoor zone micro-walk config if at an outdoor leisure/lunch/stroll spot
+        const isOutdoorLeisure = st === 'AT_LEISURE' && this._leisureZone
+        const isOutdoorLunch = st === 'AT_LUNCH' && this._lunchOutdoor
+        const isOutdoorStroll = st === 'AT_STROLL' && this._strollZone
+        const outdoorConfig = (isOutdoorLeisure && this._leisureZone.microWalk)
+          || (isOutdoorStroll && this._strollZone.microWalk)
+          || (isOutdoorLunch ? { radius: 120, intervalMs: 50000 } : null)
+        const config = outdoorConfig || MICRO_WALK_CONFIG[st]
         const intervalMs = config ? config.intervalMs : 90000
         const microRadius = config ? config.radius : 60
 
@@ -344,7 +363,7 @@ export default {
               } else {
                 this._inMicroWalk = false
                 this._microWalkPath = null
-                this._idleCenter = { x: this._cx, z: this._cy }
+                this._setIdleCenter()
               }
             }
           } else {
@@ -424,13 +443,40 @@ export default {
           this._hourPositions = computeHourPositions(
             this._schedule,
             { homeBuilding: this._homeBuilding, workplace: this._workplace,
-              lunchSpot: this._lunchSpot, leisureSpot: this._leisureSpot },
+              lunchSpot: this._lunchSpot, leisureSpot: this._leisureSpot,
+              shopSpot: this._shopSpot || this._leisureSpot,
+              socialSpot: this._socialSpot || this._leisureSpot },
             buildingRegistry
           )
         }
 
         const kf = this._hourPositions[hour]
         if (!kf) return
+
+        // Snap keyframe position to nearest road/Gehweg if on grass (one-time fix per keyframe)
+        if (!kf._snapped && !kf.indoor && walkableGrid.grid) {
+          const { grid, size: gs, gridRes: gr } = walkableGrid
+          const kgx = Math.floor(kf.x / gr), kgz = Math.floor(kf.z / gr)
+          if (kgx >= 0 && kgx < gs && kgz >= 0 && kgz < gs) {
+            const kv = grid[kgz * gs + kgx]
+            if (kv !== 1 && kv !== 2) {
+              for (let kr = 1; kr <= 10; kr++) {
+                let kfound = false
+                for (let kdx = -kr; kdx <= kr && !kfound; kdx++) {
+                  for (const kdz of [-kr, kr]) {
+                    const knx = kgx + kdx, knz = kgz + kdz
+                    if (knx >= 0 && knx < gs && knz >= 0 && knz < gs) {
+                      const kvv = grid[knz * gs + knx]
+                      if (kvv === 1 || kvv === 2) { kf.x = knx * gr + gr / 2; kf.z = knz * gr + gr / 2; kfound = true; break }
+                    }
+                  }
+                }
+                if (kfound) break
+              }
+            }
+          }
+          kf._snapped = true
+        }
 
         // Indoor states: hide blob
         if (kf.indoor) {
@@ -494,6 +540,31 @@ export default {
           this._cx = interpPos.x
           this._cy = interpPos.z
 
+          // Snap transit position to nearest road/Gehweg if on grass
+          if (walkableGrid.grid) {
+            const { grid, size: gs, gridRes: gr } = walkableGrid
+            const tgx = Math.floor(this._cx / gr), tgz = Math.floor(this._cy / gr)
+            if (tgx >= 0 && tgx < gs && tgz >= 0 && tgz < gs) {
+              const tv = grid[tgz * gs + tgx]
+              if (tv !== 1 && tv !== 2) {
+                // BFS for nearest path cell
+                for (let sr = 1; sr <= 5; sr++) {
+                  let sf = false
+                  for (let sdx = -sr; sdx <= sr && !sf; sdx++) {
+                    for (const sdz of [-sr, sr]) {
+                      const snx = tgx + sdx, snz = tgz + sdz
+                      if (snx >= 0 && snx < gs && snz >= 0 && snz < gs) {
+                        const sv = grid[snz * gs + snx]
+                        if (sv === 1 || sv === 2) { this._cx = snx * gr + gr / 2; this._cy = snz * gr + gr / 2; sf = true; break }
+                      }
+                    }
+                  }
+                  if (sf) break
+                }
+              }
+            }
+          }
+
           // Face direction of movement
           if (this._filmPath && this._filmPath.length > 1) {
             const nextIdx = Math.min(Math.floor(transitFrac * (this._filmPath.length - 1)) + 1, this._filmPath.length - 1)
@@ -514,13 +585,35 @@ export default {
           const deterministicTime = tick * 24 + hour + frac
           const speed = 0.15 * this._wanderSpeed
           const IDLE_RADIUS = {
-            'AT_LUNCH': 5, 'AT_SHOP': 3, 'AT_SOCIAL': 4, 'AT_LEISURE': 8, 'AT_PROTEST': 4
+            'AT_LUNCH': 5, 'AT_SHOP': 3, 'AT_SOCIAL': 4, 'AT_LEISURE': 8, 'AT_STROLL': 25, 'AT_PROTEST': 4
           }
-          const radius = IDLE_RADIUS[kf.state] || 3
-          const ox = Math.sin(deterministicTime * 0.7 + this._phase) * radius
-          const oz = Math.cos(deterministicTime * 0.5 + this._phase * 1.3) * radius
-          this._cx = kf.x + ox
-          this._cy = kf.z + oz
+          // Outdoor zones get larger drift radius for visible movement
+          let radius = IDLE_RADIUS[kf.state] || 3
+          if ((kf.state === 'AT_LEISURE' && this._leisureZone) || (kf.state === 'AT_STROLL' && this._strollZone)) {
+            radius = 25  // Much wider drift at outdoor zones
+          } else if (kf.state === 'AT_LUNCH' && this._lunchOutdoor) {
+            radius = 15  // Wider lunch walk outdoors
+          }
+          let ox = Math.sin(deterministicTime * 0.7 + this._phase) * radius
+          let oz = Math.cos(deterministicTime * 0.5 + this._phase * 1.3) * radius
+          let targetX = kf.x + ox
+          let targetZ = kf.z + oz
+          // Constrain drift to walkable cells (roads/Gehwege), avoid grass
+          if (walkableGrid.grid) {
+            const { grid, size, gridRes } = walkableGrid
+            const gx = Math.floor(targetX / gridRes)
+            const gz = Math.floor(targetZ / gridRes)
+            if (gx >= 0 && gx < size && gz >= 0 && gz < size) {
+              const cellVal = grid[gz * size + gx]
+              // Only allow drift onto roads (1) or Gehwege/deco (2); block grass (4), entrances (3), blocked (0)
+              if (cellVal !== 1 && cellVal !== 2) {
+                targetX = kf.x
+                targetZ = kf.z
+              }
+            }
+          }
+          this._cx = targetX
+          this._cy = targetZ
         } else {
           // SLEEPING or other — just set position to keyframe
           this._cx = kf.x
@@ -539,7 +632,8 @@ export default {
     , _doIdleDrift(st, time) {
         const IDLE_RADIUS = {
           'AT_WORK': 3, 'AT_LUNCH': 5, 'AT_SHOP': 3
-          , 'AT_SOCIAL': 4, 'AT_LEISURE': 8, 'AT_PROTEST': 4
+          , 'AT_SOCIAL': 4, 'AT_LEISURE': 8, 'AT_STROLL': 25
+          , 'AT_PROTEST': 4
         }
         const radius = IDLE_RADIUS[st] || 3
         const idleSpeed = 0.15 * this._wanderSpeed
@@ -550,14 +644,17 @@ export default {
           let targetX = this._idleCenter.x + ox
           let targetZ = this._idleCenter.z + oz
 
-          // Constrain idle drift to walkable cells
+          // Constrain idle drift to roads (1) and Gehwege/deco (2) only
           if (walkableGrid.grid) {
             const { grid, size, gridRes } = walkableGrid
             const gx = Math.floor(targetX / gridRes)
             const gz = Math.floor(targetZ / gridRes)
-            if (gx >= 0 && gx < size && gz >= 0 && gz < size && grid[gz * size + gx] === 0) {
-              targetX = this._idleCenter.x
-              targetZ = this._idleCenter.z
+            if (gx >= 0 && gx < size && gz >= 0 && gz < size) {
+              const cellVal = grid[gz * size + gx]
+              if (cellVal !== 1 && cellVal !== 2) {
+                targetX = this._idleCenter.x
+                targetZ = this._idleCenter.z
+              }
             }
           }
 
@@ -598,6 +695,47 @@ export default {
         this._arrived = false
       }
 
+    , _setIdleCenter() {
+        // Snap idle center to nearest road (1) or Gehweg (2) cell via BFS
+        if (walkableGrid.grid) {
+          const { grid, size, gridRes } = walkableGrid
+          const gx = Math.floor(this._cx / gridRes)
+          const gz = Math.floor(this._cy / gridRes)
+          const cellVal = (gx >= 0 && gx < size && gz >= 0 && gz < size) ? grid[gz * size + gx] : 0
+          if (cellVal !== 1 && cellVal !== 2) {
+            // BFS search for nearest road/Gehweg cell (NOT grass/entrance)
+            let found = null
+            for (let r = 1; r <= 20 && !found; r++) {
+              for (let dx = -r; dx <= r && !found; dx++) {
+                for (const dz of [-r, r]) {
+                  const nx = gx + dx, nz = gz + dz
+                  if (nx >= 0 && nx < size && nz >= 0 && nz < size) {
+                    const v = grid[nz * size + nx]
+                    if (v === 1 || v === 2) { found = { nx, nz }; break }
+                  }
+                }
+              }
+              if (!found) {
+                for (let dz = -r + 1; dz < r && !found; dz++) {
+                  for (const dx of [-r, r]) {
+                    const nx = gx + dx, nz = gz + dz
+                    if (nx >= 0 && nx < size && nz >= 0 && nz < size) {
+                      const v = grid[nz * size + nx]
+                      if (v === 1 || v === 2) { found = { nx, nz }; break }
+                    }
+                  }
+                }
+              }
+            }
+            if (found) {
+              this._cx = found.nx * gridRes + gridRes / 2
+              this._cy = found.nz * gridRes + gridRes / 2
+            }
+          }
+        }
+        this._idleCenter = { x: this._cx, z: this._cy }
+      }
+
     , _transitionTo(newState, buildingId){
         if (newState === this._dayState) return
         const prev = this._dayState
@@ -625,16 +763,23 @@ export default {
           const target = schedulePos || this._lunchSpot
           if (target) this._navigateTo(target.x, target.z)
         } else if (newState === 'GO_TO_SHOP') {
-          // Navigate to a shop — use schedule building or nearest shop
-          const target = schedulePos || this._leisureSpot || this._lunchSpot
+          // Navigate to nearest shop (Supermarkt, Bäckerei etc.)
+          const target = schedulePos || this._shopSpot || this._leisureSpot
           if (target) this._navigateTo(target.x, target.z)
         } else if (newState === 'GO_TO_SOCIAL') {
-          // Navigate to social venue — use schedule building or leisure spot
-          const target = schedulePos || this._leisureSpot
+          // Navigate to nearest social venue (Café, Kneipe etc.)
+          const target = schedulePos || this._socialSpot || this._leisureSpot
           if (target) this._navigateTo(target.x, target.z)
         } else if (newState === 'GO_TO_LEISURE') {
           const target = schedulePos || this._leisureSpot
           if (target) this._navigateTo(target.x, target.z)
+        } else if (newState === 'GO_TO_STROLL') {
+          // Strolling: choose an outdoor zone based on latent constructs
+          const zone = chooseOutdoorZone(this.creature, this._rng)
+          this._strollZone = zone
+          const ox = (this._rng() - 0.5) * zone.walkRadius * 0.4
+          const oz = (this._rng() - 0.5) * zone.walkRadius * 0.4
+          this._navigateTo(zone.x + ox, zone.z + oz)
         } else if (newState === 'GO_TO_PROTEST') {
           // Navigate to civic building (parliament/central square)
           const target = schedulePos || findCivicBuilding(buildingRegistry)
@@ -656,17 +801,24 @@ export default {
               }
             }
             // At destination → enter idle
-            this._idleCenter = { x: this._cx, z: this._cy }
+            this._setIdleCenter()
             this._path = []
             this._pathIndex = 0
           }
+        } else if (newState === 'AT_STROLL') {
+          // Strolling arrived: use outdoor zone micro-walk behavior
+          this._setIdleCenter()
+          this._path = []
+          this._pathIndex = 0
         } else if (newState === 'AT_LUNCH' || newState === 'AT_SHOP'
                    || newState === 'AT_SOCIAL' || newState === 'AT_LEISURE'
                    || newState === 'AT_PROTEST') {
           // Check if we're actually near the target building
           const IDLE_TARGET = {
-            'AT_LUNCH': this._lunchSpot, 'AT_SHOP': this._leisureSpot || this._lunchSpot
-            , 'AT_SOCIAL': this._leisureSpot, 'AT_LEISURE': this._leisureSpot
+            'AT_LUNCH': this._lunchSpot
+            , 'AT_SHOP': this._shopSpot || this._leisureSpot
+            , 'AT_SOCIAL': this._socialSpot || this._leisureSpot
+            , 'AT_LEISURE': this._leisureSpot
             , 'AT_PROTEST': findCivicBuilding(buildingRegistry)
           }
           const IDLE_TO_GO = {
@@ -684,7 +836,7 @@ export default {
               return
             }
           }
-          this._idleCenter = { x: this._cx, z: this._cy }
+          this._setIdleCenter()
           this._path = []
           this._pathIndex = 0
         } else if (newState === 'SLEEPING') {

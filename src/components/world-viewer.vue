@@ -245,6 +245,8 @@ const methods = {
     }
 
     this.controls.update()
+    // Update camera distance for label visibility
+    this.cameraDistance = this.camera.position.distanceTo(this.controls.target)
     this.$refs.renderer.draw()
   }
   , followBlobCamera(){
@@ -472,6 +474,7 @@ export default {
     , highlightColor: chroma(sougy.red).num()
     , hideStage: false
     , tourPosition: [0, 0, -100]
+    , cameraDistance: 500
   })
   , components
   , computed
@@ -526,3 +529,4 @@ export default {
   max-width: 100vw
   background: $grey-darker
 </style>
+

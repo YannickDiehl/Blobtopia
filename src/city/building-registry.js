@@ -6,6 +6,7 @@ import { TYPE_LABELS, DISTRICT_LABELS } from './constants'
 // ── Walkable Grid (exported for pathfinding) ────────────────
 // Populated by createCity() — grid cells with value 1 are walkable (road surface).
 export const walkableGrid = { grid: null, size: 0, gridRes: 16 }
+if (typeof window !== 'undefined') window.__wg = walkableGrid  // debug access
 
 // ── Building Registry ────────────────────────────────────────
 export const buildingRegistry = []

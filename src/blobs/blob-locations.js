@@ -1,4 +1,168 @@
 import { ACTIVITY_MAP, buildSchedule } from './blob-schedule'
+import { walkableGrid } from '@/city'
+
+// ── Outdoor leisure zones: named areas with real city coordinates ──
+// Each zone is a walkable outdoor area where blobs go for leisure/lunch.
+// Zone choice is driven by latent construct values.
+export const OUTDOOR_ZONES = [
+  {
+    id: 'steinweg_park',
+    name: 'Steinweg-Park',
+    x: 368, z: 528, // Center of stone path area in Grüntal
+    walkRadius: 200,
+    microWalk: { radius: 200, intervalMs: 30000 },  // wide, gentle wandering
+    district: 0, // Grüntal
+    // Postmaterialists prefer nature/parks
+    weights: (t) => {
+      const envOverEcon = t.environment_over_economy || 5
+      const freedom = t.freedom_over_order || 5
+      const econPriority = t.economic_security_priority || 5
+      return (envOverEcon * 0.4) + (freedom * 0.3) + ((10 - econPriority) * 0.3)
+    }
+  },
+  {
+    id: 'hafenpromenade',
+    name: 'Hafenpromenade',
+    x: 752, z: 784, // Western edge of harbor lantern path
+    walkRadius: 250,
+    microWalk: { radius: 250, intervalMs: 35000 },  // long promenade stroll
+    district: 2, // Hafenviertel
+    // Social blobs enjoy flanieren together
+    weights: (t) => {
+      const community = t.community_participation || 5
+      const neighborTrust = t.neighbor_trust || 5
+      const genTrust = t.generalized_trust || 5
+      return (community * 0.4) + (neighborTrust * 0.3) + (genTrust * 0.3)
+    }
+  },
+  {
+    id: 'marktplatz',
+    name: 'Marktplatz',
+    x: 528, z: 560, // Central civic area near Rathaus
+    walkRadius: 100,
+    microWalk: { radius: 100, intervalMs: 40000 },  // dense social gathering
+    district: -1, // Any district (central)
+    // Mixed: both materialists (shopping) and social blobs (meeting)
+    weights: (t) => {
+      const econPriority = t.economic_security_priority || 5
+      const community = t.community_participation || 5
+      const neighborTrust = t.neighbor_trust || 5
+      return (econPriority * 0.3) + (community * 0.4) + (neighborTrust * 0.3)
+    }
+  },
+  {
+    id: 'flussufer',
+    name: 'Flussufer',
+    x: 340, z: 400, // Along river mid-section
+    walkRadius: 180,
+    microWalk: { radius: 180, intervalMs: 40000 },  // riverside stroll
+    district: -1, // Any district (runs through city)
+    // Satisfied, low-alienation blobs enjoy nature
+    weights: (t) => {
+      const lowPowerless = 10 - (t.powerlessness || 5)
+      const lowComplexity = 10 - (t.political_complexity || 5)
+      const envOverEcon = t.environment_over_economy || 5
+      return (lowPowerless * 0.4) + (lowComplexity * 0.3) + (envOverEcon * 0.3)
+    }
+  },
+  {
+    id: 'ringstrassen_allee',
+    name: 'Ringstraßen-Allee',
+    x: 688, z: 176, // Tree-lined ring road spine
+    walkRadius: 300,
+    microWalk: { radius: 300, intervalMs: 25000 },  // jogging, fast movement
+    district: -1, // Any district
+    // Young, self-efficacious, non-conformist blobs
+    weights: (t, blob) => {
+      const selfEff = t.self_efficacy || 5
+      const youthFactor = (blob.age_group === 0) ? 8 : (blob.age_group === 1) ? 5 : 3
+      const lowObedience = 10 - (t.obedience_value || 5)
+      return (selfEff * 0.3) + (youthFactor * 0.4) + (lowObedience * 0.2)
+    }
+  }
+]
+
+/**
+ * Choose an outdoor zone based on blob's latent trait values.
+ * Uses weighted random selection: higher construct match = higher probability.
+ * @param {object} blob - creature data
+ * @param {Function} rng - deterministic RNG
+ * @returns {object} chosen outdoor zone
+ */
+export function chooseOutdoorZone(blob, rng) {
+  // Traits are flat on the blob object: blob.latent_traits.self_efficacy etc.
+  const t = blob.latent_traits || {}
+
+  const weights = OUTDOOR_ZONES.map(zone => Math.max(0.5, zone.weights(t, blob)))
+  const totalWeight = weights.reduce((a, b) => a + b, 0)
+  let roll = rng() * totalWeight
+  for (let i = 0; i < OUTDOOR_ZONES.length; i++) {
+    roll -= weights[i]
+    if (roll <= 0) return OUTDOOR_ZONES[i]
+  }
+  return OUTDOOR_ZONES[0]
+}
+
+// ── Building label patterns for matching named venues ──
+const SHOP_PATTERNS = /supermarkt|bäckerei|bioladen|spätkauf|apotheke|fischmarkt|blumenladen|schreibwaren|imbiss|friseur|reinigung|optiker|tabakladen|schlüsseldienst|waschsalon|hofladen|kräuterladen|laden|geschäft|markt/i
+const SOCIAL_PATTERNS = /café|kneipe|restaurant|hafencafé|konditorei|teehaus|weinbar|bar|bistro/i
+
+/**
+ * Find nearest building whose label matches a pattern.
+ * @param {number} x
+ * @param {number} z
+ * @param {Array} registry
+ * @param {RegExp} pattern
+ * @returns {{x: number, z: number}|null}
+ */
+export function findNearestLabeledBuilding(x, z, registry, pattern) {
+  let bestDist = Infinity
+  let bestB = null
+  for (const b of registry) {
+    if (!b.label || !pattern.test(b.label)) continue
+    const dx = b.x - x
+    const dz = b.z - z
+    const d = dx * dx + dz * dz
+    if (d < bestDist) { bestDist = d; bestB = b }
+  }
+  return bestB ? { x: bestB.x, z: bestB.z } : null
+}
+
+/**
+ * Snap a world position to the nearest road (1) or Gehweg (2) grid cell.
+ * Returns the original position if already on a valid cell or grid not loaded.
+ */
+function snapToPath(x, z) {
+  if (!walkableGrid.grid) return { x, z }
+  const { grid, size, gridRes } = walkableGrid
+  const gx = Math.floor(x / gridRes)
+  const gz = Math.floor(z / gridRes)
+  if (gx >= 0 && gx < size && gz >= 0 && gz < size) {
+    const v = grid[gz * size + gx]
+    if (v === 1 || v === 2) return { x, z }
+  }
+  for (let r = 1; r <= 15; r++) {
+    for (let dx = -r; dx <= r; dx++) {
+      for (const dz of [-r, r]) {
+        const nx = gx + dx, nz = gz + dz
+        if (nx >= 0 && nx < size && nz >= 0 && nz < size) {
+          const v = grid[nz * size + nx]
+          if (v === 1 || v === 2) return { x: nx * gridRes + gridRes / 2, z: nz * gridRes + gridRes / 2 }
+        }
+      }
+    }
+    for (let dz = -r + 1; dz < r; dz++) {
+      for (const dx of [-r, r]) {
+        const nx = gx + dx, nz = gz + dz
+        if (nx >= 0 && nx < size && nz >= 0 && nz < size) {
+          const v = grid[nz * size + nx]
+          if (v === 1 || v === 2) return { x: nx * gridRes + gridRes / 2, z: nz * gridRes + gridRes / 2 }
+        }
+      }
+    }
+  }
+  return { x, z }
+}
 
 /**
  * Find a building by ID in the registry.
@@ -149,40 +313,44 @@ export function assignLocations(blob, phase, registry, serverX, serverY, rng){
     }
   }
 
-  // ── Lunch spot ──
+  // ── Shop & Social spots: nearest labeled buildings ──
+  const homeX = homeBuilding.x, homeZ = homeBuilding.z
+  const shopSpot = findNearestLabeledBuilding(homeX, homeZ, registry, SHOP_PATTERNS)
+  const socialSpot = findNearestLabeledBuilding(homeX, homeZ, registry, SOCIAL_PATTERNS)
+
+  // ── Lunch spot: diversified (outdoor / restaurant / near workplace) ──
   const serverLunch = findBuildingById(c.lunch_spot_id, registry)
   let lunchSpot
-  if (serverLunch) {
+  let lunchOutdoor = false
+  const traits = c.latent_traits || {}
+  const envOverEcon = traits.environment_over_economy || 5
+  const lunchRoll = rng()
+  // ~30% outdoor lunch (postmaterialist), ~15% restaurant (high income/social), rest near work
+  const outdoorThreshold = 0.15 + (envOverEcon / 10) * 0.3  // 0.15–0.45
+  const restaurantThreshold = outdoorThreshold + (income > 6 || socialCapital > 6 ? 0.15 : 0.05)
+  if (lunchRoll < outdoorThreshold) {
+    const lunchZone = chooseOutdoorZone(c, rng)
+    const lunchOffX = (rng() - 0.5) * lunchZone.walkRadius * 0.3
+    const lunchOffZ = (rng() - 0.5) * lunchZone.walkRadius * 0.3
+    lunchSpot = snapToPath(lunchZone.x + lunchOffX, lunchZone.z + lunchOffZ)
+    lunchOutdoor = true
+  } else if (lunchRoll < restaurantThreshold && socialSpot) {
+    lunchSpot = socialSpot  // Lunch at café/restaurant
+  } else if (serverLunch) {
     lunchSpot = { x: serverLunch.x, z: serverLunch.z }
   } else {
-    if (income > 6) {
-      lunchSpot = { x: 960 + rng() * 80, z: 920 + rng() * 80 }
-    } else if (socialCapital > 6) {
-      lunchSpot = { x: 1000 + rng() * 60, z: 840 + rng() * 60 }
-    } else {
-      const lx = workplace.x + (rng() - 0.5) * 60
-      const lz = workplace.z + (rng() - 0.5) * 60
-      lunchSpot = { x: lx, z: lz }
-    }
+    const lx = workplace.x + (rng() - 0.5) * 80
+    const lz = workplace.z + (rng() - 0.5) * 80
+    lunchSpot = snapToPath(lx, lz)
   }
 
-  // ── Leisure spot ──
-  const serverLeisure = findBuildingById(c.leisure_spot_id, registry)
+  // ── Leisure spot: outdoor zones driven by latent constructs ──
   let leisureSpot
-  if (serverLeisure) {
-    leisureSpot = { x: serverLeisure.x, z: serverLeisure.z }
-  } else {
-    const LEISURE_TYPES = ['park', 'sports_facility', 'bar', 'cafe', 'central_square', 'library']
-    const leisureB = findNearestBuilding(
-      homeBuilding.x, homeBuilding.z, registry,
-      b => LEISURE_TYPES.includes(b.functional_type)
-    )
-    if (leisureB) {
-      leisureSpot = { x: leisureB.x, z: leisureB.z }
-    } else {
-      leisureSpot = homeBuilding
-    }
-  }
+  let leisureZone = null
+  leisureZone = chooseOutdoorZone(c, rng)
+  const offsetX = (rng() - 0.5) * leisureZone.walkRadius * 0.4
+  const offsetZ = (rng() - 0.5) * leisureZone.walkRadius * 0.4
+  leisureSpot = snapToPath(leisureZone.x + offsetX, leisureZone.z + offsetZ)
 
   // ── Daily schedule: use server-provided if available ──
   let schedule
@@ -193,15 +361,33 @@ export function assignLocations(blob, phase, registry, serverX, serverY, rng){
       , building_id: e.building_id != null ? e.building_id : null
     }))
   } else {
-    // Legacy fallback: client-side schedule generation
     schedule = buildSchedule(phase, ageGroup, edu, income, district, c)
   }
 
-  // Nametag
+  // ── Schedule enrichment: diversify evening leisure into shop/social/outdoor ──
+  // Replace some GO_TO_LEISURE entries with GO_TO_SHOP or GO_TO_SOCIAL
+  const econPriority = traits.economic_security_priority || 5
+  const communityPart = traits.community_participation || 5
+  for (let i = 0; i < schedule.length; i++) {
+    if (schedule[i].state !== 'GO_TO_LEISURE') continue
+    const diverseRoll = rng()
+    // Construct-modulated thresholds
+    const shopChance = 0.15 + (econPriority / 10) * 0.2       // 0.15–0.35
+    const socialChance = shopChance + 0.1 + (communityPart / 10) * 0.2  // +0.1–0.3
+    if (diverseRoll < shopChance && shopSpot) {
+      schedule[i] = { ...schedule[i], state: 'GO_TO_SHOP' }
+    } else if (diverseRoll < socialChance && socialSpot) {
+      schedule[i] = { ...schedule[i], state: 'GO_TO_SOCIAL' }
+    }
+    // else: stays GO_TO_LEISURE (outdoor zone)
+  }
+
   const blobName = c.name || null
 
   return {
     homeBuilding, workplace, lunchSpot, leisureSpot,
+    shopSpot, socialSpot,
+    leisureZone, lunchOutdoor,
     schedule, wanderSpeed, wanderRadius, commuteMaxDist, blobName
   }
 }

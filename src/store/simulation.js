@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import { snapshotToGeneration, snapshotToStatistics, initDistrictMetadata } from '@/lib/blob-adapter'
+import { snapshotToGeneration, snapshotToStatistics, initDistrictMetadata, initBuildingsMap } from '@/lib/blob-adapter'
 import { DATA_BASE } from '@/config/api'
 import { HOURS_PER_DAY, SECONDS_PER_DAY } from '@/config/world'
 import { getEraForTick } from '@/config/timeline-eras'
@@ -11,12 +11,15 @@ let blobIndex = []     // ordered blob IDs (matches compact tick array order)
 const lastKnownTraits = {}
 
 async function loadStaticData() {
-  const [staticRes, indexRes] = await Promise.all([
+  const [staticRes, indexRes, buildingsRes] = await Promise.all([
     fetch(`${DATA_BASE}/blobs-static.json`),
     fetch(`${DATA_BASE}/blob-index.json`),
+    fetch(`${DATA_BASE}/buildings.json`),
   ])
   blobsStatic = await staticRes.json()
   blobIndex = await indexRes.json()
+  const buildings = await buildingsRes.json()
+  initBuildingsMap(buildings)
   console.log(`[Static] Loaded ${blobsStatic.length} blobs, ${blobIndex.length} index entries`)
 }
 
@@ -46,14 +49,14 @@ function expandTickSnapshot(tickData) {
       id,
       name: g.name || '',
       district: g.district,
-      education_level: g.education_level,
+      education_level: s[16] != null ? s[16] : g.education_level,
       job: g.job || null,
       income: s[6],
-      age: (g.age || 0) + (tickData.y || 0),
+      age: s[15] != null ? s[15] : ((g.age || 0) + (tickData.y || 0)),
       home_building_id: g.home_building_id,
-      workplace_id: g.workplace_id,
-      lunch_spot_id: g.lunch_spot_id,
-      leisure_spot_id: g.leisure_spot_id,
+      workplace_id: s[17] != null ? s[17] : g.workplace_id,
+      lunch_spot_id: s[18] != null ? s[18] : g.lunch_spot_id,
+      leisure_spot_id: s[19] != null ? s[19] : g.leisure_spot_id,
       attitudes: {
         political_satisfaction: s[0],
         ideology: s[1],
