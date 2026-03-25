@@ -11,7 +11,7 @@ use super::events::BlobtopiaEvent;
 use super::building_assignment::{
     assign_all_buildings, reassign_workplace_single,
     reassign_leisure_spot_single, reassign_leisure_spot_with_homophily,
-    compute_spot_atmosphere,
+    reassign_lunch_spot_single, compute_spot_atmosphere,
 };
 use super::contact_graph::ContactGraph;
 use super::household::{Household, form_households, household_ages};
@@ -878,27 +878,33 @@ impl BlobtopiaSim {
             }
         }
 
-        // 4. Periodic social mobility and network dynamics
-        // ── Phase 3: Leisure spot rotation every 26 weeks (with homophily) ──
-        if self.current_tick % 182 == 0 && self.current_tick > 0 {
+        // 4. Weekly spot rotation — blobs occasionally try a different café, bar, or park
+        // Replaces the old 26-week cycle with weekly rotation for more lively daily routines.
+        if self.current_tick % 7 == 0 && self.current_tick > 0 {
             if let Some(ref city) = self.city {
-                // Compute current ideological atmosphere of each leisure spot
                 let atmosphere = compute_spot_atmosphere(&self.blobs);
                 let mut rng = self.rng.lock().unwrap();
                 for i in 0..self.blobs.len() {
-                    if self.blobs[i].is_child() { continue; } // children stay at school
-                    if rng.gen::<f64>() < 0.20 {  // 20% chance per cycle
+                    if self.blobs[i].is_child() { continue; }
+                    // 30% chance to rotate leisure spot (bar, café, park, library, etc.)
+                    if rng.gen::<f64>() < 0.30 {
                         reassign_leisure_spot_with_homophily(
                             &mut self.blobs[i], city, 0.15,
                             Some(&atmosphere), &mut rng,
                         );
                     }
+                    // 20% chance to rotate lunch spot (restaurant, café, bar)
+                    if rng.gen::<f64>() < 0.20 {
+                        reassign_lunch_spot_single(&mut self.blobs[i], city, &mut rng);
+                    }
                 }
             }
-            // ── Phase 1: Contact graph rebuild ──
+        }
+
+        // 4b. Contact graph rebuild every 26 weeks (less frequent — expensive)
+        if self.current_tick % 182 == 0 && self.current_tick > 0 {
             if self.city.is_some() {
                 self.contact_graph = Some(ContactGraph::build(&self.blobs));
-                // Update network_size from actual contact count
                 if let Some(ref graph) = self.contact_graph {
                     for (i, blob) in self.blobs.iter_mut().enumerate() {
                         blob.latent_traits.network_size = graph.get(i).len().min(20) as u8;
