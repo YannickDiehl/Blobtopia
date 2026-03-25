@@ -1,0 +1,88 @@
+[
+  { "tick": 400,  "event": { "EconomicCrisis": { "severity": 0.4, "affected_districts": [4, 2] } },
+    "comment": "Leichte Wirtschaftskrise in Industriezone + Hafenviertel — Einstieg ins Krisenthema" },
+
+  { "tick": 900,  "event": { "EconomicBoom": { "magnitude": 0.3, "affected_districts": [1, 3] } },
+    "comment": "Boom NUR in reichen Distrikten — Einkommensschere öffnet sich" },
+
+  { "tick": 1100, "event": { "InequalityReport": { "magnitude": 0.7 } },
+    "comment": "Ungleichheitsbericht macht die Schere sichtbar — Industriezone + Grüntal frustriert" },
+
+  { "tick": 1300, "event": { "IssueDebate": { "topic": "Wirtschaftspolitik", "dimension": "inequality", "intensity": 0.6 } },
+    "comment": "Grundsatzdebatte über Ungleichheit — polarisiert entlang Einkommen" },
+
+  { "tick": 1460, "event": "Election",
+    "comment": "Wahl 1 — Jahr 4. Nach Krise + Boom-Ungleichheit + Debatte. Erwartet: Mitte verliert, Ränder stärker" },
+
+  { "tick": 1800, "event": { "Scandal": { "target_party": 1, "magnitude": 0.7 } },
+    "comment": "Skandal bei der Mitte-Partei — Magnitude erhöht (war 0.6), erschüttert die Dominanz" },
+
+  { "tick": 2200, "event": { "CivicSuccess": { "affected_district": 2, "magnitude": 0.5 } },
+    "comment": "Erfolgreiche Bürgerbeteiligung im Hafenviertel — Vertrauen und Efficacy steigen" },
+
+  { "tick": 2500, "event": { "IssueDebate": { "topic": "Sicherheitspolitik", "dimension": "security", "intensity": 0.7 } },
+    "comment": "Sicherheitsdebatte — Autoritäre vs Libertäre. Grüntal/Industriezone vs Sonnenberg" },
+
+  { "tick": 2700, "event": { "CrossDistrictConflict": { "district_a": 1, "district_b": 4, "intensity": 0.6 } },
+    "comment": "Sonnenberg vs Industriezone — offener Wertekonflikt" },
+
+  { "tick": 2850, "event": { "MediaCampaign": { "party": 2, "reach": 0.5 } },
+    "comment": "Tradition-Kampagne kurz vor Wahl 2 — nutzt Sicherheitsangst" },
+
+  { "tick": 2920, "event": "Election",
+    "comment": "Wahl 2 — Jahr 8. Nach Skandal + Sicherheitsdebatte + Tradition-Kampagne" },
+
+  { "tick": 3200, "event": { "CulturalEvent": { "affected_district": 0, "magnitude": 0.4 } },
+    "comment": "Kulturereignis in Grüntal — Sozialkapital und Zufriedenheit steigen" },
+
+  { "tick": 3500, "event": { "EducationReform": { "target_district": 4 } },
+    "comment": "Bildungsreform in der Industriezone — langfristige Policy-Wirkung" },
+
+  { "tick": 3800, "event": { "IssueDebate": { "topic": "Klimapolitik", "dimension": "climate", "intensity": 0.8 } },
+    "comment": "Klimadebatte — hohe Intensität. Spaltet Sonnenberg/Hafenviertel vs Grüntal/Industriezone" },
+
+  { "tick": 4000, "event": { "EconomicBoom": { "magnitude": 0.4, "affected_districts": [] } },
+    "comment": "Gesamtwirtschaftlicher Aufschwung — alle profitieren, aber ungleich" },
+
+  { "tick": 4200, "event": { "InequalityReport": { "magnitude": 0.8 } },
+    "comment": "Zweiter Ungleichheitsbericht — Boom hat Schere weiter geöffnet" },
+
+  { "tick": 4300, "event": { "MediaCampaign": { "party": 0, "reach": 0.5 } },
+    "comment": "Fortschritt-Kampagne kurz vor Wahl 3 — nutzt Klimadebatte + Ungleichheit" },
+
+  { "tick": 4380, "event": "Election",
+    "comment": "Wahl 3 — Jahr 12. Nach Klima-Debatte + Ungleichheit + Fortschritt-Kampagne. Swing-Wahl!" },
+
+  { "tick": 4800, "event": { "CorruptionRevelation": { "severity": 0.6 } },
+    "comment": "Korruptionsenthüllung — globaler Vertrauensverlust, Protestwelle" },
+
+  { "tick": 5000, "event": { "NaturalDisaster": { "affected_district": 4, "severity": 0.6 } },
+    "comment": "Naturkatastrophe Industriezone — trifft die Verwundbarsten" },
+
+  { "tick": 5200, "event": { "IssueDebate": { "topic": "Gesellschaftliche Solidarität", "dimension": "inequality", "intensity": 0.9 } },
+    "comment": "Höchste Intensität! Solidaritätsdebatte nach Katastrophe — maximale Polarisierung" },
+
+  { "tick": 5350, "event": { "CrossDistrictConflict": { "district_a": 1, "district_b": 4, "intensity": 0.8 } },
+    "comment": "Zweiter Wertekonflikt Sonnenberg vs Industriezone — verschärft durch Katastrophe" },
+
+  { "tick": 5475, "event": "Election",
+    "comment": "Wahl 4 — Jahr 15. Maximale Polarisierung: Korruption + Katastrophe + Wertekonflikt" },
+
+  { "tick": 5800, "event": { "CulturalEvent": { "affected_district": 3, "magnitude": 0.3 } },
+    "comment": "Kulturereignis in Mittelfeld — Beruhigung" },
+
+  { "tick": 6200, "event": { "CivicSuccess": { "affected_district": 4, "magnitude": 0.6 } },
+    "comment": "Bürgerbeteiligung Industriezone — zeigt: Aktivierung wirkt" },
+
+  { "tick": 6570, "event": { "PolicyChange": { "name": "Sozialreform", "ideology_shift": -0.36 } },
+    "comment": "Progressive Sozialreform — stärker als vorher (-0.4 statt -0.3)" },
+
+  { "tick": 6900, "event": { "EconomicBoom": { "magnitude": 0.3, "affected_districts": [0, 2] } },
+    "comment": "Wirtschaftserholung in Grüntal + Hafenviertel" },
+
+  { "tick": 7100, "event": { "IssueDebate": { "topic": "Zukunft Globtopias", "dimension": "climate", "intensity": 0.7 } },
+    "comment": "Abschlussdebatte kurz vor letzter Wahl — mobilisiert alle Lager" },
+
+  { "tick": 7300, "event": "Election",
+    "comment": "Wahl 5 — Jahr 20. Abschlusswahl: War Sozialreform + Bürgerbeteiligung ausreichend?" }
+]

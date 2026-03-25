@@ -1,0 +1,3090 @@
+"""Editorial profiles and event mappings for the BlobGazetta newspaper generation.
+
+Two newspapers:
+  - Blobtopia Kurier: linksliberal, urban, gehoben (SZ/ZEIT-Tonfall)
+  - Der Blobspiegel: mitte-rechts, breite Mitte, direkt (FAZ/Welt-Tonfall)
+"""
+
+# ═══════════════════════════════════════════════════════
+# District & Party Constants
+# ═══════════════════════════════════════════════════════
+
+DISTRICT_NAMES = {
+    0: "Gruental", 1: "Sonnenberg", 2: "Hafenviertel",
+    3: "Mittelfeld", 4: "Industriezone",
+}
+DISTRICT_DISPLAY = {
+    0: "Grüntal", 1: "Sonnenberg", 2: "Hafenviertel",
+    3: "Mittelfeld", 4: "Industriezone",
+}
+PARTY_NAMES = {0: "Fortschritt", 1: "Mitte", 2: "Tradition", 3: "Unabhängige"}
+
+TICKS_PER_YEAR = 365
+
+# ═══════════════════════════════════════════════════════
+# Editorial Profiles
+# ═══════════════════════════════════════════════════════
+
+NEWSPAPERS = {
+    "kurier": {
+        "id": "kurier",
+        "name": "Blobtopia Kurier",
+        "motto": "Fakten. Fortschritt. Fairness.",
+        "sitz": "Hafenviertel",
+        "style_prompt": (
+            "Du schreibst fuer den 'Blobtopia Kurier', eine seriöse Tageszeitung "
+            "mit linksliberaler Tendenz, vergleichbar mit der Sueddeutschen Zeitung oder ZEIT. "
+            "Dein Stil: gehobenes, aber zugaengliches Deutsch. Laengere Saetze mit Nebensaetzen, "
+            "Konjunktiv in Zitaten, Fachvokabular wird erklaert. "
+            "Du bevorzugst strukturelle Erklaerungen fuer Probleme (Ungleichheit als Systemfehler), "
+            "siehst Umweltthemen als dringlich, Partizipation als Loesung, Diversitaet als Staerke. "
+            "Du verwendest: 'Buergerinnen und Buerger', 'strukturelle Ursachen', "
+            "'gesellschaftlicher Zusammenhalt', 'differenziert betrachtet'. "
+            "Du vermeidest: vereinfachende Zuschreibungen, emotionale Zuspitzungen (ausser im Kommentar). "
+            "WICHTIG: Dein Bias ist SUBTIL. Du bist kein Aktivisten-Blatt, sondern ein "
+            "Qualitaetsmedium mit erkennbarer, aber nicht plakativer Tendenz."
+        ),
+        # Which districts get more coverage (higher = more)
+        "district_salience": {0: 0.3, 1: 0.7, 2: 1.0, 3: 0.5, 4: 0.8},
+        # Frame tendency: -1 = structural, +1 = individual
+        "frame_tendency": -0.6,
+        # Which blob demographics are preferred for quotes
+        "source_preference": {
+            "education_min": 2,   # prefer higher education
+            "income_bias": "low",  # highlight lower incomes
+            "district_weight": {0: 0.3, 1: 0.6, 2: 1.0, 3: 0.4, 4: 0.9},
+        },
+        # Reader letter selection bias
+        "leserbrief_bias": {
+            "prefer_high_efficacy": True,
+            "prefer_low_authoritarianism": True,
+            "prefer_districts": [2, 4],  # Hafenviertel, Industriezone
+        },
+    },
+    "blobspiegel": {
+        "id": "blobspiegel",
+        "name": "Der Blobspiegel",
+        "motto": "Nah dran. Klar gesagt.",
+        "sitz": "Mittelfeld",
+        "style_prompt": (
+            "Du schreibst fuer 'Der Blobspiegel', eine seriöse Zeitung "
+            "mit konservativ-liberaler Tendenz, vergleichbar mit FAZ oder Welt. "
+            "Dein Stil: klar, direkt, aktiv. Kuerzere Saetze, alltagsnahes Deutsch "
+            "ohne boulevardesk zu werden. "
+            "Du bevorzugst: Eigenverantwortung, wirtschaftliche Stabilitaet, "
+            "Sicherheit und Ordnung, Leistungsgerechtigkeit, Pragmatismus vor Ideologie. "
+            "Du verwendest: 'Buerger', 'klare Verhaeltnisse', 'Leistungstraeger', "
+            "'gesunder Menschenverstand', 'Stabilitaet', 'Verantwortung uebernehmen'. "
+            "Du vermeidest: akademisches Vokabular, zu lange Relativierungen. "
+            "WICHTIG: Dein Bias ist SUBTIL. Du bist keine populistische Zeitung, sondern ein "
+            "seriöses buergerliches Blatt mit erkennbarer, aber nicht plakativer Tendenz."
+        ),
+        "district_salience": {0: 0.8, 1: 0.4, 2: 0.5, 3: 1.0, 4: 0.6},
+        "frame_tendency": 0.5,
+        "source_preference": {
+            "education_min": 1,
+            "income_bias": "middle",
+            "district_weight": {0: 0.8, 1: 0.3, 2: 0.4, 3: 1.0, 4: 0.6},
+        },
+        "leserbrief_bias": {
+            "prefer_high_efficacy": False,
+            "prefer_low_authoritarianism": False,
+            "prefer_districts": [3, 0],  # Mittelfeld, Gruental
+        },
+    },
+}
+
+
+# ═══════════════════════════════════════════════════════
+# Event-to-Article Mapping (ALL 29 Events)
+# ═══════════════════════════════════════════════════════
+
+ALL_EVENTS = {
+
+    # ─── EconomicCrisis (Tick 400) ───
+    400: {
+        "event_type": "EconomicCrisis",
+        "event_label": "Wirtschaftskrise",
+        "severity": 0.4,
+        "affected_districts": [4, 2],
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Krise trifft die Schwächsten: Industriezone und Hafenviertel leiden unter Wirtschaftseinbruch",
+                "frame": (
+                    "Betone strukturelle Ungleichheit. Die Krise trifft nicht alle gleich — "
+                    "Industriezone und Hafenviertel sind besonders betroffen, waehrend Sonnenberg "
+                    "weitgehend verschont bleibt. Frage nach der Verantwortung der Politik. "
+                    "Nutze Daten zu Einkommensunterschieden zwischen Distrikten."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Sonnenberg bleibt von der Krise verschont — Alltag geht weiter",
+                "frame": "Kontrastiere die Unbetroffenheit der Wohlhabenden mit dem Leid anderswo.",
+                "focus_district": 1,
+            },
+            "kommentar": {
+                "headline_hint": "Wer schützt die, die am wenigsten haben?",
+                "frame": (
+                    "Fordere solidarische Massnahmen, kritisiere die fehlende Umverteilung. "
+                    "Argumentiere, dass die Krise zeigt, wie fragil der Zusammenhalt ist."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "frustrated", "desc": "Arbeiter aus Industriezone, existenzielle Sorgen"},
+                    {"district": 2, "mood": "worried", "desc": "Bewohner Hafenviertel, solidarisch aber besorgt"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Zahlen zur Krise",
+                "metrics": [
+                    {"label": "Durchschnittseinkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Durchschnittseinkommen Sonnenberg", "source": "avg_income_district_1"},
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                    {"label": "Zufriedenheit Sonnenberg", "source": "avg_satisfaction_district_1"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Kulturverein im Hafenviertel organisiert Nachbarschaftshilfe"},
+                {"hint": "Fortschritt-Partei fordert Sofortmassnahmen fuer betroffene Distrikte"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Konjunktureinbruch in Blobtopia: Wirtschaft braucht klare Impulse",
+                "frame": (
+                    "Fokussiere auf wirtschaftspolitische Massnahmen und Reformbedarf. "
+                    "Die Krise ist ernst, aber mit kluger Politik und Eigeninitiative zu meistern. "
+                    "Betone Gesamtwirtschaft, nicht einzelne Distrikte. "
+                    "Nutze Beschaeftigungszahlen und BIP-Vergleiche."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld: Gewerbetreibende spüren die Krise, bleiben aber zuversichtlich",
+                "frame": "Pragmatischer Blick: Krise als Herausforderung, die man mit Fleiss meistert.",
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Krise als Chance: Warum Blobtopia jetzt Reformmut braucht",
+                "frame": (
+                    "Argumentiere fuer wirtschaftliche Reformen, weniger Buerokratie, "
+                    "mehr Eigenverantwortung. Die Krise als Weckruf, nicht als Beweis fuer Systemversagen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "concerned", "desc": "Buerger aus Mittelfeld, besorgt um Stabilitaet"},
+                    {"district": 0, "mood": "calm", "desc": "Bewohnerin Gruental, gelassen aber aufmerksam"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wirtschaftsdaten im Überblick",
+                "metrics": [
+                    {"label": "Durchschnittseinkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Veränderung zum Vormonat", "source": "income_change"},
+                    {"label": "Beschäftigte mit stabilem Einkommen", "source": "stable_income_pct"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Mitte-Partei kuendigt Wirtschaftsgipfel an"},
+                {"hint": "Tradition fordert Entlastung fuer Leistungstraeger"},
+            ],
+        },
+    },
+
+    # ─── Election (Tick 1460) ───
+    1460: {
+        "event_type": "Election",
+        "event_label": "Wahl",
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Blobtopia hat gewählt: [Ergebnis] — Eine Analyse der Distriktstimmen",
+                "frame": (
+                    "Fokussiere auf Wahlbeteiligung, Distriktunterschiede, Repraesentationsfrage. "
+                    "Wer hat NICHT gewaehlt und warum? Welche Distrikte fuehlen sich nicht repraesentiert? "
+                    "Analysiere die demokratische Vitalitaet."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Niedrigste Wahlbeteiligung trotz hoher Unzufriedenheit",
+                "frame": "Frage, warum gerade die Unzufriedensten nicht waehlen. Strukturelle Barrieren?",
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Demokratie lebt von Beteiligung — nicht nur von Ergebnissen",
+                "frame": (
+                    "Argumentiere, dass die Wahlbeteiligung wichtiger ist als das Ergebnis. "
+                    "Fordere bessere Repraesentationsstrukturen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 3,
+                "criteria": [
+                    {"district": 2, "mood": "engaged", "desc": "Fortschritt-Waehler, zufrieden mit eigener Beteiligung"},
+                    {"district": 4, "mood": "cynical", "desc": "Nichtwaehler, haelt Politik fuer sinnlos"},
+                    {"district": 3, "mood": "moderate", "desc": "Mitte-Waehler, hofft auf Stabilitaet"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahl in Zahlen",
+                "metrics": [
+                    {"label": "Wahlbeteiligung gesamt", "source": "election_turnout"},
+                    {"label": "Stimmen Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Stimmen Mitte", "source": "election_mitte"},
+                    {"label": "Stimmen Tradition", "source": "election_tradition"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wahlbeobachter loben friedlichen Ablauf"},
+                {"hint": "Buergerforum fordert staerkere Beteiligungsmoeglichkeiten"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Wahlergebnis: [Partei] stärkste Kraft — Was das für Blobtopia bedeutet",
+                "frame": (
+                    "Fokussiere auf das Ergebnis, Regierungsfaehigkeit, Koalitionsoptionen. "
+                    "Wer hat gewonnen? Was bedeutet das fuer Stabilitaet und Wirtschaft? "
+                    "Klare Verhaeltnisse sind gut fuer Blobtopia."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld wählt pragmatisch: Mitte bleibt stärkste Kraft im Distrikt",
+                "frame": "Der pragmatische Waehler als Rueckgrat der Demokratie.",
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Klare Verhältnisse: Warum Blobtopia eine stabile Regierung braucht",
+                "frame": (
+                    "Argumentiere fuer Stabilitaet und Handlungsfaehigkeit. "
+                    "Warnung vor Fragmentierung und Blockade."
+                ),
+            },
+            "leserbriefe": {
+                "count": 3,
+                "criteria": [
+                    {"district": 3, "mood": "satisfied", "desc": "Mitte-Waehler, erleichtert ueber Stabilitaet"},
+                    {"district": 0, "mood": "moderate", "desc": "Tradition-Waehler, hofft auf Sicherheitspolitik"},
+                    {"district": 1, "mood": "uncertain", "desc": "Unentschlossener, hat dennoch gewaehlt"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Stärkste Kraft", "source": "election_winner"},
+                    {"label": "Stimmen Mitte", "source": "election_mitte"},
+                    {"label": "Stimmen Tradition", "source": "election_tradition"},
+                    {"label": "Stimmen Fortschritt", "source": "election_fortschritt"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Mitte-Vorsitzender spricht von 'Auftrag zur Stabilitaet'"},
+                {"hint": "Tradition kuendigt konstruktive Opposition an"},
+            ],
+        },
+    },
+
+    # ─── NaturalDisaster (Tick 5000) ───
+    5000: {
+        "event_type": "NaturalDisaster",
+        "event_label": "Naturkatastrophe",
+        "severity": 0.6,
+        "affected_districts": [4],
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Katastrophe trifft die Verwundbarsten: Industriezone kämpft ums Überleben",
+                "frame": (
+                    "Human-Interest gepaart mit struktureller Analyse. Warum trifft es immer "
+                    "die Schwachen? Die Industriezone war schon vorher benachteiligt — die Katastrophe "
+                    "verstaerkt bestehende Ungleichheiten. Verbindung zur Klimadebatte herstellen."
+                ),
+                "quote_districts": [4, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Solidarität aus dem Hafenviertel: Nachbarn helfen mit Spenden und Unterkünften",
+                "frame": "Zivilgesellschaftliches Engagement als Hoffnungszeichen. Diversitaet als Staerke.",
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Klimawandel ist keine Zukunftsfrage mehr",
+                "frame": (
+                    "Verknuepfe die Katastrophe mit der laufenden Klimadebatte. "
+                    "Fordere praeventive Massnahmen und gerechte Verteilung der Kosten."
+                ),
+            },
+            "leserbriefe": {
+                "count": 3,
+                "criteria": [
+                    {"district": 4, "mood": "desperate", "desc": "Direkt Betroffener, hat Hab und Gut verloren"},
+                    {"district": 4, "mood": "angry", "desc": "Langjaehriger Bewohner, wuetend auf fehlende Praevention"},
+                    {"district": 2, "mood": "solidarity", "desc": "Nachbar aus Hafenviertel, bietet Hilfe an"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Die Katastrophe in Zahlen",
+                "metrics": [
+                    {"label": "Zufriedenheit Industriezone (vorher/nachher)", "source": "satisfaction_industriezone_change"},
+                    {"label": "Vertrauen in Institutionen Industriezone", "source": "avg_trust_district_4"},
+                    {"label": "Durchschnittseinkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Protestbereitschaft Industriezone", "source": "avg_protest_district_4"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Fortschritt fordert Klimaschutz-Sofortprogramm"},
+                {"hint": "Gruental startet Spendensammlung fuer Betroffene"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Naturkatastrophe in der Industriezone: Blobtopia hält zusammen",
+                "frame": (
+                    "Solidaritaets-Narrativ: Blobtopia zeigt in der Krise Zusammenhalt. "
+                    "Fokus auf konkrete Hilfe, schnelle Massnahmen, Gemeinschaftsgeist. "
+                    "Nicht: warum es passiert ist, sondern: wie wir helfen."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld organisiert Hilfstransporte: Bürger packen an",
+                "frame": "Eigeninitiative und Gemeinschaftssinn: die Buerger handeln, statt zu warten.",
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Für die Industriezone: Schnelle Hilfe statt langer Reden",
+                "frame": (
+                    "Pragmatismus statt Grundsatzdebatte. Die Menschen brauchen jetzt Hilfe, "
+                    "nicht ideologische Deutungen. Kritik an denen, die die Katastrophe "
+                    "'politisch instrumentalisieren'."
+                ),
+            },
+            "leserbriefe": {
+                "count": 3,
+                "criteria": [
+                    {"district": 3, "mood": "helpful", "desc": "Mittelfeld-Buergerin, organisiert Hilfe"},
+                    {"district": 0, "mood": "compassionate", "desc": "Gruental-Bewohner, traditionell solidarisch"},
+                    {"district": 4, "mood": "resilient", "desc": "Betroffener, will anpacken statt klagen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Hilfe für die Industriezone",
+                "metrics": [
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Vertrauen in Institutionen gesamt", "source": "avg_trust_all"},
+                    {"label": "Protestbereitschaft gesamt", "source": "avg_protest_all"},
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Mitte kuendigt Soforthilfe-Paket an"},
+                {"hint": "Tradition kritisiert langsame Reaktion der Verwaltung"},
+            ],
+        },
+    },
+
+
+
+    # ── 1. Tick 900: EconomicBoom ─────────────────────────────────────
+    900: {
+        "event_type": "EconomicBoom",
+        "event_label": "Wirtschaftsboom (Sonnenberg & Mittelfeld)",
+        "affected_districts": [1, 3],
+        "magnitude": 0.5,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Aufschwung geht an vielen vorbei",
+                "frame": (
+                    "Die juengsten Wirtschaftsdaten zeigen Wachstum — doch nur in "
+                    "Sonnenberg und Mittelfeld. Hafenviertel und Industriezone "
+                    "profitieren kaum. Strukturelle Ungleichheit verfestigt sich."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel wartet auf den Aufschwung",
+                "frame": (
+                    "Waehrend anderswo Investitionen fliessen, bleibt das "
+                    "Hafenviertel aussen vor. Bewohner fordern gezielte Foerderung."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Wachstum ohne Teilhabe ist kein Fortschritt",
+                "frame": (
+                    "Ein Boom, der nur die ohnehin Privilegierten erreicht, "
+                    "verstaerkt die Spaltung. Politik muss umverteilen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "frustrated", "desc": "Arbeiter aus der Industriezone sieht nichts vom Boom"},
+                    {"district": 2, "mood": "frustrated", "desc": "Bewohnerin im Hafenviertel fragt: Wann sind wir dran?"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Boom in Zahlen",
+                "metrics": [
+                    {"label": "Einkommen Sonnenberg", "source": "avg_income_district_1"},
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Gewerkschaft fordert Mindestlohn-Erhoehung"},
+                {"hint": "Sozialverband warnt vor wachsender Armut"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Positive Wirtschaftsdaten fuer Blobtopia",
+                "frame": (
+                    "Die Konjunktur zieht an. Sonnenberg und Mittelfeld verzeichnen "
+                    "starkes Wachstum. Experten erwarten Ausstrahlungseffekte auf "
+                    "andere Bezirke."
+                ),
+                "quote_districts": [1, 3],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld profitiert vom Aufschwung",
+                "frame": (
+                    "Neue Geschaefte und steigende Einkommen: Mittelfeld erlebt "
+                    "einen wirtschaftlichen Fruehling."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Wachstum braucht Vertrauen, nicht Umverteilung",
+                "frame": (
+                    "Der Boom zeigt: Eigeninitiative und stabile Rahmenbedingungen "
+                    "wirken. Jetzt nicht durch ueberzogene Regulierung bremsen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 1, "mood": "satisfied", "desc": "Unternehmerin aus Sonnenberg lobt wirtschaftsfreundliches Klima"},
+                    {"district": 3, "mood": "satisfied", "desc": "Handwerker in Mittelfeld sieht volle Auftragsbuecher"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Konjunkturdaten",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Einkommen Sonnenberg", "source": "avg_income_district_1"},
+                    {"label": "Einkommen Mittelfeld", "source": "avg_income_district_3"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wirtschaftsverband begruesst Wachstumszahlen"},
+                {"hint": "Experte: Boom koennte laenger anhalten"},
+            ],
+        },
+    },
+
+    # ── 2. Tick 1100: InequalityReport ────────────────────────────────
+    1100: {
+        "event_type": "InequalityReport",
+        "event_label": "Ungleichheitsbericht",
+        "magnitude": 0.7,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Kluft zwischen Arm und Reich waechst dramatisch",
+                "frame": (
+                    "Der neue Ungleichheitsbericht offenbart alarmierende Zahlen. "
+                    "Die Einkommensschere oeffnet sich weiter — besonders "
+                    "Industriezone und Hafenviertel fallen zurueck. "
+                    "Strukturelle Ursachen muessen endlich benannt werden."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Leben am Rand des Aufschwungs",
+                "frame": (
+                    "Detaillierte Datenanalyse zeigt: In der Industriezone "
+                    "stagnieren die Einkommen, waehrend die Zufriedenheit sinkt."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Ungleichheit ist kein Naturgesetz",
+                "frame": (
+                    "Die Zahlen sprechen eine deutliche Sprache. Wer jetzt nicht "
+                    "handelt, nimmt gesellschaftliche Spaltung billigend in Kauf."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "angry", "desc": "Arbeiterin fordert politische Konsequenzen"},
+                    {"district": 2, "mood": "worried", "desc": "Sozialarbeiter schildert Alltagsrealitaet im Hafenviertel"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Ungleichheit in Zahlen",
+                "metrics": [
+                    {"label": "Einkommen Sonnenberg", "source": "avg_income_district_1"},
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Einkommen Hafenviertel", "source": "avg_income_district_2"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wohlfahrtsverband: Armutsgefaehrdung steigt"},
+                {"hint": "Opposition fordert Sozialgipfel"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Ungleichheitsbericht: Differenzierung noetig",
+                "frame": (
+                    "Der Bericht zeigt Unterschiede, doch das Gesamtbild ist "
+                    "nuancierter als Alarmisten behaupten. Das Medianeinkommen "
+                    "steigt, die Grundversorgung ist stabil. Relative Unterschiede "
+                    "sind in jeder Gesellschaft normal."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld zeigt: Aufstieg ist moeglich",
+                "frame": (
+                    "Im Bezirk Mittelfeld haben viele Bewohner ihren Lebensstandard "
+                    "verbessert. Ein Zeichen, dass Eigenleistung sich auszahlt."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Nicht alles ist eine Krise",
+                "frame": (
+                    "Ja, es gibt Unterschiede. Aber statt Neiddebatte brauchen wir "
+                    "Anreize fuer Leistung. Gleichmacherei hilft niemandem."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "moderate", "desc": "Buerger relativiert: Mir geht es besser als vor fuenf Jahren"},
+                    {"district": 0, "mood": "calm", "desc": "Landwirt aus Gruental sieht keinen Handlungsbedarf"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Einkommensvergleich",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Einkommen Mittelfeld", "source": "avg_income_district_3"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wirtschaftsinstitut: Wachstum hebt alle Boote"},
+                {"hint": "Experte warnt vor uebereilten Umverteilungsmassnahmen"},
+            ],
+        },
+    },
+
+    # ── 3. Tick 1300: IssueDebate "Wirtschaftspolitik" ───────────────
+    1300: {
+        "event_type": "IssueDebate",
+        "event_label": "Debatte: Wirtschaftspolitik",
+        "topic": "Wirtschaftspolitik",
+        "intensity": 0.6,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Wirtschaftspolitik: Wachstum fuer wen?",
+                "frame": (
+                    "Die wirtschaftspolitische Debatte offenbart eine Grundsatzfrage: "
+                    "Dient die Wirtschaft allen — oder nur wenigen? Der Kurier "
+                    "analysiert, warum Ungleichheit das zentrale Thema sein muss."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel diskutiert: Wo bleibt der faire Anteil?",
+                "frame": (
+                    "Im Hafenviertel fordern Buerger eine Wirtschaftspolitik, "
+                    "die auch ihre Realitaet abbildet."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Markt allein schafft keine Gerechtigkeit",
+                "frame": (
+                    "Ohne politische Steuerung profitieren nur die Staerksten. "
+                    "Gerechtigkeit entsteht nicht von allein."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "engaged", "desc": "Gewerkschafter verlangt Investitionsprogramm"},
+                    {"district": 2, "mood": "engaged", "desc": "Kleinunternehmerin will faire Wettbewerbsbedingungen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wirtschaft im Ueberblick",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Fortschrittspartei legt Reformpapier vor"},
+                {"hint": "Demonstration fuer gerechte Loehne angekuendigt"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Wirtschaftsdebatte: Leistung muss sich wieder lohnen",
+                "frame": (
+                    "Die Wirtschaftspolitik braucht klare Leitlinien: Wer leistet, "
+                    "soll belohnt werden. Statt Umverteilungsphantasien braucht "
+                    "Blobtopia Wachstumsimpulse und Planungssicherheit."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental: Mittelstand als Rueckgrat der Wirtschaft",
+                "frame": (
+                    "In Gruental setzen Unternehmer auf Stabilitaet und warnen "
+                    "vor ideologischer Wirtschaftspolitik."
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Leistungsgerechtigkeit statt Gleichmacherei",
+                "frame": (
+                    "Wer hart arbeitet, verdient mehr. Das ist kein Skandal, "
+                    "sondern das Fundament einer funktionierenden Gesellschaft."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "satisfied", "desc": "Unternehmer fordert weniger Buerokratie"},
+                    {"district": 3, "mood": "moderate", "desc": "Angestellter will Chancen statt Almosen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wirtschaftsindikatoren",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Einkommen Gruental", "source": "avg_income_district_0"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Mitte-Partei stellt Wirtschaftskonzept vor"},
+                {"hint": "Handelskammer warnt vor Steuerbelastung"},
+            ],
+        },
+    },
+
+    # ── 4. Tick 1800: Scandal ─────────────────────────────────────────
+    1800: {
+        "event_type": "Scandal",
+        "event_label": "Skandal: Mitte-Partei",
+        "party": "Mitte",
+        "magnitude": 0.7,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Mitte-Partei: Vertrauen verspielt",
+                "frame": (
+                    "Der Skandal in der Mitte-Partei ist kein Zufall, sondern "
+                    "Symptom institutionellen Versagens. Fehlende Transparenz "
+                    "und mangelnde Kontrolle haben diesen Missbrauch ermoeglicht. "
+                    "Die Partei muss sich grundlegend reformieren."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel: Vertrauen in Politik sinkt weiter",
+                "frame": (
+                    "Im Hafenviertel reagieren die Bewohner mit Enttaeuschung. "
+                    "Viele sehen sich in ihrem Misstrauen gegenueber der Politik bestaetigt."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Wenn Institutionen versagen",
+                "frame": (
+                    "Der Skandal zeigt: Ohne wirksame Kontrollmechanismen "
+                    "verkommen politische Strukturen. Reform ist ueberfaellig."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "angry", "desc": "Waehler fuehlt sich betrogen und erwaegt Nichtwahl"},
+                    {"district": 2, "mood": "cynical", "desc": "Bewohnerin: Die da oben machen doch was sie wollen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Vertrauenskrise",
+                "metrics": [
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Vertrauen Hafenviertel", "source": "avg_trust_district_2"},
+                    {"label": "Vertrauen Industriezone", "source": "avg_trust_district_4"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Opposition fordert Untersuchungsausschuss"},
+                {"hint": "Mitte-Partei kuendigt interne Aufklaerung an"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Skandal in der Mitte-Partei: Einzelfall oder mehr?",
+                "frame": (
+                    "Die Vorwuerfe gegen die Mitte-Partei sind ernst zu nehmen. "
+                    "Doch Vorverurteilung hilft niemandem. Die Partei hat "
+                    "Aufklaerung angekuendigt — das verdient eine faire Chance. "
+                    "Vorschnelle Urteile schaden der politischen Kultur."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld: Buerger zwischen Enttaeuschung und Fairness",
+                "frame": (
+                    "Im Bezirk Mittelfeld reagieren viele besonnen. Man will "
+                    "Aufklaerung, aber keinen politischen Rundumschlag."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Aufklaerung ja, Vorverurteilung nein",
+                "frame": (
+                    "In einer reifen Demokratie gelten Rechtsstaatlichkeit und "
+                    "Unschuldsvermutung. Wer jetzt pauschal verurteilt, "
+                    "untergaebt genau die Werte, die er zu verteidigen vorgibt."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "moderate", "desc": "Waehler will Fakten abwarten, bevor er urteilt"},
+                    {"district": 0, "mood": "calm", "desc": "Buergerin aus Gruental: Nicht alle Politiker in einen Topf werfen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Stimmungslage",
+                "metrics": [
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Vertrauen Mittelfeld", "source": "avg_trust_district_3"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Mitte-Partei setzt Sonderbeauftragten ein"},
+                {"hint": "Politikwissenschaftler mahnt zur Sachlichkeit"},
+            ],
+        },
+    },
+
+    # ── 5. Tick 2200: CivicSuccess ────────────────────────────────────
+    2200: {
+        "event_type": "CivicSuccess",
+        "event_label": "Buergerbeteiligung erfolgreich (Hafenviertel)",
+        "district": 2,
+        "magnitude": 0.5,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Partizipation wirkt: Hafenviertel zeigt wie es geht",
+                "frame": (
+                    "Das Hafenviertel beweist, dass Buergerbeteiligung keine "
+                    "leere Floskel sein muss. Wenn Menschen mitgestalten duerfen, "
+                    "entsteht echte Veraenderung. Ein Modell fuer ganz Blobtopia."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Nachbarschaftsprojekt im Hafenviertel gefeiert",
+                "frame": (
+                    "Das Projekt zeigt: Wo Buerger Verantwortung uebernehmen, "
+                    "veraendert sich der Bezirk zum Besseren."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Demokratie lebt vom Mitmachen",
+                "frame": (
+                    "Der Erfolg im Hafenviertel zeigt: Beteiligung ist kein "
+                    "Luxus, sondern Notwendigkeit. Mehr davon!"
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "proud", "desc": "Initiatoren-Sprecherin berichtet vom Erfolg"},
+                    {"district": 4, "mood": "engaged", "desc": "Bewohner der Industriezone will aehnliches Projekt starten"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Buergerbeteiligung",
+                "metrics": [
+                    {"label": "Zufriedenheit Hafenviertel", "source": "avg_satisfaction_district_2"},
+                    {"label": "Vertrauen Hafenviertel", "source": "avg_trust_district_2"},
+                    {"label": "Protestneigung Hafenviertel", "source": "avg_protest_district_2"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Weitere Bezirke pruefen Beteiligungsmodelle"},
+                {"hint": "Sozialforscherin: Partizipation senkt Protestneigung"},
+            ],
+        },
+        "blobspiegel": {
+            "lokalnachricht": {
+                "headline_hint": "Erfolgreiches Buergerprojekt im Hafenviertel",
+                "frame": (
+                    "Im Hafenviertel hat eine Buergerinitiative ein lokales "
+                    "Projekt erfolgreich umgesetzt. Ein positives Zeichen fuer "
+                    "Eigeninitiative und Gemeinschaftssinn."
+                ),
+                "focus_district": 2,
+            },
+            "leitartikel": {
+                "headline_hint": "Engagement vor Ort: Positives Signal aus dem Hafenviertel",
+                "frame": (
+                    "Buergerschaftliches Engagement verdient Anerkennung. "
+                    "Das Projekt zeigt, was moeglich ist, wenn Menschen "
+                    "eigenverantwortlich handeln statt auf den Staat zu warten."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Eigeninitiative statt Staatsabhaengigkeit",
+                "frame": (
+                    "Der Erfolg beweist: Nicht immer braucht es die grosse "
+                    "Politik. Manchmal reicht der Wille der Buerger vor Ort."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "satisfied", "desc": "Buerger lobt Eigeninitiative statt Politikabhaengigkeit"},
+                    {"district": 0, "mood": "calm", "desc": "Vereinsvorsitzender sieht Parallelen zu Gruental"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Bezirksdaten Hafenviertel",
+                "metrics": [
+                    {"label": "Zufriedenheit Hafenviertel", "source": "avg_satisfaction_district_2"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Bezirksrat gratuliert zum erfolgreichen Projekt"},
+                {"hint": "Weitere Initiativen geplant"},
+            ],
+        },
+    },
+
+    # ── 6. Tick 2500: IssueDebate "Sicherheitspolitik" ───────────────
+    2500: {
+        "event_type": "IssueDebate",
+        "event_label": "Debatte: Sicherheitspolitik",
+        "topic": "Sicherheitspolitik",
+        "intensity": 0.7,
+        "kurier": {
+            "lokalnachricht": {
+                "headline_hint": "Sicherheitsdebatte: Ursachen statt Symptome bekaempfen",
+                "frame": (
+                    "Die Debatte um Sicherheit darf nicht ueber die "
+                    "eigentlichen Probleme hinwegtaeuschen: Armut und "
+                    "Ausgrenzung sind die wahren Unsicherheitsfaktoren."
+                ),
+                "focus_district": 4,
+            },
+            "leitartikel": {
+                "headline_hint": "Sicherheit durch soziale Gerechtigkeit",
+                "frame": (
+                    "Wer Sicherheit will, muss bei den Ursachen ansetzen. "
+                    "Soziale Ungleichheit erzeugt Unsicherheit — nicht umgekehrt. "
+                    "Die aktuelle Debatte lenkt von den wahren Problemen ab."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Angst ist ein schlechter Ratgeber",
+                "frame": (
+                    "Die Sicherheitsdebatte droht in Populismus abzugleiten. "
+                    "Fakten statt Gefuehle muessen die Politik leiten."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "frustrated", "desc": "Sozialpaedagogin warnt vor Kriminalisierung ganzer Bezirke"},
+                    {"district": 4, "mood": "moderate", "desc": "Bewohner sieht soziale Ursachen fuer Unsicherheit"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Sicherheit und Soziales",
+                "metrics": [
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Protestneigung gesamt", "source": "avg_protest_all"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Fortschrittspartei kritisiert Angstrhetorik"},
+                {"hint": "Studie: Sicherheitsgefuehl korreliert mit Einkommen"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Sicherheit ist Grundrecht — Blobtopia muss handeln",
+                "frame": (
+                    "Sicherheit ist die Grundlage jeder funktionierenden "
+                    "Gesellschaft. Die Sorgen der Buerger sind berechtigt und "
+                    "verdienen ernsthafte Antworten. Wer das als Populismus "
+                    "abtut, hat den Ernst der Lage nicht verstanden."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld fordert mehr Praesenz und Ordnung",
+                "frame": (
+                    "Bewohner in Mittelfeld wuenschen sich mehr Sicherheit "
+                    "im Alltag. Die Debatte trifft einen Nerv."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Sicherheit geht vor Ideologie",
+                "frame": (
+                    "Die Menschen wollen sich sicher fuehlen. Das ist kein "
+                    "rechtes Anliegen, sondern ein menschliches Beduerfnis. "
+                    "Politik muss liefern."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "worried", "desc": "Familienvater in Mittelfeld sorgt sich um Sicherheit"},
+                    {"district": 0, "mood": "engaged", "desc": "Rentnerin aus Gruental fordert konsequentes Durchgreifen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Sicherheitslage",
+                "metrics": [
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Zufriedenheit Mittelfeld", "source": "avg_satisfaction_district_3"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Traditionspartei stellt Sicherheitskonzept vor"},
+                {"hint": "Buergerumfrage: Sicherheit ist Top-Thema"},
+            ],
+        },
+    },
+
+    # ── 7. Tick 2700: CrossDistrictConflict ───────────────────────────
+    2700: {
+        "event_type": "CrossDistrictConflict",
+        "event_label": "Konflikt: Sonnenberg vs. Industriezone",
+        "districts": [1, 4],
+        "intensity": 0.6,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Soziale Kluft waechst: Sonnenberg und Industriezone im Clinch",
+                "frame": (
+                    "Der Konflikt zwischen Sonnenberg und Industriezone ist "
+                    "Ausdruck einer wachsenden strukturellen Kluft. Unterschiedliche "
+                    "Lebenswelten prallen aufeinander — die Politik hat es versaeumt, "
+                    "Bruecken zu bauen."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone fuehlt sich abgehaengt",
+                "frame": (
+                    "Bewohner der Industriezone sehen im Konflikt eine logische "
+                    "Folge jahrelanger Vernachlaessigung ihres Bezirks."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Spaltung ist kein Schicksal",
+                "frame": (
+                    "Der Konflikt spiegelt reale Ungleichheit wider. Wer ihn "
+                    "als Kulturkampf umdeutet, verschleiert die oekonomischen "
+                    "Ursachen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "angry", "desc": "Arbeiter: Sonnenberg lebt auf unsere Kosten"},
+                    {"district": 2, "mood": "helpful", "desc": "Hafenviertel-Bewohnerin solidarisiert sich mit Industriezone"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Bezirksvergleich",
+                "metrics": [
+                    {"label": "Einkommen Sonnenberg", "source": "avg_income_district_1"},
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Zufriedenheit Sonnenberg", "source": "avg_satisfaction_district_1"},
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Schlichtungsgespraech geplant"},
+                {"hint": "Soziologe warnt vor weiterer Eskalation"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Wertekonflikt zwischen Sonnenberg und Industriezone",
+                "frame": (
+                    "Die Spannungen zwischen den Bezirken sind Ausdruck "
+                    "unterschiedlicher Wertvorstellungen und Lebensentwuerfe. "
+                    "Statt strukturelle Schuld zuzuweisen, braucht es Dialog "
+                    "und gegenseitigen Respekt."
+                ),
+                "quote_districts": [1, 3],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Sonnenberg wehrt sich gegen pauschale Vorwuerfe",
+                "frame": (
+                    "Bewohner von Sonnenberg betonen: Ihr Wohlstand ist "
+                    "selbst erarbeitet. Neiddebatten helfen niemandem."
+                ),
+                "focus_district": 1,
+            },
+            "kommentar": {
+                "headline_hint": "Dialog statt Schuldzuweisungen",
+                "frame": (
+                    "Beide Seiten muessen aufeinander zugehen. Wer den Konflikt "
+                    "ideologisch auflaed, vertieft die Graeben nur."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 1, "mood": "angry", "desc": "Sonnenberger weist Vorwurf des Privilegs zurueck"},
+                    {"district": 3, "mood": "moderate", "desc": "Mittelfeld-Buerger plaediert fuer Kompromiss"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Stimmung in den Bezirken",
+                "metrics": [
+                    {"label": "Zufriedenheit Sonnenberg", "source": "avg_satisfaction_district_1"},
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Mitte-Partei ruft zur Maessigung auf"},
+                {"hint": "Buergerforum soll Konflikte entschaerfen"},
+            ],
+        },
+    },
+
+    # ── 8. Tick 2850: MediaCampaign ───────────────────────────────────
+    2850: {
+        "event_type": "MediaCampaign",
+        "event_label": "Medienkampagne: Traditionspartei",
+        "party": "Tradition",
+        "reach": 0.5,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Traditionspartei setzt auf Angst statt Argumente",
+                "frame": (
+                    "Die Medienkampagne der Traditionspartei bedient gezielt "
+                    "Aengste und vereinfacht komplexe Probleme. Sicherheitsrhetorik "
+                    "ersetzt sachliche Debatte — ein gefaehrlicher Trend."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel kritisiert Kampagne als stigmatisierend",
+                "frame": (
+                    "Im Hafenviertel stossen die Plakate der Traditionspartei "
+                    "auf Kritik. Bewohner fuehlen sich gezielt ausgegrenzt."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Angstmache ist kein politisches Programm",
+                "frame": (
+                    "Wer Stimmung macht statt Loesungen anzubieten, "
+                    "untergaebt den demokratischen Diskurs."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "angry", "desc": "Bewohner fuehlt sich durch Kampagne diffamiert"},
+                    {"district": 4, "mood": "worried", "desc": "Arbeiterin durchschaut einfache Antworten"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlkampf-Klima",
+                "metrics": [
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Protestneigung gesamt", "source": "avg_protest_all"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Medienwissenschaftler analysiert Kampagnenstrategie"},
+                {"hint": "Fortschrittspartei kontert mit eigener Kampagne"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Traditionspartei startet Wahlkampagne zur Sicherheit",
+                "frame": (
+                    "Die Traditionspartei hat ihre Kampagne gestartet und setzt "
+                    "auf das Thema innere Sicherheit. Die Partei spricht damit "
+                    "ein Thema an, das viele Buerger bewegt. Ueber die "
+                    "konkreten Vorschlaege wird zu diskutieren sein."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental: Kampagne kommt gut an",
+                "frame": (
+                    "In Gruental finden die Sicherheitsversprechen der "
+                    "Traditionspartei Zuspruch. Viele sehen ihre Sorgen "
+                    "endlich ernst genommen."
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Wahlkampf gehoert zur Demokratie",
+                "frame": (
+                    "Jede Partei hat das Recht, ihre Themen zu setzen. "
+                    "Die Buerger werden am Wahltag entscheiden, "
+                    "ob die Botschaft ueberzeugt."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "satisfied", "desc": "Gruental-Bewohner findet Sicherheitsfokus richtig"},
+                    {"district": 3, "mood": "moderate", "desc": "Buerger aus Mittelfeld will konkrete Vorschlaege sehen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Stimmungsbild",
+                "metrics": [
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wahlkampf nimmt Fahrt auf"},
+                {"hint": "Umfrage: Sicherheit unter Top-3-Themen"},
+            ],
+        },
+    },
+
+    # ── 9. Tick 2920: Election (Wahl 2) ──────────────────────────────
+    2920: {
+        "event_type": "Election",
+        "event_label": "Wahl 2 (nach Skandal, Sicherheitsdebatte, Traditions-Kampagne)",
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Wahl 2: Skandal und Sicherheitsangst praegen den Urnengang",
+                "frame": (
+                    "Die zweite Wahl findet im Schatten des Mitte-Skandals und "
+                    "einer aufgeheizten Sicherheitsdebatte statt. Entscheidend wird, "
+                    "ob die Wahlbeteiligung trotz Vertrauenskrise stabil bleibt."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel: Waehlen trotz Enttaeuschung?",
+                "frame": (
+                    "Im Hafenviertel ist die Stimmung gespalten. Viele sind "
+                    "frustriert, manche hoffen auf Veraenderung durch die Wahl."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Jede Stimme zaehlt — gerade jetzt",
+                "frame": (
+                    "Wer nicht waehlt, ueberlasst die Entscheidung anderen. "
+                    "Gerade in Krisenzeiten ist Beteiligung wichtiger denn je."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "engaged", "desc": "Waehler will trotz Frust ein Zeichen setzen"},
+                    {"district": 2, "mood": "uncertain", "desc": "Erstwaehlerin fragt sich, wem sie noch vertrauen kann"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Wahlbeteiligung", "source": "election_turnout"},
+                    {"label": "Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Mitte", "source": "election_mitte"},
+                    {"label": "Tradition", "source": "election_tradition"},
+                    {"label": "Wahlsieger", "source": "election_winner"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wahllokale gut besucht trotz Vertrauenskrise"},
+                {"hint": "Wahlbeobachter: Spannung bis zum Schluss"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Wahl 2: Blobtopia entscheidet ueber Stabilitaet",
+                "frame": (
+                    "Nach turbulenten Wochen gehen die Buerger zur Wahl. "
+                    "Im Zentrum steht die Frage: Wer kann Stabilitaet und "
+                    "Sicherheit gewaehrleisten? Die Ergebnisse zeigen, "
+                    "wohin Blobtopia steuert."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld: Pragmatismus an der Wahlurne",
+                "frame": (
+                    "In Mittelfeld waehlen die Buerger mit kuehlem Kopf. "
+                    "Stabilitaet und Sachpolitik stehen im Vordergrund."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Wahlen sind kein Protestventil",
+                "frame": (
+                    "Wer aus Frust waehlt, riskiert Instabilitaet. "
+                    "Verantwortungsvolles Waehlen heisst: Sachthemen vor Emotionen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "engaged", "desc": "Waehler setzt auf Stabilitaet und Kontinuitaet"},
+                    {"district": 0, "mood": "satisfied", "desc": "Buergerin hofft auf klare Verhaeltnisse"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Wahlbeteiligung", "source": "election_turnout"},
+                    {"label": "Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Mitte", "source": "election_mitte"},
+                    {"label": "Tradition", "source": "election_tradition"},
+                    {"label": "Wahlsieger", "source": "election_winner"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Hohe Wahlbeteiligung in Gruental"},
+                {"hint": "Erste Hochrechnungen am Abend erwartet"},
+            ],
+        },
+    },
+
+    # ── 10. Tick 3200: CulturalEvent ─────────────────────────────────
+    3200: {
+        "event_type": "CulturalEvent",
+        "event_label": "Kulturfest in Gruental",
+        "district": 0,
+        "magnitude": 0.4,
+        "kurier": {
+            "lokalnachricht": {
+                "headline_hint": "Kulturfest in Gruental: Vielfalt und Zusammenhalt",
+                "frame": (
+                    "Das Kulturfest in Gruental bringt unterschiedliche "
+                    "Bevoelkerungsgruppen zusammen. Ein Zeichen dafuer, dass "
+                    "Diversitaet und Tradition kein Widerspruch sind."
+                ),
+                "focus_district": 0,
+            },
+            "leitartikel": {
+                "headline_hint": "Kultur verbindet — wenn man es zulaesst",
+                "frame": (
+                    "Das Fest in Gruental zeigt: Kulturelle Vielfalt bereichert "
+                    "eine Gemeinschaft, wenn Offenheit gelebt wird."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Zusammenhalt waechst von unten",
+                "frame": (
+                    "Kulturelle Begegnung schafft Verstaendigung. "
+                    "Mehr solcher Initiativen braucht Blobtopia."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "satisfied", "desc": "Hafenviertel-Bewohnerin genoss den Austausch"},
+                    {"district": 4, "mood": "moderate", "desc": "Industriezone-Bewohner wuenscht sich aehnliches Fest"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Bezirksdaten Gruental",
+                "metrics": [
+                    {"label": "Zufriedenheit Gruental", "source": "avg_satisfaction_district_0"},
+                    {"label": "Vertrauen Gruental", "source": "avg_trust_district_0"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Besucherzahlen uebertreffen Erwartungen"},
+                {"hint": "Naechstes Fest bereits in Planung"},
+            ],
+        },
+        "blobspiegel": {
+            "lokalnachricht": {
+                "headline_hint": "Gruental feiert seine Traditionen",
+                "frame": (
+                    "Das jaehrliche Kulturfest in Gruental pflegt lokale "
+                    "Traditionen und staerkt das Heimatgefuehl. Familien "
+                    "und Nachbarn feiern gemeinsam."
+                ),
+                "focus_district": 0,
+            },
+            "leitartikel": {
+                "headline_hint": "Heimat feiern, Identitaet bewahren",
+                "frame": (
+                    "Gruental zeigt, wie wichtig kulturelle Verwurzelung ist. "
+                    "Traditionen geben Halt in unsicheren Zeiten."
+                ),
+                "quote_districts": [0, 3],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Traditionen sind kein Rueckschritt",
+                "frame": (
+                    "Wer Brauchtum pflegt, bewahrt Identitaet. "
+                    "Das verdient Respekt, keine Belehrung."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "proud", "desc": "Landwirtin aus Gruental freut sich ueber Anerkennung"},
+                    {"district": 3, "mood": "calm", "desc": "Mittelfeld-Buerger erinnert sich an fruehe Feste"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Gruental im Ueberblick",
+                "metrics": [
+                    {"label": "Zufriedenheit Gruental", "source": "avg_satisfaction_district_0"},
+                    {"label": "Vertrauen Gruental", "source": "avg_trust_district_0"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Buergermeister eroeffnet Fest mit Traditionsrede"},
+                {"hint": "Lokale Vereine praesentieren sich"},
+            ],
+        },
+    },
+
+    # ── 11. Tick 3500: EducationReform ────────────────────────────────
+    3500: {
+        "event_type": "EducationReform",
+        "event_label": "Bildungsreform (Industriezone)",
+        "district": 4,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Bildungsgerechtigkeit: Reform fuer die Industriezone",
+                "frame": (
+                    "Die geplante Bildungsreform in der Industriezone ist "
+                    "ueberfaellig. Bildung ist der Schluessel zu Teilhabe — "
+                    "doch bisher wurden gerade die benachteiligten Bezirke "
+                    "systematisch unterfinanziert."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Hoffnung auf bessere Schulen",
+                "frame": (
+                    "Eltern und Lehrer in der Industriezone begrueszen die "
+                    "Reform, fordern aber langfristige Finanzierung."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Bildung darf kein Privileg der Postleitzahl sein",
+                "frame": (
+                    "Chancengleichheit beginnt im Klassenzimmer. Die Reform "
+                    "ist ein erster Schritt — aber nur, wenn sie konsequent "
+                    "umgesetzt wird."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "satisfied", "desc": "Mutter hofft auf bessere Zukunft fuer ihre Kinder"},
+                    {"district": 2, "mood": "engaged", "desc": "Lehrerin im Hafenviertel will gleiche Reform fuer ihren Bezirk"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Bildung und Teilhabe",
+                "metrics": [
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Fortschrittspartei feiert Bildungsoffensive"},
+                {"hint": "Lehrerverband begrueszt Reform mit Einschraenkungen"},
+            ],
+        },
+        "blobspiegel": {
+            "lokalnachricht": {
+                "headline_hint": "Bildungsreform in der Industriezone: Gut gemeint, aber wer bezahlt?",
+                "frame": (
+                    "Die geplante Reform fuer die Schulen der Industriezone "
+                    "klingt vielversprechend. Doch die Finanzierungsfrage ist "
+                    "offen. Experten warnen vor Mehrbelastung der Steuerzahler."
+                ),
+                "focus_district": 4,
+            },
+            "leitartikel": {
+                "headline_hint": "Bildungsreform: Masshalten statt Giesskanne",
+                "frame": (
+                    "Bildung ist wichtig, keine Frage. Aber jede Reform muss "
+                    "finanzierbar sein. Statt ideologischer Grossprojekte "
+                    "braucht es gezielte Foerderung der Leistungswilligen."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Leistung foerdern, nicht nur Strukturen aendern",
+                "frame": (
+                    "Bildungserfolg haengt nicht nur von Geld ab, sondern "
+                    "auch von Eigenverantwortung und Elternengagement."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "worried", "desc": "Steuerzahler in Mittelfeld fragt nach den Kosten"},
+                    {"district": 0, "mood": "moderate", "desc": "Gruental-Buerger will Leistungsprinzip in Schulen staerken"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Bildungsausgaben",
+                "metrics": [
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Rechnungshof prueft Kosten der Reform"},
+                {"hint": "Mitte-Partei fordert Kosten-Nutzen-Analyse"},
+            ],
+        },
+    },
+
+    # ── 12. Tick 3800: IssueDebate "Klimapolitik" ────────────────────
+    3800: {
+        "event_type": "IssueDebate",
+        "event_label": "Debatte: Klimapolitik",
+        "topic": "Klimapolitik",
+        "intensity": 0.8,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Klimapolitik: Die Uhr tickt — Blobtopia muss handeln",
+                "frame": (
+                    "Die Klimadebatte erreicht eine neue Dringlichkeitsstufe. "
+                    "Wissenschaftliche Daten lassen keinen Zweifel: Ohne "
+                    "entschlossenes Handeln jetzt werden die Kosten spaeter "
+                    "unbezahlbar. Soziale Gerechtigkeit und Klimaschutz "
+                    "muessen zusammen gedacht werden."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Klimawandel trifft die Aermsten zuerst",
+                "frame": (
+                    "In der Industriezone spueren die Bewohner die Folgen "
+                    "schon heute. Hitze, schlechte Luft, marode Infrastruktur."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Klimaschutz ist Sozialpolitik",
+                "frame": (
+                    "Wer den Klimaschutz als Luxusthema abtut, uebersieht: "
+                    "Die Schwachen trifft es zuerst und am haertesten."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "engaged", "desc": "Aktivistin im Hafenviertel fordert sofortige Massnahmen"},
+                    {"district": 4, "mood": "worried", "desc": "Arbeiter sieht Gesundheitsrisiken durch Luftverschmutzung"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Klima und Lebensqualitaet",
+                "metrics": [
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Protestneigung gesamt", "source": "avg_protest_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Klimabuendnis ruft zu Grossdemonstration auf"},
+                {"hint": "Fortschrittspartei legt Klimaschutzgesetz vor"},
+            ],
+        },
+        "blobspiegel": {
+            "lokalnachricht": {
+                "headline_hint": "Klimadebatte: Wirtschaft nicht gefaehrden",
+                "frame": (
+                    "Die Klimadiskussion wird immer intensiver, doch "
+                    "Experten warnen: Ueberzogene Massnahmen koennten "
+                    "Arbeitsplaetze vernichten und den Wohlstand gefaehrden."
+                ),
+                "focus_district": 3,
+            },
+            "leitartikel": {
+                "headline_hint": "Klimapolitik mit Augenmass statt Ideologie",
+                "frame": (
+                    "Umweltschutz ist wichtig, aber nicht um jeden Preis. "
+                    "Blobtopia braucht eine Klimapolitik, die Oekonomie und "
+                    "Oekologie in Balance bringt — ohne Arbeitsplaetze zu "
+                    "opfern oder den Mittelstand zu belasten."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Klima ja, Deindustrialisierung nein",
+                "frame": (
+                    "Wer mit Klima-Panik Politik macht, riskiert wirtschaftliche "
+                    "Stabilitaet. Vernunft muss vor Aktivismus gehen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "worried", "desc": "Handwerksmeister fuerchtet Kosten durch Klimaauflagen"},
+                    {"district": 0, "mood": "moderate", "desc": "Landwirt will Umweltschutz, aber wirtschaftlich tragbar"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wirtschaft und Klima",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wirtschaftsverband warnt vor Klimaauflagen"},
+                {"hint": "Traditionspartei fordert Technologie statt Verbote"},
+            ],
+        },
+    },
+
+    # ── 13. Tick 4000: EconomicBoom (alle Bezirke) ───────────────────
+    4000: {
+        "event_type": "EconomicBoom",
+        "event_label": "Wirtschaftsboom (alle Bezirke)",
+        "affected_districts": [0, 1, 2, 3, 4],
+        "magnitude": 0.4,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Boom verstaerkt die Schere — trotz Wachstum fuer alle",
+                "frame": (
+                    "Ja, alle Bezirke wachsen. Doch die reichen Bezirke wachsen "
+                    "schneller. Der Boom verstaerkt bestehende Ungleichheiten, "
+                    "statt sie abzubauen. Relatives Wachstum ist nicht gleich "
+                    "gerechtes Wachstum."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel: Wachstum kommt, Ungleichheit bleibt",
+                "frame": (
+                    "Auch im Hafenviertel steigen die Einkommen — doch der "
+                    "Abstand zu Sonnenberg waechst trotzdem."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Wachstum allein heilt keine Ungleichheit",
+                "frame": (
+                    "Der Trickle-Down-Mythos erweist sich erneut als Illusion. "
+                    "Ohne aktive Umverteilung bleibt der Boom ein Vorteil "
+                    "fuer Privilegierte."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "worried", "desc": "Arbeiter bemerkt kaum Verbesserung im Alltag"},
+                    {"district": 2, "mood": "frustrated", "desc": "Bewohnerin: Mieten steigen schneller als Loehne"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Boom in Zahlen",
+                "metrics": [
+                    {"label": "Einkommen Sonnenberg", "source": "avg_income_district_1"},
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Einkommen Hafenviertel", "source": "avg_income_district_2"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Oxblob-Studie: Schere oeffnet sich trotz Wachstum"},
+                {"hint": "Sozialverband fordert Mindestlohn-Anpassung"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Aufschwung fuer alle: Blobtopias Wirtschaft boomt",
+                "frame": (
+                    "Gute Nachrichten: Alle Bezirke profitieren vom aktuellen "
+                    "Wirtschaftswachstum. Die Einkommen steigen flaechendeckend. "
+                    "Ein Beleg dafuer, dass die wirtschaftlichen Rahmenbedingungen "
+                    "stimmen."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld und Gruental: Wohlstand waechst",
+                "frame": (
+                    "In Mittelfeld und Gruental zeigen sich die Buerger "
+                    "zufrieden mit der wirtschaftlichen Entwicklung."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Der Markt liefert — wenn man ihn laesst",
+                "frame": (
+                    "Das Wachstum beweist: Eine verlssliche Wirtschaftspolitik "
+                    "schafft Wohlstand fuer alle. Jetzt nicht durch Umverteilung "
+                    "die Erfolge gefaehrden."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "satisfied", "desc": "Buerger freut sich ueber steigende Kaufkraft"},
+                    {"district": 0, "mood": "satisfied", "desc": "Unternehmerin aus Gruental investiert in Erweiterung"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Konjunkturdaten",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wirtschaftsinstitut hebt Prognose an"},
+                {"hint": "Arbeitsmarkt: Vollbeschaeftigung in Sicht"},
+            ],
+        },
+    },
+
+    # ── 14. Tick 4200: InequalityReport (zweiter, staerker) ──────────
+    4200: {
+        "event_type": "InequalityReport",
+        "event_label": "Zweiter Ungleichheitsbericht (verschaerft)",
+        "magnitude": 0.8,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Schere weiter geoeffnet — zweiter Bericht schlaegt Alarm",
+                "frame": (
+                    "Der zweite Ungleichheitsbericht uebertriff die schlimmsten "
+                    "Befuerchtungen. Die Kluft ist groesser geworden, nicht kleiner. "
+                    "Trotz Boom profitieren die ohnehin Benachteiligten kaum. "
+                    "Politisches Versagen auf ganzer Linie."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Zweiter Bericht bestaetigt das Gefuehl",
+                "frame": (
+                    "Was die Bewohner der Industriezone laengst wissen, belegen "
+                    "jetzt die Daten: Der Abstand waechst."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Wer jetzt nicht handelt, macht sich mitschuldig",
+                "frame": (
+                    "Zwei Berichte, eine Botschaft: Ungleichheit ist kein "
+                    "Naturgesetz, sondern politisches Versagen. Es reicht."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "angry", "desc": "Gewerkschafterin: Die Politik ignoriert uns systematisch"},
+                    {"district": 2, "mood": "cynical", "desc": "Alleinerziehende sieht keine Verbesserung in Sicht"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Ungleichheit: Die Fakten",
+                "metrics": [
+                    {"label": "Einkommen Sonnenberg", "source": "avg_income_district_1"},
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Einkommen Hafenviertel", "source": "avg_income_district_2"},
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Protestaktionen in der Industriezone angekuendigt"},
+                {"hint": "Fortschrittspartei fordert Sondersteuer fuer Reiche"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Zweiter Bericht: Differenziert betrachten, nicht skandalisieren",
+                "frame": (
+                    "Der neue Ungleichheitsbericht liefert Diskussionsstoff. "
+                    "Doch bei genauem Hinsehen zeigt sich: Das Medianeinkommen "
+                    "ist gestiegen, die Grundversorgung stabil. Relative "
+                    "Unterschiede sind in einer dynamischen Wirtschaft normal. "
+                    "Panikmache hilft niemandem."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld: Buerger sehen Lage differenzierter als Studie",
+                "frame": (
+                    "In Mittelfeld bestaetigen viele: Ja, es gibt Unterschiede, "
+                    "aber mir persoenlich geht es gut. Der Bericht male zu schwarz."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Statistik ist nicht alles",
+                "frame": (
+                    "Zahlen koennen truegen. Wer nur auf Ungleichheit schaut, "
+                    "uebersieht, dass es vielen besser geht als zuvor. "
+                    "Fortschritt braucht Differenzierung, nicht Alarmismus."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "calm", "desc": "Unternehmer: Wer fleissig ist, kommt auch voran"},
+                    {"district": 3, "mood": "moderate", "desc": "Angestellte: In meinem Umfeld beschwert sich niemand"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Einkommensentwicklung",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                    {"label": "Einkommen Mittelfeld", "source": "avg_income_district_3"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wirtschaftsweise relativiert Ungleichheitsdaten"},
+                {"hint": "Mitte-Partei: Leistung muss sich lohnen"},
+            ],
+        },
+    },
+
+    # ── 15. Tick 4300: MediaCampaign (Fortschritt) ───────────────────
+    4300: {
+        "event_type": "MediaCampaign",
+        "event_label": "Medienkampagne: Fortschrittspartei",
+        "party": "Fortschritt",
+        "reach": 0.5,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Fortschrittspartei wirbt fuer sozialen Wandel",
+                "frame": (
+                    "Die Fortschrittspartei startet ihre Kampagne mit dem "
+                    "Versprechen von Klimaschutz und sozialer Gerechtigkeit. "
+                    "Die Themen treffen den Nerv der Zeit. Ob die konkreten "
+                    "Vorschlaege ueberzeugen, wird sich zeigen."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel: Hoffnung auf Kurswechsel",
+                "frame": (
+                    "Im Hafenviertel stossen die Versprechen der "
+                    "Fortschrittspartei auf offene Ohren."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Richtige Themen, offene Fragen",
+                "frame": (
+                    "Die Kampagne setzt wichtige Akzente. Doch Wahlkampf "
+                    "ist Wahlkampf — entscheidend ist die Umsetzung."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "satisfied", "desc": "Bewohnerin sieht endlich ihre Themen im Wahlkampf"},
+                    {"district": 4, "mood": "moderate", "desc": "Arbeiter will Taten statt Worte sehen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlkampf-Stimmung",
+                "metrics": [
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Protestneigung gesamt", "source": "avg_protest_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Fortschrittspartei plant Grosskundgebung"},
+                {"hint": "Wahlkampfbudgets der Parteien veroeffentlicht"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Fortschrittspartei: Unrealistische Versprechen im Wahlkampf",
+                "frame": (
+                    "Die Kampagne der Fortschrittspartei klingt gut, doch "
+                    "bei genauem Hinsehen fehlt die Substanz. Wer Klimaschutz "
+                    "und Umverteilung gleichzeitig verspricht, muss erklaeren, "
+                    "wer das bezahlen soll. Wahlgeschenke ersetzen keine "
+                    "seriöse Politik."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental skeptisch gegenueber Fortschritts-Versprechen",
+                "frame": (
+                    "In Gruental begegnen viele der Kampagne mit Skepsis. "
+                    "Die Versprechen klingen gut, aber wer traegt die Kosten?"
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Wahlkampf-Versprechen auf dem Pruefstand",
+                "frame": (
+                    "Schoene Worte gewinnen Wahlen, aber nicht immer die "
+                    "Zukunft. Die Buerger verdienen Ehrlichkeit statt "
+                    "unrealistischer Versprechen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "worried", "desc": "Steuerzahler befuerchtet hoehere Abgaben"},
+                    {"district": 0, "mood": "frustrated", "desc": "Unternehmerin haelt Versprechen fuer unbezahlbar"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Finanzierungsfrage",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Rechnungshof-Experte bezweifelt Finanzierbarkeit"},
+                {"hint": "Mitte-Partei kontert mit Stabilitaetsagenda"},
+            ],
+        },
+    },
+
+    # ── 16. Tick 4380: Election (Wahl 3) ─────────────────────────────
+    4380: {
+        "event_type": "Election",
+        "event_label": "Wahl 3 (Swing-Wahl: Klima, Ungleichheit, Fortschritt-Kampagne)",
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Wahl 3: Richtungsentscheidung fuer Blobtopia",
+                "frame": (
+                    "Die dritte Wahl wird zur Richtungsentscheidung. "
+                    "Klima, Ungleichheit und die Frage sozialer Gerechtigkeit "
+                    "dominieren die Debatte. Wird Blobtopia den Kurswechsel "
+                    "waehlen oder auf Kontinuitaet setzen?"
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Wahl als Hoffnungstraeger",
+                "frame": (
+                    "In der Industriezone setzen viele auf einen Politikwechsel. "
+                    "Die Ungleichheitsberichte haben Spuren hinterlassen."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Wer jetzt nicht waehlt, verschenkt Einfluss",
+                "frame": (
+                    "Diese Wahl bietet die Chance auf Veraenderung. Hohe "
+                    "Beteiligung ist der beste Weg, sie einzufordern."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "engaged", "desc": "Aktivistin ruft zum Waehlen auf"},
+                    {"district": 4, "mood": "engaged", "desc": "Arbeiter will mit seiner Stimme ein Signal senden"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Wahlbeteiligung", "source": "election_turnout"},
+                    {"label": "Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Mitte", "source": "election_mitte"},
+                    {"label": "Tradition", "source": "election_tradition"},
+                    {"label": "Wahlsieger", "source": "election_winner"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Rekord-Wahlbeteiligung erwartet"},
+                {"hint": "Alle Parteien rufen zur Wahl auf"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Wahl 3: Stabilitaet oder Experiment?",
+                "frame": (
+                    "Die dritte Wahl stellt Blobtopia vor die Frage: "
+                    "Bewaehrtes bewahren oder riskantes Experiment wagen? "
+                    "Die Buerger entscheiden ueber den wirtschaftlichen Kurs. "
+                    "Vernunft sollte ueber Emotionen siegen."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental waehlt besonnen",
+                "frame": (
+                    "In Gruental setzen die Buerger auf Stabilitaet. "
+                    "Die Wirtschaftslage ist gut — warum riskieren?"
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Stabilitaet ist kein Stillstand",
+                "frame": (
+                    "Wer Bewaehrtes bewahrt, ist kein Reaktionaer. "
+                    "Stabilitaet schafft die Grundlage fuer echten Fortschritt."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "satisfied", "desc": "Buergerin setzt auf wirtschaftliche Vernunft"},
+                    {"district": 3, "mood": "moderate", "desc": "Waehler waegt Risiko gegen Sicherheit ab"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Wahlbeteiligung", "source": "election_turnout"},
+                    {"label": "Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Mitte", "source": "election_mitte"},
+                    {"label": "Tradition", "source": "election_tradition"},
+                    {"label": "Wahlsieger", "source": "election_winner"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wahlabend: Spannung in allen Bezirken"},
+                {"hint": "Experten rechnen mit knappem Ergebnis"},
+            ],
+        },
+    },
+
+    # ── 17. Tick 4800: CorruptionRevelation ──────────────────────────
+    4800: {
+        "event_type": "CorruptionRevelation",
+        "event_label": "Korruptionsenthuellung",
+        "severity": 0.6,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "System der Selbstbedienung: Korruption in Blobtopia",
+                "frame": (
+                    "Die Enthuellung belegt, was viele laengst vermuteten: "
+                    "Ein Netzwerk der Selbstbedienung hat sich in den "
+                    "Institutionen breitgemacht. Das Problem ist nicht "
+                    "individuelles Versagen — es ist systemisch. Nur "
+                    "grundlegende Transparenzreformen koennen das Vertrauen "
+                    "wiederherstellen."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel: Wut ueber politische Selbstbedienung",
+                "frame": (
+                    "Die Korruptionsenthuellung trifft im Hafenviertel auf "
+                    "blanke Wut. Viele fuehlen sich vom System verraten."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Transparenz ist kein Luxus, sondern Pflicht",
+                "frame": (
+                    "Korruption zerstoert Vertrauen. Ohne radikale Transparenz "
+                    "wird die Demokratie zur Fassade."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "angry", "desc": "Arbeiter: Wir sparen, die da oben bedienen sich"},
+                    {"district": 2, "mood": "cynical", "desc": "Bewohnerin hat letzten Rest Vertrauen verloren"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Vertrauenskrise",
+                "metrics": [
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Vertrauen Hafenviertel", "source": "avg_trust_district_2"},
+                    {"label": "Vertrauen Industriezone", "source": "avg_trust_district_4"},
+                    {"label": "Protestneigung gesamt", "source": "avg_protest_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Staatsanwaltschaft leitet Ermittlungen ein"},
+                {"hint": "Demonstrationen vor dem Rathaus angekuendigt"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Korruptionsfall: Aufklaerung ja, Panikmache nein",
+                "frame": (
+                    "Die Korruptionsenthuellung ist ernst und muss aufgeklaert "
+                    "werden. Doch wer jetzt alle Institutionen unter Generalverdacht "
+                    "stellt, schadet der Demokratie mehr als er ihr nuetzt. "
+                    "Rechtsstaatliche Verfahren statt politischer Hysterie."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld: Vertrauen in Institutionen angeschlagen, aber vorhanden",
+                "frame": (
+                    "In Mittelfeld reagieren die Buerger betroffen, aber "
+                    "besonnen. Die meisten setzen auf den Rechtsstaat."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Rechtsstaatlichkeit statt Wutbuerger-Mentalitaet",
+                "frame": (
+                    "Korruption gehoert bestraft — durch Gerichte, nicht "
+                    "durch Strassenmobs. Besonnenheit ist jetzt die staerkste "
+                    "demokratische Tugend."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "worried", "desc": "Buerger will rechtsstaatliche Aufklaerung abwarten"},
+                    {"district": 0, "mood": "moderate", "desc": "Gruental-Bewohner warnt vor Vorverurteilung"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Institutionenvertrauen",
+                "metrics": [
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Vertrauen Mittelfeld", "source": "avg_trust_district_3"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Justizminister verspricht lueckenlose Aufklaerung"},
+                {"hint": "Politikwissenschaftler: Institutionen bleiben stabil"},
+            ],
+        },
+    },
+
+    # ── 18. Tick 5200: IssueDebate "Gesellschaftliche Solidaritaet" ──
+    5200: {
+        "event_type": "IssueDebate",
+        "event_label": "Debatte: Gesellschaftliche Solidaritaet",
+        "topic": "Gesellschaftliche Solidaritaet",
+        "intensity": 0.9,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Solidaritaet als Pflicht: Blobtopia am Scheideweg",
+                "frame": (
+                    "Die Debatte um gesellschaftliche Solidaritaet erreicht "
+                    "einen Hoehepunkt. In einer Gesellschaft mit wachsender "
+                    "Ungleichheit, Korruptionsskandalen und eskalierenden "
+                    "Konflikten ist Solidaritaet keine Option, sondern "
+                    "Ueberlebensnotwendigkeit. Wer sie verweigert, "
+                    "riskiert den gesellschaftlichen Zusammenbruch."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Solidaritaet ist keine Einbahnstrasse",
+                "frame": (
+                    "In der Industriezone fordern die Menschen konkrete "
+                    "Solidaritaet: Investitionen, Infrastruktur, Respekt."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Ohne Solidaritaet zerfaellt die Gesellschaft",
+                "frame": (
+                    "Die Frage ist nicht ob, sondern wie wir solidarisch "
+                    "sind. Wer Solidaritaet als Ideologie diffamiert, "
+                    "hat die Krise nicht verstanden."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "engaged", "desc": "Sozialarbeiterin sieht Solidaritaet als Grundpfeiler"},
+                    {"district": 4, "mood": "engaged", "desc": "Arbeiter verlangt Taten statt schoener Worte"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Solidaritaet in Zahlen",
+                "metrics": [
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Protestneigung gesamt", "source": "avg_protest_all"},
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Solidaritaetsbuendnis plant Grosskundgebung"},
+                {"hint": "Fortschrittspartei fordert Solidaritaetszuschlag"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Solidaritaet ja — aber nicht durch Ideologie erzwungen",
+                "frame": (
+                    "Solidaritaet ist ein Wert, den alle teilen. Doch "
+                    "echte Solidaritaet entsteht freiwillig, nicht durch "
+                    "staatlichen Zwang. Wer Solidaritaet ideologisch auflaed, "
+                    "spaltet statt zu einen. Pragmatische Loesungen statt "
+                    "moralischer Ueberheblichkeit."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental: Solidaritaet beginnt in der Nachbarschaft",
+                "frame": (
+                    "In Gruental setzen die Buerger auf gelebte Solidaritaet "
+                    "im Kleinen: Nachbarschaftshilfe statt Grossreform."
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Solidaritaet ohne Bevormundung",
+                "frame": (
+                    "Natuerlich braucht Blobtopia Zusammenhalt. Aber "
+                    "Solidaritaet darf nicht als Hebel fuer Umverteilung "
+                    "missbraucht werden. Eigenverantwortung bleibt die Basis."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "moderate", "desc": "Buerger will Solidaritaet, aber keine Bevormundung"},
+                    {"district": 0, "mood": "moderate", "desc": "Vereinsmitglied sieht Solidaritaet als lokale Tugend"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Gesellschaftsklima",
+                "metrics": [
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Zufriedenheit Mittelfeld", "source": "avg_satisfaction_district_3"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Ehrenamtspreis fuer lokale Initiativen vergeben"},
+                {"hint": "Mitte-Partei: Solidaritaet durch Eigenleistung"},
+            ],
+        },
+    },
+
+    # ── 19. Tick 5350: CrossDistrictConflict (eskaliert) ─────────────
+    5350: {
+        "event_type": "CrossDistrictConflict",
+        "event_label": "Eskalierter Konflikt: Sonnenberg vs. Industriezone",
+        "districts": [1, 4],
+        "intensity": 0.8,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Konflikt eskaliert: Verschaerfte Ungleichheit spaltet Blobtopia",
+                "frame": (
+                    "Der Konflikt zwischen Sonnenberg und Industriezone hat "
+                    "sich dramatisch verschaerft. Was als Spannungen begann, "
+                    "ist zum offenen Riss geworden. Die Ursache liegt in der "
+                    "wachsenden Ungleichheit, die politisch nie ernsthaft "
+                    "bekaempft wurde. Blobtopia steht vor einer Zerreissprobe."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Geduld ist am Ende",
+                "frame": (
+                    "Die Stimmung in der Industriezone ist aufgeladen. "
+                    "Bewohner sprechen von Verachtung und jahrelanger Ignoranz."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Eskalation war vorhersehbar",
+                "frame": (
+                    "Wer Ungleichheit wachsen laesst, erntet Konflikte. "
+                    "Die Politik hat die Warnzeichen ignoriert — jetzt "
+                    "brennt es."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "angry", "desc": "Arbeiter: Wir werden nicht laenger schweigen"},
+                    {"district": 2, "mood": "worried", "desc": "Sozialarbeiterin warnt vor Flaechenbrand"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Eskalation in Zahlen",
+                "metrics": [
+                    {"label": "Einkommen Sonnenberg", "source": "avg_income_district_1"},
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Protestneigung Industriezone", "source": "avg_protest_district_4"},
+                    {"label": "Protestneigung Sonnenberg", "source": "avg_protest_district_1"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Polizei verstaerkt Praesenz zwischen Bezirken"},
+                {"hint": "Vermittlungsversuch gescheitert"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Eskalation stoppen: Deeskalation ist Gebot der Stunde",
+                "frame": (
+                    "Der Konflikt zwischen den Bezirken droht ausser Kontrolle "
+                    "zu geraten. Jetzt ist Besonnenheit gefragt, nicht Oel ins "
+                    "Feuer. Beide Seiten muessen zurueck an den Verhandlungstisch. "
+                    "Wer die Eskalation weiter befeuert, handelt verantwortungslos."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld: Angst vor Uebergreifen des Konflikts",
+                "frame": (
+                    "In Mittelfeld waechst die Sorge, dass der Konflikt "
+                    "die eigene Ruhe gefaehrdet. Buerger fordern schnelle "
+                    "Deeskalation."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Gewalt loest keine Probleme",
+                "frame": (
+                    "Egal wie berechtigt der Frust ist — Eskalation "
+                    "zerstoert nur. Dialog und Ordnung muessen wiederhergestellt "
+                    "werden."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "worried", "desc": "Familienvater sorgt sich um die Sicherheit"},
+                    {"district": 1, "mood": "moderate", "desc": "Sonnenberger weist Schuldzuweisung zurueck"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Konfliktlage",
+                "metrics": [
+                    {"label": "Protestneigung gesamt", "source": "avg_protest_all"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Buergermeister ruft zu Besonnenheit auf"},
+                {"hint": "Runder Tisch fuer Freitag angesetzt"},
+            ],
+        },
+    },
+
+    # ── 20. Tick 5475: Election (Wahl 4) ─────────────────────────────
+    5475: {
+        "event_type": "Election",
+        "event_label": "Wahl 4 (maximale Polarisierung: Korruption, Katastrophe, Konflikt)",
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Wahl 4: Polarisierung auf dem Hoehepunkt",
+                "frame": (
+                    "Blobtopia waehlt unter maximaler Anspannung. Korruption, "
+                    "eskalierte Konflikte und tiefes Misstrauen praegen den "
+                    "Urnengang. Die Wahlbeteiligung wird zum Gradmesser: "
+                    "Kaempfen die Buerger fuer ihre Demokratie — oder haben "
+                    "sie bereits resigniert?"
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Wahl als letzter Ausweg?",
+                "frame": (
+                    "In der Industriezone ist die Stimmung angespannt. "
+                    "Viele sehen diese Wahl als letzte Chance auf Veraenderung."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Demokratie bewahren — gerade jetzt waehlen",
+                "frame": (
+                    "In Zeiten der Krise braucht die Demokratie jede Stimme. "
+                    "Nichtwahl ist keine Loesung, sondern Kapitulation."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "engaged", "desc": "Aktivistin: Wir lassen uns die Demokratie nicht nehmen"},
+                    {"district": 4, "mood": "desperate", "desc": "Arbeiter waehlt aus letzter Hoffnung"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Wahlbeteiligung", "source": "election_turnout"},
+                    {"label": "Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Mitte", "source": "election_mitte"},
+                    {"label": "Tradition", "source": "election_tradition"},
+                    {"label": "Wahlsieger", "source": "election_winner"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Lange Schlangen vor Wahllokalen"},
+                {"hint": "Wahlbeobachter: Angespannte Atmosphaere"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Wahl 4: Stabilitaet in stuermischen Zeiten waehlen",
+                "frame": (
+                    "Blobtopia steht vor einer schwierigen Wahl. Umso "
+                    "wichtiger ist Besonnenheit. Wer aus Wut waehlt, "
+                    "riskiert Instabilitaet. Die Buerger sollten auf "
+                    "Erfahrung und Kompetenz setzen — nicht auf Protest."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental: Stabiler Kompass in der Krise",
+                "frame": (
+                    "In Gruental waehlen die Buerger mit ruhiger Hand. "
+                    "Stabilitaet und Ordnung stehen an erster Stelle."
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Verantwortung waehlen, nicht Emotionen",
+                "frame": (
+                    "Krisenzeiten erfordern besonnene Fuehrung. "
+                    "Protestwahl ist keine Verantwortung, sondern Risiko."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "engaged", "desc": "Buergerin waehlt bewusst Stabilitaet"},
+                    {"district": 3, "mood": "moderate", "desc": "Waehler waegt sorgfaeltig zwischen Wandel und Sicherheit ab"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Wahlbeteiligung", "source": "election_turnout"},
+                    {"label": "Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Mitte", "source": "election_mitte"},
+                    {"label": "Tradition", "source": "election_tradition"},
+                    {"label": "Wahlsieger", "source": "election_winner"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wahlabend unter Hochspannung"},
+                {"hint": "Sicherheitskraefte an Wahllokalen verstaerkt"},
+            ],
+        },
+    },
+
+    # ── 21. Tick 5800: CulturalEvent (Mittelfeld) ────────────────────
+    5800: {
+        "event_type": "CulturalEvent",
+        "event_label": "Kulturfest in Mittelfeld",
+        "district": 3,
+        "magnitude": 0.3,
+        "kurier": {
+            "lokalnachricht": {
+                "headline_hint": "Kulturfest in Mittelfeld: Ein Moment der Ruhe",
+                "frame": (
+                    "Nach turbulenten Wochen bietet das Kulturfest in "
+                    "Mittelfeld einen Moment der Entspannung. Kultur als "
+                    "Kitt einer gespaltenen Gesellschaft."
+                ),
+                "focus_district": 3,
+            },
+            "leitartikel": {
+                "headline_hint": "Kultur in Krisenzeiten: Beruhigung von unten",
+                "frame": (
+                    "Das Fest zeigt: Auch in schwierigen Zeiten finden "
+                    "Menschen zusammen, wenn man ihnen Raum dafuer gibt."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Zusammenhalt braucht Raeume der Begegnung",
+                "frame": (
+                    "Kulturelle Veranstaltungen sind mehr als Unterhaltung — "
+                    "sie sind Orte des Dialogs und der Heilung."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "satisfied", "desc": "Hafenviertel-Bewohnerin genoss den friedlichen Abend"},
+                    {"district": 4, "mood": "calm", "desc": "Industriezone-Bewohner kam zum Fest und fand Gespraech"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Bezirksdaten Mittelfeld",
+                "metrics": [
+                    {"label": "Zufriedenheit Mittelfeld", "source": "avg_satisfaction_district_3"},
+                    {"label": "Vertrauen Mittelfeld", "source": "avg_trust_district_3"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Besucherzahlen trotz Krisenzeit stabil"},
+                {"hint": "Kuenstler rufen zu Zusammenhalt auf"},
+            ],
+        },
+        "blobspiegel": {
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld feiert Gemeinschaft",
+                "frame": (
+                    "Das Kulturfest in Mittelfeld bringt die Nachbarschaft "
+                    "zusammen. Familien, Vereine und Gewerbetreibende feiern "
+                    "gemeinsam — ein Zeichen gelebter Gemeinschaft."
+                ),
+                "focus_district": 3,
+            },
+            "leitartikel": {
+                "headline_hint": "Gemeinschaft staerken in schwierigen Zeiten",
+                "frame": (
+                    "Das Fest in Mittelfeld beweist: Die Mitte haelt. "
+                    "Gemeinschaft entsteht nicht durch Politik, sondern "
+                    "durch Zusammenleben."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Normalitaet ist eine Staerke",
+                "frame": (
+                    "In Zeiten der Aufregung tut Normalitaet gut. "
+                    "Das Fest erinnert daran, was wirklich zaehlt: "
+                    "Nachbarschaft und Zusammenhalt."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "satisfied", "desc": "Nachbarin freut sich ueber gelungenes Fest"},
+                    {"district": 0, "mood": "calm", "desc": "Gruental-Bewohnerin kam gern nach Mittelfeld zum Feiern"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Mittelfeld im Ueberblick",
+                "metrics": [
+                    {"label": "Zufriedenheit Mittelfeld", "source": "avg_satisfaction_district_3"},
+                    {"label": "Vertrauen Mittelfeld", "source": "avg_trust_district_3"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Fest wird zur jaehrlichen Tradition"},
+                {"hint": "Lokale Vereine praesentieren sich erfolgreich"},
+            ],
+        },
+    },
+
+    # ── 22. Tick 6200: CivicSuccess (Industriezone) ──────────────────
+    6200: {
+        "event_type": "CivicSuccess",
+        "event_label": "Buergerbeteiligung erfolgreich (Industriezone)",
+        "district": 4,
+        "magnitude": 0.6,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Aktivierung wirkt: Industriezone zeigt Staerke von unten",
+                "frame": (
+                    "Die Industriezone beweist, dass Empowerment moeglich ist. "
+                    "Trotz aller Widrigkeiten haben die Buerger ein Projekt "
+                    "auf die Beine gestellt, das Massstabe setzt. "
+                    "Partizipation ist der Schluessel — wenn sie ernst gemeint "
+                    "und mit Ressourcen hinterlegt ist."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Industriezone: Buerger nehmen Zukunft selbst in die Hand",
+                "frame": (
+                    "Das erfolgreiche Buergerprojekt in der Industriezone "
+                    "zeigt: Wo Menschen Verantwortung uebernehmen duerfen, "
+                    "entsteht Veraenderung."
+                ),
+                "focus_district": 4,
+            },
+            "kommentar": {
+                "headline_hint": "Empowerment ist keine Floskel — es funktioniert",
+                "frame": (
+                    "Der Erfolg zeigt: Wenn man Menschen die Mittel gibt, "
+                    "gestalten sie ihre Umgebung. Mehr Beteiligung wagen!"
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "proud", "desc": "Projektleiterin berichtet vom Weg zum Erfolg"},
+                    {"district": 2, "mood": "engaged", "desc": "Hafenviertel-Bewohner will Konzept uebernehmen"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Buergerbeteiligung Industriezone",
+                "metrics": [
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                    {"label": "Vertrauen Industriezone", "source": "avg_trust_district_4"},
+                    {"label": "Protestneigung Industriezone", "source": "avg_protest_district_4"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Stiftung foerdert weiteres Buergerprojekt"},
+                {"hint": "Stadtverwaltung will Modell uebertragen"},
+            ],
+        },
+        "blobspiegel": {
+            "lokalnachricht": {
+                "headline_hint": "Erfolgreiches Buergerprojekt in der Industriezone",
+                "frame": (
+                    "In der Industriezone haben Buerger durch Eigeninitiative "
+                    "ein beachtliches Projekt realisiert. Ein Beweis, dass "
+                    "Verantwortung vor Ort mehr bewirkt als Fordern vom Staat."
+                ),
+                "focus_district": 4,
+            },
+            "leitartikel": {
+                "headline_hint": "Eigeninitiative als Vorbild: Industriezone macht es vor",
+                "frame": (
+                    "Das Projekt zeigt: Wenn Buerger selbst anpacken, statt "
+                    "auf die Politik zu warten, entsteht Positives. "
+                    "Eigenverantwortung ist der beste Motor fuer Wandel."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Selbst ist der Buerger",
+                "frame": (
+                    "Nicht immer braucht es Foerderprogramme und Subventionen. "
+                    "Manchmal reicht der Wille, etwas zu veraendern."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "satisfied", "desc": "Buerger applaudiert der Eigeninitiative"},
+                    {"district": 0, "mood": "satisfied", "desc": "Vereinsvorsitzender sieht bestaetigt: Selbsthilfe wirkt"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Industriezone aktuell",
+                "metrics": [
+                    {"label": "Zufriedenheit Industriezone", "source": "avg_satisfaction_district_4"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Bezirksrat wuerdigt Buergerprojekt"},
+                {"hint": "Weitere Initiativen in Planung"},
+            ],
+        },
+    },
+
+    # ── 23. Tick 6570: PolicyChange "Sozialreform" ───────────────────
+    6570: {
+        "event_type": "PolicyChange",
+        "event_label": "Politikwechsel: Sozialreform",
+        "policy": "Sozialreform",
+        "ideology_shift": -0.36,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Ueberfaellige Sozialreform: Ein Schritt in die richtige Richtung",
+                "frame": (
+                    "Die Sozialreform ist ein historischer Moment fuer Blobtopia. "
+                    "Nach Jahren wachsender Ungleichheit und sozialer Spannungen "
+                    "wird endlich umgesteuert. Die Reform adressiert strukturelle "
+                    "Probleme und gibt den Benachteiligten eine reale Perspektive. "
+                    "Ueberfaellig — und doch erst der Anfang."
+                ),
+                "quote_districts": [4, 2],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel: Endlich werden wir gehoert",
+                "frame": (
+                    "Im Hafenviertel wird die Sozialreform mit Erleichterung "
+                    "aufgenommen. Bewohner hoffen auf spuerbare Verbesserungen."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Reform ist kein Geschenk, sondern laengst verdient",
+                "frame": (
+                    "Die Reform korrigiert, was laengst haette korrigiert "
+                    "werden muessen. Kein Grund zur Euphorie — aber ein "
+                    "ueberfaelliger Anfang."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "satisfied", "desc": "Arbeiterin sieht erste Hoffnung auf konkrete Hilfe"},
+                    {"district": 2, "mood": "moderate", "desc": "Familienvater will abwarten, ob Reform ankommt"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Sozialreform: Kerndaten",
+                "metrics": [
+                    {"label": "Einkommen Industriezone", "source": "avg_income_district_4"},
+                    {"label": "Einkommen Hafenviertel", "source": "avg_income_district_2"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Sozialverband begrueszt Reform als Meilenstein"},
+                {"hint": "Gewerkschaft fordert zuegige Umsetzung"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Sozialreform: Guter Wille, offene Rechnung",
+                "frame": (
+                    "Die Sozialreform mag gut gemeint sein, doch die Kosten "
+                    "sind enorm und die Buerokratie wird wachsen. Wer bezahlt? "
+                    "Der Mittelstand, der ohnehin unter Druck steht. Reformen "
+                    "muessen finanzierbar sein, sonst schaden sie am Ende "
+                    "denen, die sie schuetzen sollen."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Mittelfeld: Wer traegt die Kosten der Sozialreform?",
+                "frame": (
+                    "In Mittelfeld fragen sich viele Buerger, ob die Reform "
+                    "am Ende auf ihre Kosten geht. Skepsis ist berechtigt."
+                ),
+                "focus_district": 3,
+            },
+            "kommentar": {
+                "headline_hint": "Reform mit Augenmass — oder Ueberforderung des Systems",
+                "frame": (
+                    "Soziale Absicherung ist wichtig. Aber eine Reform, "
+                    "die den Haushalt sprengt und Buerokratie aufblaeht, "
+                    "ist keine Loesung, sondern ein neues Problem."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 3, "mood": "worried", "desc": "Steuerzahler fuerchtet Mehrbelastung"},
+                    {"district": 0, "mood": "frustrated", "desc": "Unternehmerin warnt vor Buerokratielawine"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Reformkosten",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Einkommen Mittelfeld", "source": "avg_income_district_3"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Rechnungshof: Finanzierungsfragen offen"},
+                {"hint": "Wirtschaftsverband warnt vor Kostenspirale"},
+            ],
+        },
+    },
+
+    # ── 24. Tick 6900: EconomicBoom (Gruental + Hafenviertel) ────────
+    6900: {
+        "event_type": "EconomicBoom",
+        "event_label": "Wirtschaftsboom (Gruental & Hafenviertel)",
+        "affected_districts": [0, 2],
+        "magnitude": 0.3,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Erholung erreicht endlich auch die Schwachen",
+                "frame": (
+                    "Zum ersten Mal profitiert auch das Hafenviertel von "
+                    "wirtschaftlichem Wachstum. Ein Zeichen, dass die "
+                    "Sozialreform erste Wirkung zeigt? Die Richtung stimmt — "
+                    "aber die Schere bleibt offen."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel spuert ersten Aufschwung",
+                "frame": (
+                    "Steigende Einkommen und neue Geschaefte: Im Hafenviertel "
+                    "zeigen sich erste Zeichen wirtschaftlicher Erholung."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Wenn Politik wirkt: Erste Fruechte der Reform",
+                "frame": (
+                    "Der Boom in bisher benachteiligten Bezirken zeigt: "
+                    "Gezielte Politik kann etwas veraendern. Weiter so — "
+                    "aber nicht nachlassen."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 2, "mood": "satisfied", "desc": "Kleinunternehmer sieht mehr Kunden im Laden"},
+                    {"district": 4, "mood": "calm", "desc": "Arbeiter freut sich fuer Hafenviertel, will Gleiches fuer sich"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wirtschaftsdaten",
+                "metrics": [
+                    {"label": "Einkommen Hafenviertel", "source": "avg_income_district_2"},
+                    {"label": "Einkommen Gruental", "source": "avg_income_district_0"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Sozialreform zeigt erste Wirkung"},
+                {"hint": "Wirtschaftsfoerderung fuer Hafenviertel bewilligt"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Wirtschaft stabilisiert sich — auch in der Breite",
+                "frame": (
+                    "Erfreuliche Nachrichten: Die Wirtschaft waechst nun auch "
+                    "in Gruental und dem Hafenviertel. Die Rahmenbedingungen "
+                    "stimmen — der Markt reguliert sich. Ein Zeichen, dass "
+                    "Geduld und Stabilitaet sich auszahlen."
+                ),
+                "quote_districts": [0, 3],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental: Wirtschaft blueht wie gewohnt",
+                "frame": (
+                    "In Gruental freuen sich die Buerger ueber stabiles "
+                    "Wachstum. Der Bezirk bleibt wirtschaftlich solide."
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Der Markt liefert — wenn man Geduld hat",
+                "frame": (
+                    "Die aktuellen Zahlen zeigen: Wirtschaftswachstum "
+                    "kommt mit der Zeit bei allen an. Panikmache war "
+                    "uebertrieben."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "satisfied", "desc": "Landwirt aus Gruental sieht stabile Konjunktur"},
+                    {"district": 3, "mood": "calm", "desc": "Mittelfeld-Buerger sieht positive Entwicklung"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Konjunkturdaten",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Einkommen Gruental", "source": "avg_income_district_0"},
+                    {"label": "Einkommensveraenderung", "source": "income_change"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Wirtschaftsinstitut bestaetigt Aufwaertstrend"},
+                {"hint": "Arbeitsmarkt entspannt sich weiter"},
+            ],
+        },
+    },
+
+    # ── 25. Tick 7100: IssueDebate "Zukunft Blobtopias" ─────────────
+    7100: {
+        "event_type": "IssueDebate",
+        "event_label": "Debatte: Zukunft Blobtopias",
+        "topic": "Zukunft Blobtopias",
+        "intensity": 0.7,
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Zukunft gerecht gestalten: Blobtopia braucht eine Vision",
+                "frame": (
+                    "Die abschliessende Debatte um Blobtopias Zukunft muss "
+                    "die Lehren der letzten Jahre ziehen: Ungleichheit, "
+                    "Konflikte und Vertrauenskrisen waren keine Zufaelle, "
+                    "sondern Ergebnis politischer Entscheidungen. Die Zukunft "
+                    "muss gerechter werden — oder die Spaltung wird bleiben."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel blickt nach vorn: Was muss sich aendern?",
+                "frame": (
+                    "Im Hafenviertel diskutieren die Bewohner ueber die "
+                    "Zukunft. Teilhabe, Bildung und faire Loehne stehen "
+                    "ganz oben auf der Wunschliste."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Die Zukunft wird nur gerecht oder gar nicht",
+                "frame": (
+                    "Wer die Zukunft Blobtopias gestalten will, muss "
+                    "Gerechtigkeit zum Leitprinzip machen. Alles andere "
+                    "ist Verwaltung des Status quo."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "satisfied", "desc": "Jugendlicher aus der Industriezone will mitgestalten"},
+                    {"district": 2, "mood": "engaged", "desc": "Bewohnerin fordert langfristige Investitionen in Bildung"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Blobtopia heute",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                    {"label": "Protestneigung gesamt", "source": "avg_protest_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Zukunftskonferenz bringt alle Bezirke zusammen"},
+                {"hint": "Fortschrittspartei legt Zukunftsprogramm vor"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Zukunft sichern: Stabilitaet als Fundament fuer Blobtopia",
+                "frame": (
+                    "Die Zukunftsdebatte muss mit Augenmass gefuehrt werden. "
+                    "Blobtopia braucht keine Revolution, sondern Evolution. "
+                    "Stabilitaet, wirtschaftliche Vernunft und gesellschaftlicher "
+                    "Zusammenhalt sind die Pfeiler einer guten Zukunft — "
+                    "nicht ideologische Experimente."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental: Die Zukunft liegt in bewaehrten Werten",
+                "frame": (
+                    "In Gruental setzt man auf Kontinuitaet. Bewaehrtes "
+                    "soll bewahrt werden — mit behutsamer Weiterentwicklung."
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Stabilitaet ist kein Stillstand — sie ist Voraussetzung",
+                "frame": (
+                    "Wer Stabilitaet als Rueckschritt diffamiert, hat nicht "
+                    "verstanden, dass Fortschritt ein festes Fundament braucht."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "satisfied", "desc": "Unternehmerin setzt auf wirtschaftliche Kontinuitaet"},
+                    {"district": 3, "mood": "moderate", "desc": "Buerger will praktische Loesungen statt grosser Worte"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Blobtopia in Zahlen",
+                "metrics": [
+                    {"label": "Einkommen gesamt", "source": "avg_income_all"},
+                    {"label": "Zufriedenheit gesamt", "source": "avg_satisfaction_all"},
+                    {"label": "Vertrauen gesamt", "source": "avg_trust_all"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Mitte-Partei stellt Zukunftsagenda vor"},
+                {"hint": "Wirtschaftsverband mahnt zu Realismus"},
+            ],
+        },
+    },
+
+    # ── 26. Tick 7300: Election (Wahl 5, final) ─────────────────────
+    7300: {
+        "event_type": "Election",
+        "event_label": "Wahl 5 (Abschlusswahl: nach Sozialreform und Buergerbeteiligung)",
+        "kurier": {
+            "leitartikel": {
+                "headline_hint": "Wahl 5: Die letzte Weichenstellung fuer Blobtopia",
+                "frame": (
+                    "Die fuenfte und letzte Wahl entscheidet ueber die "
+                    "langfristige Richtung Blobtopias. Nach Sozialreform, "
+                    "Buergerbeteiligung und hitzigen Debatten liegt die Zukunft "
+                    "in den Haenden der Waehler. Die Wahlbeteiligung wird zeigen, "
+                    "ob die Demokratie gestaerkt aus der Krise hervorgeht."
+                ),
+                "quote_districts": [2, 4],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Hafenviertel: Letzte Chance auf Wandel nutzen",
+                "frame": (
+                    "Im Hafenviertel mobilisieren Initiativen fuer hohe "
+                    "Wahlbeteiligung. Die Sozialreform hat Hoffnung geweckt — "
+                    "jetzt soll sie abgesichert werden."
+                ),
+                "focus_district": 2,
+            },
+            "kommentar": {
+                "headline_hint": "Das letzte Wort haben die Buerger",
+                "frame": (
+                    "Diese Wahl ist das Fazit einer langen Reise. "
+                    "Jede Stimme zaehlt — fuer eine gerechtere Zukunft."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 4, "mood": "satisfied", "desc": "Arbeiterin will Erfolge der Sozialreform absichern"},
+                    {"district": 2, "mood": "engaged", "desc": "Aktivist ruft Nachbarn zum Waehlen auf"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Wahlbeteiligung", "source": "election_turnout"},
+                    {"label": "Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Mitte", "source": "election_mitte"},
+                    {"label": "Tradition", "source": "election_tradition"},
+                    {"label": "Wahlsieger", "source": "election_winner"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Abschlusswahl: Historischer Moment fuer Blobtopia"},
+                {"hint": "Alle Parteien rufen zur maximalen Beteiligung auf"},
+            ],
+        },
+        "blobspiegel": {
+            "leitartikel": {
+                "headline_hint": "Wahl 5: Bilanz ziehen und klug entscheiden",
+                "frame": (
+                    "Die letzte Wahl ist die Zeit fuer eine nuechterne Bilanz. "
+                    "Was hat funktioniert, was nicht? Die Buerger sollten "
+                    "mit Bedacht waehlen — fuer Stabilitaet, Zusammenhalt "
+                    "und eine realistische Zukunft."
+                ),
+                "quote_districts": [3, 0],
+                "quote_count": 2,
+            },
+            "lokalnachricht": {
+                "headline_hint": "Gruental: Mit ruhiger Hand in die Zukunft",
+                "frame": (
+                    "In Gruental geht man gelassen zur letzten Wahl. "
+                    "Die Buerger setzen auf Erfahrung und Bestaendigkeit."
+                ),
+                "focus_district": 0,
+            },
+            "kommentar": {
+                "headline_hint": "Vernunft waehlen — fuer Blobtopias Zukunft",
+                "frame": (
+                    "Am Ende zaehlt nicht die lauteste Stimme, sondern "
+                    "die klugste Entscheidung. Blobtopia verdient "
+                    "verantwortungsvolle Politik."
+                ),
+            },
+            "leserbriefe": {
+                "count": 2,
+                "criteria": [
+                    {"district": 0, "mood": "calm", "desc": "Buergerin waehlt ueberzeugt fuer Kontinuitaet"},
+                    {"district": 3, "mood": "moderate", "desc": "Waehler zieht Bilanz und entscheidet sich bewusst"},
+                ],
+            },
+            "zahlen_box": {
+                "headline": "Wahlergebnis",
+                "metrics": [
+                    {"label": "Wahlbeteiligung", "source": "election_turnout"},
+                    {"label": "Fortschritt", "source": "election_fortschritt"},
+                    {"label": "Mitte", "source": "election_mitte"},
+                    {"label": "Tradition", "source": "election_tradition"},
+                    {"label": "Wahlsieger", "source": "election_winner"},
+                ],
+            },
+            "kurzmeldungen": [
+                {"hint": "Letzte Wahl: Blobtopia blickt gespannt auf Ergebnis"},
+                {"hint": "Wahlbueros oeffnen puenktlich in allen Bezirken"},
+            ],
+        },
+    },
+
+}

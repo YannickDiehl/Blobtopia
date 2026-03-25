@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Globtopia — Gesellschaftssimulation</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #e0e0e0; }
+    .header { background: #16213e; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f3460; }
+    .header h1 { font-size: 1.4rem; color: #e94560; }
+    .header .status { font-size: 0.85rem; color: #888; }
+    .header .status .connected { color: #4ecca3; }
+    .header .status .year { color: #e94560; font-weight: bold; font-size: 1.1rem; }
+    .main { display: grid; grid-template-columns: 1fr 380px; grid-template-rows: 1fr 1fr; gap: 12px; padding: 12px; height: calc(100vh - 52px); }
+    .city-map { grid-row: 1 / 3; background: #16213e; border-radius: 8px; padding: 12px; position: relative; }
+    .city-map canvas { width: 100%; height: 100%; border-radius: 4px; cursor: crosshair; }
+    .panel { background: #16213e; border-radius: 8px; padding: 12px; overflow-y: auto; }
+    .panel h2 { font-size: 1rem; color: #e94560; margin-bottom: 8px; border-bottom: 1px solid #0f3460; padding-bottom: 4px; }
+    .district { background: #0f3460; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 0.8rem; }
+    .district .name { font-weight: bold; color: #fff; }
+    .district .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; margin-top: 4px; }
+    .district .stats span { color: #aaa; }
+    .district .stats b { color: #e0e0e0; }
+    .party-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .party-bar div { height: 100%; }
+    .tweet { background: #0f3460; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 0.8rem; }
+    .tweet .meta { color: #888; font-size: 0.7rem; margin-bottom: 3px; }
+    .tweet .content { color: #e0e0e0; }
+    .events-panel { position: absolute; bottom: 12px; left: 12px; right: 12px; background: rgba(22,33,62,0.95); border-radius: 8px; padding: 10px; }
+    .events-panel h3 { font-size: 0.85rem; color: #e94560; margin-bottom: 6px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 4px; }
+    .btn { padding: 4px 10px; border: 1px solid #0f3460; border-radius: 4px; background: #1a1a2e; color: #e0e0e0; cursor: pointer; font-size: 0.75rem; transition: 0.15s; }
+    .btn:hover { background: #e94560; color: #fff; border-color: #e94560; }
+    .btn.pause { background: #4ecca3; color: #1a1a2e; border-color: #4ecca3; }
+    .btn.pause:hover { background: #3daa8a; }
+    .controls { display: flex; gap: 6px; align-items: center; }
+    .glob-tooltip { position: absolute; background: rgba(15,52,96,0.95); border: 1px solid #e94560; border-radius: 6px; padding: 8px 12px; font-size: 0.75rem; pointer-events: none; z-index: 10; display: none; min-width: 180px; }
+    .glob-tooltip .row { display: flex; justify-content: space-between; gap: 12px; }
+    .glob-tooltip .label { color: #888; }
+    .glob-tooltip .value { color: #fff; font-weight: bold; }
+    .gazette-item { background: #0f3460; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 0.8rem; }
+    .gazette-item .headline { font-weight: bold; color: #e94560; }
+    .gazette-item .body { color: #ccc; margin-top: 3px; }
+    .gazette-item .meta { color: #666; font-size: 0.7rem; margin-top: 2px; }
+    .tab-bar { display: flex; gap: 4px; margin-bottom: 8px; }
+    .tab { padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; background: #0f3460; color: #aaa; }
+    .tab.active { background: #e94560; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Globtopia</h1>
+    <div class="status">
+      <span id="connStatus">Verbinde...</span> |
+      <span class="year">Jahr <span id="year">0</span></span> |
+      Tick <span id="tick">0</span> |
+      <span id="pop">0</span> Bürger
+      <div class="controls" style="margin-top:4px">
+        <button class="btn pause" id="btnPause" onclick="togglePause()">Pause</button>
+        <button class="btn" onclick="triggerEvent('Election')">Wahl</button>
+        <button class="btn" onclick="triggerCrisis()">Wirtschaftskrise</button>
+        <button class="btn" onclick="triggerScandal()">Skandal</button>
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="city-map">
+      <canvas id="cityCanvas"></canvas>
+      <div class="glob-tooltip" id="tooltip"></div>
+    </div>
+    <div class="panel" id="rightPanel">
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchTab('demographics')">Distrikte</div>
+        <div class="tab" onclick="switchTab('twitter')">GlobTwitter</div>
+        <div class="tab" onclick="switchTab('gazette')">Gazette</div>
+      </div>
+      <div id="tabDemographics"></div>
+      <div id="tabTwitter" style="display:none"></div>
+      <div id="tabGazette" style="display:none"></div>
+    </div>
+  </div>
+
+<script>
+const DISTRICT_NAMES = ['Grüntal', 'Sonnenberg', 'Hafenviertel', 'Mittelfeld', 'Industriezone'];
+const DISTRICT_COLORS = ['#4ecca3', '#f0c929', '#5c9ded', '#f09a40', '#aaa'];
+const PARTY_COLORS = ['#e94560', '#5c9ded', '#f0c929', '#aaa'];
+const PARTY_NAMES = ['Fortschritt', 'Mitte', 'Tradition', 'Unabh.'];
+
+// District bounds: [x_min, y_min, x_max, y_max]
+const DISTRICT_BOUNDS = [
+  [0, 375, 150, 500],     // Grüntal
+  [350, 375, 500, 500],   // Sonnenberg
+  [0, 0, 150, 125],       // Hafenviertel
+  [350, 0, 500, 125],     // Mittelfeld
+  [125, 0, 375, 75],      // Industriezone
+];
+
+const STRUCTURES = [
+  { name: 'Parlament', x: 250, y: 280, r: 20, color: '#fff' },
+  { name: 'Marktplatz', x: 250, y: 240, r: 30, color: '#f0e8a0' },
+  { name: 'Medienzentrum', x: 220, y: 260, r: 12, color: '#e94560' },
+  { name: 'Zentralplatz', x: 250, y: 210, r: 25, color: '#ddd' },
+  { name: 'Universität', x: 250, y: 450, r: 18, color: '#c8a96e' },
+  { name: 'Bibliothek', x: 250, y: 50, r: 12, color: '#c8a96e' },
+];
+
+let globs = [];
+let paused = false;
+let canvas, ctx;
+let hoveredGlob = null;
+
+// --- WebSocket ---
+function connectWS() {
+  const ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onopen = () => { document.getElementById('connStatus').innerHTML = '<span class="connected">Verbunden</span>'; };
+  ws.onclose = () => { document.getElementById('connStatus').textContent = 'Getrennt'; setTimeout(connectWS, 3000); };
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'Welcome' || msg.type === 'GenerationUpdate') {
+      const snap = msg.generation;
+      globs = snap.globs || [];
+      document.getElementById('tick').textContent = snap.tick;
+      document.getElementById('year').textContent = snap.year;
+      document.getElementById('pop').textContent = globs.length;
+      drawCity();
+      fetchDemographics();
+      fetchTweets();
+      fetchGazette();
+    }
+    if (msg.type === 'SimulationStatus') {
+      paused = msg.paused;
+      document.getElementById('btnPause').textContent = paused ? 'Weiter' : 'Pause';
+    }
+  };
+}
+
+// --- API ---
+async function fetchDemographics() {
+  const res = await fetch('/api/demographics');
+  const data = await res.json();
+  renderDemographics(data);
+}
+
+async function fetchTweets() {
+  const res = await fetch('/api/tweets');
+  const data = await res.json();
+  renderTweets(data.tweets || []);
+}
+
+async function fetchGazette() {
+  const res = await fetch('/api/gazette');
+  const data = await res.json();
+  renderGazette(data.articles || []);
+}
+
+async function togglePause() {
+  await fetch(paused ? '/api/resume' : '/api/pause');
+  paused = !paused;
+  document.getElementById('btnPause').textContent = paused ? 'Weiter' : 'Pause';
+}
+
+async function triggerEvent(type, extra = {}) {
+  await fetch('/api/event', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, ...extra })
+  });
+}
+
+function triggerCrisis() {
+  const district = prompt('Distrikt (0-4, leer=alle):', '');
+  const severity = prompt('Schwere (0.1-1.0):', '0.5');
+  const affected = district === '' ? [] : [parseInt(district)];
+  triggerEvent('EconomicCrisis', { severity: parseFloat(severity) || 0.5, affected_districts: affected });
+}
+
+function triggerScandal() {
+  const party = prompt('Partei (0=Fortschritt, 1=Mitte, 2=Tradition, 3=Unabh.):', '1');
+  const magnitude = prompt('Stärke (0.1-1.0):', '0.5');
+  triggerEvent('Scandal', { target_party: parseInt(party) || 1, magnitude: parseFloat(magnitude) || 0.5 });
+}
+
+// --- Drawing ---
+function initCanvas() {
+  canvas = document.getElementById('cityCanvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  canvas.addEventListener('mousemove', onCanvasMove);
+  canvas.addEventListener('mouseleave', () => {
+    document.getElementById('tooltip').style.display = 'none';
+    hoveredGlob = null;
+  });
+}
+
+function resizeCanvas() {
+  const parent = canvas.parentElement;
+  canvas.width = parent.clientWidth - 24;
+  canvas.height = parent.clientHeight - 24;
+  drawCity();
+}
+
+function toScreen(x, y) {
+  const scale = Math.min(canvas.width, canvas.height) / 520;
+  const ox = (canvas.width - 500 * scale) / 2 + 10 * scale;
+  const oy = (canvas.height - 500 * scale) / 2 + 10 * scale;
+  return [ox + x * scale, oy + (500 - y) * scale]; // flip Y
+}
+
+function fromScreen(sx, sy) {
+  const scale = Math.min(canvas.width, canvas.height) / 520;
+  const ox = (canvas.width - 500 * scale) / 2 + 10 * scale;
+  const oy = (canvas.height - 500 * scale) / 2 + 10 * scale;
+  return [(sx - ox) / scale, 500 - (sy - oy) / scale];
+}
+
+function drawCity() {
+  if (!ctx) return;
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Background
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, w, h);
+
+  // Districts
+  DISTRICT_BOUNDS.forEach((b, i) => {
+    const [x1, y1] = toScreen(b[0], b[3]);
+    const [x2, y2] = toScreen(b[2], b[1]);
+    ctx.fillStyle = DISTRICT_COLORS[i] + '18';
+    ctx.strokeStyle = DISTRICT_COLORS[i] + '40';
+    ctx.lineWidth = 1;
+    ctx.fillRect(x1, y1, x2 - x1, y2 - y1);
+    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    // Label
+    ctx.fillStyle = DISTRICT_COLORS[i] + '80';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(DISTRICT_NAMES[i], x1 + 4, y1 + 12);
+  });
+
+  // Civic center
+  const [cx1, cy1] = toScreen(150, 325);
+  const [cx2, cy2] = toScreen(350, 175);
+  ctx.strokeStyle = '#ffffff20';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx1, cy1, cx2 - cx1, cy2 - cy1);
+
+  // Roads
+  const scale = Math.min(w, h) / 520;
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 3 * scale;
+  // Ost-West
+  let [rx1, ry1] = toScreen(0, 250); let [rx2, ry2] = toScreen(500, 250);
+  ctx.beginPath(); ctx.moveTo(rx1, ry1); ctx.lineTo(rx2, ry2); ctx.stroke();
+  // Nord-Süd
+  [rx1, ry1] = toScreen(250, 0); [rx2, ry2] = toScreen(250, 500);
+  ctx.beginPath(); ctx.moveTo(rx1, ry1); ctx.lineTo(rx2, ry2); ctx.stroke();
+
+  // Structures
+  STRUCTURES.forEach(s => {
+    const [sx, sy] = toScreen(s.x, s.y);
+    ctx.beginPath();
+    ctx.arc(sx, sy, s.r * scale * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = s.color + '30';
+    ctx.strokeStyle = s.color + '60';
+    ctx.lineWidth = 1;
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = s.color + '80';
+    ctx.font = `${8 * scale}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(s.name, sx, sy + s.r * scale * 0.3 + 10 * scale);
+    ctx.textAlign = 'left';
+  });
+
+  // Globs
+  const globRadius = Math.max(2.5, 3.5 * scale);
+  globs.forEach(g => {
+    const [gx, gy] = toScreen(g.pos.x, g.pos.y);
+    const color = DISTRICT_COLORS[g.district] || '#fff';
+    ctx.beginPath();
+    ctx.arc(gx, gy, globRadius * (0.8 + g.income * 0.04), 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.85;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    if (hoveredGlob && hoveredGlob.id === g.id) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  });
+}
+
+function onCanvasMove(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const [wx, wy] = fromScreen(mx, my);
+  const scale = Math.min(canvas.width, canvas.height) / 520;
+
+  let closest = null;
+  let closestDist = 15 / scale; // pixel tolerance
+
+  for (const g of globs) {
+    const dist = Math.sqrt((g.pos.x - wx) ** 2 + (g.pos.y - wy) ** 2);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = g;
+    }
+  }
+
+  const tooltip = document.getElementById('tooltip');
+  if (closest) {
+    hoveredGlob = closest;
+    const party = PARTY_NAMES[closest.political_state.party_affiliation] || '?';
+    const ideo = closest.attitudes.ideology.toFixed(1);
+    const ideoLabel = ideo < -1 ? 'links' : ideo > 1 ? 'rechts' : 'mitte';
+    tooltip.innerHTML = `
+      <div class="row"><span class="label">Distrikt</span><span class="value">${DISTRICT_NAMES[closest.district]}</span></div>
+      <div class="row"><span class="label">Einkommen</span><span class="value">${closest.income.toFixed(1)}</span></div>
+      <div class="row"><span class="label">Bildung</span><span class="value">${['keine','grundl.','höher','akad.'][closest.education_level]}</span></div>
+      <div class="row"><span class="label">Zufriedenheit</span><span class="value">${closest.attitudes.political_satisfaction.toFixed(1)}/10</span></div>
+      <div class="row"><span class="label">Ideologie</span><span class="value">${ideo} (${ideoLabel})</span></div>
+      <div class="row"><span class="label">Vertrauen</span><span class="value">${closest.attitudes.institutional_trust.toFixed(1)}/10</span></div>
+      <div class="row"><span class="label">Partei</span><span class="value">${party}</span></div>
+      <div class="row"><span class="label">Wahlbereit</span><span class="value">${closest.political_state.will_vote ? 'Ja' : 'Nein'}</span></div>
+      <div class="row"><span class="label">Protestbereit.</span><span class="value">${(closest.political_state.protest_readiness * 100).toFixed(0)}%</span></div>
+    `;
+    tooltip.style.display = 'block';
+    tooltip.style.left = Math.min(mx + 15, canvas.parentElement.clientWidth - 200) + 'px';
+    tooltip.style.top = Math.min(my + 15, canvas.parentElement.clientHeight - 200) + 'px';
+    drawCity();
+  } else if (hoveredGlob) {
+    hoveredGlob = null;
+    tooltip.style.display = 'none';
+    drawCity();
+  }
+}
+
+// --- Render Panels ---
+function renderDemographics(data) {
+  const el = document.getElementById('tabDemographics');
+  let html = '';
+  for (const d of data.districts || []) {
+    if (!d.count) continue;
+    const parties = d.parties || {};
+    const total = (parties.fortschritt||0) + (parties.mitte||0) + (parties.tradition||0) + (parties.unabhaengige||0);
+    const pctF = total ? (parties.fortschritt||0)/total*100 : 0;
+    const pctM = total ? (parties.mitte||0)/total*100 : 0;
+    const pctT = total ? (parties.tradition||0)/total*100 : 0;
+    const pctU = total ? (parties.unabhaengige||0)/total*100 : 0;
+    html += `<div class="district" style="border-left:3px solid ${DISTRICT_COLORS[d.district]}">
+      <div class="name">${DISTRICT_NAMES[d.district]} <span style="color:#888;font-weight:normal">(${d.count} Bürger)</span></div>
+      <div class="stats">
+        <span>Einkommen</span><b>${d.avg_income}</b>
+        <span>Zufriedenheit</span><b>${d.avg_satisfaction}/10</b>
+        <span>Ideologie</span><b>${d.avg_ideology > 0 ? '+' : ''}${d.avg_ideology}</b>
+        <span>Vertrauen</span><b>${d.avg_trust}/10</b>
+        <span>Wähler</span><b>${d.voters}/${d.count}</b>
+        <span>Protestber.</span><b>${(d.avg_protest_readiness*100).toFixed(0)}%</b>
+      </div>
+      <div class="party-bar">
+        <div style="width:${pctF}%;background:${PARTY_COLORS[0]}" title="Fortschritt ${pctF.toFixed(0)}%"></div>
+        <div style="width:${pctM}%;background:${PARTY_COLORS[1]}" title="Mitte ${pctM.toFixed(0)}%"></div>
+        <div style="width:${pctT}%;background:${PARTY_COLORS[2]}" title="Tradition ${pctT.toFixed(0)}%"></div>
+        <div style="width:${pctU}%;background:${PARTY_COLORS[3]}" title="Unabh. ${pctU.toFixed(0)}%"></div>
+      </div>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderTweets(tweets) {
+  const el = document.getElementById('tabTwitter');
+  let html = '';
+  for (const t of tweets.slice(0, 20)) {
+    const color = DISTRICT_COLORS[t.author_district] || '#888';
+    html += `<div class="tweet">
+      <div class="meta"><span style="color:${color}">${DISTRICT_NAMES[t.author_district]}</span> · Jahr ${t.year}, Tick ${t.tick}</div>
+      <div class="content">${t.content}</div>
+    </div>`;
+  }
+  el.innerHTML = html || '<div style="color:#666">Noch keine Tweets.</div>';
+}
+
+function renderGazette(articles) {
+  const el = document.getElementById('tabGazette');
+  let html = '';
+  for (const a of articles.slice(-15).reverse()) {
+    html += `<div class="gazette-item">
+      <div class="headline">${a.headline}</div>
+      <div class="body">${a.body}</div>
+      <div class="meta">Jahr ${a.year}, Tick ${a.tick}</div>
+    </div>`;
+  }
+  el.innerHTML = html || '<div style="color:#666">Noch keine Artikel.</div>';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tabDemographics').style.display = tab === 'demographics' ? '' : 'none';
+  document.getElementById('tabTwitter').style.display = tab === 'twitter' ? '' : 'none';
+  document.getElementById('tabGazette').style.display = tab === 'gazette' ? '' : 'none';
+  event.target.classList.add('active');
+}
+
+// --- Init ---
+initCanvas();
+connectWS();
+</script>
+</body>
+</html>

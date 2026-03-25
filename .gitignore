@@ -1,7 +1,42 @@
 node_modules/
 dist/
 .DS_Store
+
+# Environment
 .env
+.env.local
+.env.*.local
+
+# Lock files (using npm only)
+yarn.lock
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw*
+
+# Rust build
+target/
+
+# Generated/large data files
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.db.bak
+data/blobtopia_state.json
 
 # Generated timeline data (run `npm run export` to regenerate)
 public/data/timeline/ticks/
@@ -11,9 +46,12 @@ public/data/timeline/tweets.json
 public/data/timeline/globs-static.json
 public/data/timeline/glob-index.json
 public/data/timeline/buildings.json
-.vercel
 
 # 3D models (binary, tracked via Vercel upload)
 public/models/
 src/assets/models/
 *.glb
+
+# Deployment
+.vercel
+.now

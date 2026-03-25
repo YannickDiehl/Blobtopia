@@ -1,0 +1,64 @@
+use super::*;
+use std::f64::consts::FRAC_PI_4;
+
+// what phase of the time step is it?
+#[derive(Debug, Copy, Clone)]
+pub enum Phase {
+    REPRODUCE, // only called when going from previous step
+    INIT,      // setup
+    PRE,       // before each step
+    ORIENT,
+    MOVE,
+    ACT,
+    POST,  // after each step
+    FINAL,
+}
+
+pub trait StepBehaviour: Send + Sync {
+    // if you need &mut self, use Cell or RefCell
+    fn apply(&self, phase: Phase, generation: &mut Generation, sim: &Simulation);
+}
+
+pub trait ReproductionBehaviour: Send + Sync {
+    fn reproduce(&self, creatures: &Vec<Creature>, sim: &Simulation) -> Vec<Creature>;
+}
+
+mod reproduction;
+pub use reproduction::*;
+
+mod wander;
+pub use wander::*;
+
+mod homesick;
+pub use homesick::*;
+
+mod satisfied;
+pub use satisfied::*;
+
+// move is a reserved word
+mod r#move;
+pub use r#move::*;
+
+mod scavenge;
+pub use scavenge::*;
+
+mod starve;
+pub use starve::*;
+
+mod old_age;
+pub use old_age::*;
+
+mod edge_home;
+pub use edge_home::*;
+
+mod cannibalism;
+pub use cannibalism::*;
+
+mod social_influence;
+pub use social_influence::*;
+
+mod voting;
+pub use voting::*;
+
+mod protest;
+pub use protest::*;

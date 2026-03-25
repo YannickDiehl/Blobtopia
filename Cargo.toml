@@ -1,0 +1,7 @@
+[workspace]
+members = [
+  "crates/simulation-core",
+  "crates/precompute",
+  "crates/server",
+]
+resolver = "2"

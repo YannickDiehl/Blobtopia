@@ -1,0 +1,2003 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<wfs:FeatureCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd http://www.opengis.net/gml/3.2 http://schemas.opengis.net/gml/3.2.1/gml.xsd http://inspire.ec.europa.eu/schemas/bu-core3d/4.0 https://inspire-hessen.de/ows/services/org.2.ef07833e-78a6-4c2c-a895-e31de788aac3_wfs?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;OUTPUTFORMAT=application%2Fgml%2Bxml%3B+version%3D3.2&amp;TYPENAME=bu-core3d:Building&amp;NAMESPACES=xmlns(bu-core3d,http%3A%2F%2Finspire.ec.europa.eu%2Fschemas%2Fbu-core3d%2F4.0)" xmlns:wfs="http://www.opengis.net/wfs/2.0" timeStamp="2026-03-18T09:28:52Z" xmlns:gss="http://www.isotc211.org/2005/gss" xmlns:gn="http://inspire.ec.europa.eu/schemas/gn/4.0" xmlns:gsr="http://www.isotc211.org/2005/gsr" xmlns:gts="http://www.isotc211.org/2005/gts" xmlns:ogc="http://www.opengis.net/ogc" xmlns:sc="http://www.interactive-instruments.de/ShapeChange/AppInfo" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:bu-base="http://inspire.ec.europa.eu/schemas/bu-base/4.0" xmlns:bu-core3d="http://inspire.ec.europa.eu/schemas/bu-core3d/4.0" xmlns:base="http://inspire.ec.europa.eu/schemas/base/3.3" xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml/3.2" numberMatched="unknown" numberReturned="0">
+  <!--NOTE: numberReturned attribute should be 'unknown' as well, but this would not validate against the current version of the WFS 2.0 schema (change upcoming). See change request (CR 144): https://portal.opengeospatial.org/files?artifact_id=43925.-->
+  <wfs:member>
+    <bu-core3d:Building gml:id="Building_DEHE06210000EfpY">
+      <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/Building_DEHE06210000EfpY</gml:identifier>
+      <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+      <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+      <bu-base:externalReference>
+        <bu-base:ExternalReference>
+          <bu-base:informationSystem>http://repository.gdi-de.org/schemas/adv/citygml/fdv/art.htm#_9100</bu-base:informationSystem>
+          <bu-base:informationSystemName>
+            <gco:CharacterString>DEHE06210000EfpY</gco:CharacterString>
+          </bu-base:informationSystemName>
+          <bu-base:reference>urn:adv:oid:DEHE06210000EfpY</bu-base:reference>
+        </bu-base:ExternalReference>
+      </bu-base:externalReference>
+      <bu-base:heightAboveGround>
+        <bu-base:HeightAboveGround>
+          <bu-base:heightReference xsi:nil="true"/>
+          <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+          <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+          <bu-base:value uom="m">3.295</bu-base:value>
+        </bu-base:HeightAboveGround>
+      </bu-base:heightAboveGround>
+      <bu-base:inspireId>
+        <base:Identifier>
+          <base:localId>Building_DEHE06210000EfpY</base:localId>
+          <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+        </base:Identifier>
+      </bu-base:inspireId>
+      <bu-base:currentUse>
+        <bu-base:CurrentUse>
+          <bu-base:currentUse xlink:href="http://inspire.ec.europa.eu/codelist/CurrentUseValue/residential"/>
+          <bu-base:percentage xsi:nil="true"/>
+        </bu-base:CurrentUse>
+      </bu-base:currentUse>
+      <bu-core3d:geometry3DLoD2>
+        <bu-core3d:BuildingGeometry3DLoD2>
+          <bu-core3d:geometryMultiSurface>
+            <!--Inlined geometry 'GEOMETRY_51259405-b376-4069-921b-0fb9d44b6bac'-->
+            <gml:MultiSurface gml:id="GEOMETRY_51259405-b376-4069-921b-0fb9d44b6bac" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_90218e6e-e9cd-4654-83f1-5267d347c118" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.811072 8.764781 50.811010 8.765002 50.811010 8.765002 50.811072 8.764781 50.811072 8.764781</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_daca87dc-88e1-4796-9e53-84b7098a5b52" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.811052 8.764771 50.811072 8.764781 50.811072 8.764781 50.811052 8.764771 50.811052 8.764771</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_34435d06-9cfb-46a1-b7c9-65ceaaed7285" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.811014 8.764907 50.811052 8.764771 50.811052 8.764771 50.811014 8.764907 50.811014 8.764907</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_feba6e93-0fa5-4d41-ab1f-e0c650e0fed6" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.810997 8.764970 50.811014 8.764907 50.811014 8.764907 50.810997 8.764970 50.810997 8.764970</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_67054747-215e-4feb-a431-3da1e9861eff" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.811010 8.765002 50.810997 8.764970 50.810997 8.764970 50.811010 8.765002 50.811010 8.765002</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_7c59d38b-6637-4341-91c3-74d8069e79b2" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.811014 8.764907 50.810997 8.764970 50.811010 8.765002 50.811072 8.764781 50.811052 8.764771 50.811014 8.764907</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_af8c54e1-8a41-45bd-8c46-138123b15890" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.811052 8.764771 50.811072 8.764781 50.811010 8.765002 50.810997 8.764970 50.811014 8.764907 50.811052 8.764771</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+            </gml:MultiSurface>
+          </bu-core3d:geometryMultiSurface>
+          <bu-core3d:terrainIntersection>
+            <!--Inlined geometry 'GEOMETRY_924ed526-15c0-4eb0-b83b-3367c4c49fb0'-->
+            <gml:MultiCurve gml:id="GEOMETRY_924ed526-15c0-4eb0-b83b-3367c4c49fb0" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_4e16eb9e-b983-4a9b-a73d-4167b3bfae53" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.811052 8.764771 50.811053 8.764771 50.811055 8.764773 50.811062 8.764776 50.811069 8.764779 50.811071 8.764781 50.811072 8.764781</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_6cbaac88-f436-4900-812e-03cb8a42288f" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.811072 8.764781 50.811071 8.764783 50.811071 8.764783 50.811068 8.764793 50.811067 8.764797 50.811066 8.764803 50.811063 8.764812 50.811063 8.764813 50.811062 8.764815 50.811060 8.764823 50.811059 8.764826 50.811057 8.764832 50.811055 8.764840 50.811055 8.764842 50.811053 8.764847 50.811052 8.764852 50.811051 8.764854 50.811049 8.764862 50.811047 8.764868 50.811046 8.764872 50.811044 8.764879 50.811044 8.764882 50.811043 8.764883 50.811041 8.764891 50.811039 8.764897 50.811038 8.764901 50.811036 8.764911 50.811035 8.764911 50.811033 8.764921 50.811032 8.764925 50.811030 8.764931 50.811028 8.764940 50.811027 8.764941 50.811027 8.764943 50.811025 8.764951 50.811024 8.764954 50.811022 8.764960 50.811020 8.764968 50.811019 8.764970 50.811018 8.764975 50.811016 8.764980 50.811016 8.764982 50.811014 8.764990 50.811012 8.764996 50.811011 8.765000 50.811010 8.765002</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_55678c28-0389-4f58-9dde-d9e4f2d356ea" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.810997 8.764970 50.811000 8.764977 50.811002 8.764982 50.811006 8.764993 50.811008 8.764996 50.811009 8.764998 50.811010 8.765002</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_e756a046-8f2e-4346-87f1-8a0dfc166a57" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.811014 8.764907 50.811013 8.764911 50.811012 8.764916 50.811009 8.764925 50.811009 8.764926 50.811009 8.764927 50.811006 8.764936 50.811005 8.764940 50.811003 8.764946 50.811001 8.764954 50.811001 8.764956 50.811000 8.764959 50.810998 8.764965 50.810997 8.764968 50.810997 8.764970</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_eb92d25a-7e0f-4e8d-8845-e197d3a0824c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.811052 8.764771 50.811050 8.764778 50.811049 8.764783 50.811047 8.764788 50.811045 8.764797 50.811044 8.764798 50.811044 8.764799 50.811042 8.764808 50.811041 8.764812 50.811039 8.764818 50.811037 8.764826 50.811036 8.764827 50.811035 8.764831 50.811034 8.764837 50.811033 8.764840 50.811031 8.764847 50.811029 8.764854 50.811028 8.764857 50.811026 8.764863 50.811025 8.764867 50.811025 8.764869 50.811023 8.764877 50.811021 8.764883 50.811020 8.764887 50.811017 8.764895 50.811017 8.764896 50.811017 8.764897 50.811014 8.764906 50.811014 8.764907</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+            </gml:MultiCurve>
+          </bu-core3d:terrainIntersection>
+          <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+          <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+        </bu-core3d:BuildingGeometry3DLoD2>
+      </bu-core3d:geometry3DLoD2>
+    </bu-core3d:Building>
+  </wfs:member>
+  <wfs:member>
+    <bu-core3d:Building gml:id="Building_DEHE06210000Efq6">
+      <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/Building_DEHE06210000Efq6</gml:identifier>
+      <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+      <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+      <bu-base:externalReference>
+        <bu-base:ExternalReference>
+          <bu-base:informationSystem>http://repository.gdi-de.org/schemas/adv/citygml/fdv/art.htm#_9100</bu-base:informationSystem>
+          <bu-base:informationSystemName>
+            <gco:CharacterString>DEHE06210000Efq6</gco:CharacterString>
+          </bu-base:informationSystemName>
+          <bu-base:reference>urn:adv:oid:DEHE06210000Efq6</bu-base:reference>
+        </bu-base:ExternalReference>
+      </bu-base:externalReference>
+      <bu-base:heightAboveGround>
+        <bu-base:HeightAboveGround>
+          <bu-base:heightReference xsi:nil="true"/>
+          <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+          <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+          <bu-base:value uom="m">3.823</bu-base:value>
+        </bu-base:HeightAboveGround>
+      </bu-base:heightAboveGround>
+      <bu-base:inspireId>
+        <base:Identifier>
+          <base:localId>Building_DEHE06210000Efq6</base:localId>
+          <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+        </base:Identifier>
+      </bu-base:inspireId>
+      <bu-base:currentUse>
+        <bu-base:CurrentUse>
+          <bu-base:currentUse xlink:href="http://inspire.ec.europa.eu/codelist/CurrentUseValue/residential"/>
+          <bu-base:percentage xsi:nil="true"/>
+        </bu-base:CurrentUse>
+      </bu-base:currentUse>
+      <bu-core3d:geometry3DLoD2>
+        <bu-core3d:BuildingGeometry3DLoD2>
+          <bu-core3d:geometryMultiSurface>
+            <!--Inlined geometry 'GEOMETRY_2b5325a2-9749-45d9-b51a-20511b2279ae'-->
+            <gml:MultiSurface gml:id="GEOMETRY_2b5325a2-9749-45d9-b51a-20511b2279ae" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_66714b31-512d-40b1-aff4-f792589d0150" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.810788 8.765101 50.810839 8.765044 50.810839 8.765044 50.810788 8.765101 50.810788 8.765101</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_702684c8-6dba-4964-9b3f-61768081c617" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.810839 8.765044 50.810868 8.765109 50.810818 8.765166 50.810788 8.765101 50.810839 8.765044</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_8cece573-f17a-4330-90ac-2babecaf6944" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.810868 8.765109 50.810818 8.765166 50.810818 8.765166 50.810868 8.765109 50.810868 8.765109</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_021467be-479e-4b5b-b746-789bb2d375e5" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.810839 8.765044 50.810868 8.765109 50.810868 8.765109 50.810839 8.765044 50.810839 8.765044</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_56cb96b6-dd19-4538-8b6b-f584ebc4405c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.810818 8.765166 50.810788 8.765101 50.810788 8.765101 50.810818 8.765166 50.810818 8.765166</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+              <gml:surfaceMember>
+                <gml:Polygon gml:id="GEOMETRY_5b6e164a-eb8b-4015-bdf4-cca0ba3237e0" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:exterior>
+                    <gml:LinearRing>
+                      <gml:posList>50.810788 8.765101 50.810818 8.765166 50.810868 8.765109 50.810839 8.765044 50.810788 8.765101</gml:posList>
+                    </gml:LinearRing>
+                  </gml:exterior>
+                </gml:Polygon>
+              </gml:surfaceMember>
+            </gml:MultiSurface>
+          </bu-core3d:geometryMultiSurface>
+          <bu-core3d:terrainIntersection>
+            <!--Inlined geometry 'GEOMETRY_a6441805-5ecf-4cf3-b2a0-1a8f9c4454f9'-->
+            <gml:MultiCurve gml:id="GEOMETRY_a6441805-5ecf-4cf3-b2a0-1a8f9c4454f9" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_ced59452-9a26-47f9-9453-68ea54d9b331" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.810839 8.765044 50.810843 8.765054 50.810847 8.765062 50.810850 8.765068 50.810856 8.765082 50.810856 8.765082 50.810856 8.765083 50.810863 8.765096 50.810865 8.765102 50.810868 8.765109</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_33428a06-e9df-4b2a-8a93-3bad60a96105" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.810868 8.765109 50.810866 8.765111 50.810866 8.765112 50.810865 8.765112 50.810860 8.765117 50.810856 8.765122 50.810855 8.765123 50.810854 8.765125 50.810850 8.765129 50.810847 8.765133 50.810845 8.765135 50.810841 8.765139 50.810839 8.765141 50.810838 8.765143 50.810834 8.765147 50.810829 8.765153 50.810829 8.765153 50.810829 8.765153 50.810824 8.765159 50.810820 8.765163 50.810819 8.765165 50.810818 8.765166</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_02758dce-c24d-41fb-ad28-771d086a7fce" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.810788 8.765101 50.810792 8.765109 50.810793 8.765111 50.810793 8.765112 50.810799 8.765125 50.810802 8.765132 50.810806 8.765139 50.810811 8.765152 50.810812 8.765154 50.810814 8.765158 50.810818 8.765166</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+              <gml:curveMember>
+                <gml:LineString gml:id="GEOMETRY_98e3e626-963a-43de-a73d-e0cb6e071bff" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:posList>50.810839 8.765044 50.810838 8.765045 50.810834 8.765049 50.810830 8.765054 50.810829 8.765054 50.810829 8.765055 50.810824 8.765060 50.810820 8.765065 50.810819 8.765066 50.810817 8.765068 50.810814 8.765072 50.810811 8.765075 50.810808 8.765078 50.810805 8.765083 50.810803 8.765084 50.810802 8.765085 50.810798 8.765090 50.810793 8.765096 50.810793 8.765096 50.810792 8.765097 50.810788 8.765101</gml:posList>
+                </gml:LineString>
+              </gml:curveMember>
+            </gml:MultiCurve>
+          </bu-core3d:terrainIntersection>
+          <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+          <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+        </bu-core3d:BuildingGeometry3DLoD2>
+      </bu-core3d:geometry3DLoD2>
+    </bu-core3d:Building>
+  </wfs:member>
+  <wfs:member>
+    <bu-core3d:Building gml:id="Building_DEHE06210000EfpS">
+      <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/Building_DEHE06210000EfpS</gml:identifier>
+      <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+      <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+      <bu-base:externalReference>
+        <bu-base:ExternalReference>
+          <bu-base:informationSystem>http://repository.gdi-de.org/schemas/adv/citygml/fdv/art.htm#_9100</bu-base:informationSystem>
+          <bu-base:informationSystemName>
+            <gco:CharacterString>DEHE06210000EfpS</gco:CharacterString>
+          </bu-base:informationSystemName>
+          <bu-base:reference>urn:adv:oid:DEHE06210000EfpS</bu-base:reference>
+        </bu-base:ExternalReference>
+      </bu-base:externalReference>
+      <bu-base:inspireId>
+        <base:Identifier>
+          <base:localId>Building_DEHE06210000EfpS</base:localId>
+          <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+        </base:Identifier>
+      </bu-base:inspireId>
+      <bu-base:currentUse>
+        <bu-base:CurrentUse>
+          <bu-base:currentUse xlink:href="http://inspire.ec.europa.eu/codelist/CurrentUseValue/residential"/>
+          <bu-base:percentage xsi:nil="true"/>
+        </bu-base:CurrentUse>
+      </bu-base:currentUse>
+      <bu-base:parts>
+        <!--Inlined feature 'BuildingPart_UUID_8b6aaec4-dfeb-4af3-a801-c2fbfae709ce'-->
+        <bu-core3d:BuildingPart gml:id="BuildingPart_UUID_8b6aaec4-dfeb-4af3-a801-c2fbfae709ce">
+          <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/BuildingPart_UUID_8b6aaec4-dfeb-4af3-a801-c2fbfae709ce</gml:identifier>
+          <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+          <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+          <bu-base:heightAboveGround>
+            <bu-base:HeightAboveGround>
+              <bu-base:heightReference xsi:nil="true"/>
+              <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+              <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/estimated"/>
+              <bu-base:value uom="m">18.881</bu-base:value>
+            </bu-base:HeightAboveGround>
+          </bu-base:heightAboveGround>
+          <bu-base:inspireId>
+            <base:Identifier>
+              <base:localId>BuildingPart_UUID_8b6aaec4-dfeb-4af3-a801-c2fbfae709ce</base:localId>
+              <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+            </base:Identifier>
+          </bu-base:inspireId>
+          <bu-core3d:geometry3DLoD2>
+            <bu-core3d:BuildingGeometry3DLoD2>
+              <bu-core3d:geometryMultiSurface>
+                <!--Inlined geometry 'GEOMETRY_9afccd36-a471-4bad-af3f-43fcdf74f4e0'-->
+                <gml:MultiSurface gml:id="GEOMETRY_9afccd36-a471-4bad-af3f-43fcdf74f4e0" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_bbc27878-a06d-486e-bdee-564e483a92b0" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810965 8.765016 50.810992 8.765024 50.810971 8.764974 50.810965 8.765016</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_0f355928-1f92-4da3-b579-2e37a498bb8d" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810870 8.765018 50.810907 8.764979 50.810907 8.764979 50.810870 8.765018 50.810870 8.765018</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_75265342-9f50-44f2-8491-338d4ed7c8c0" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810926 8.765153 50.810898 8.765085 50.810898 8.765085 50.810926 8.765153 50.810926 8.765153</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_9f533647-c1a7-465d-836f-95f4f3716c3a" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810902 8.764968 50.810901 8.764963 50.810901 8.764963 50.810902 8.764968 50.810902 8.764968</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_f449aee0-fad9-4c4c-98c9-c3f7bf31a220" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810898 8.765085 50.810870 8.765018 50.810870 8.765018 50.810898 8.765085 50.810898 8.765085</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_31493189-5d94-4b97-b448-542fea51a7ac" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810965 8.765016 50.810898 8.765085 50.810926 8.765153 50.811010 8.765067 50.810998 8.765039 50.810992 8.765024 50.810965 8.765016</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_db197998-d3e1-4941-b5f8-5461c24a6bdd" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810965 8.765016 50.810971 8.764974 50.810953 8.764931 50.810946 8.764916 50.810901 8.764963 50.810902 8.764968 50.810907 8.764979 50.810870 8.765018 50.810898 8.765085 50.810965 8.765016</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_8565e581-500d-4391-b287-715ed7bf4f05" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810901 8.764963 50.810946 8.764916 50.810946 8.764916 50.810901 8.764963 50.810901 8.764963</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_3c011ea8-e0dd-4fd0-89d3-16cd0f9b3e8b" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810998 8.765039 50.811010 8.765067 50.811010 8.765067 50.810998 8.765039 50.810998 8.765039 50.810998 8.765039</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_77d88817-30d2-4495-9b15-cd9da002976a" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.811010 8.765067 50.810926 8.765153 50.810926 8.765153 50.811010 8.765067 50.811010 8.765067</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_ee94181f-0bd6-4196-a05e-57a2a14080de" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810898 8.765085 50.810870 8.765018 50.810907 8.764979 50.810902 8.764968 50.810901 8.764963 50.810946 8.764916 50.810971 8.764974 50.810992 8.765024 50.810998 8.765039 50.811010 8.765067 50.810926 8.765153 50.810898 8.765085</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_7ca400a6-d721-4cae-888e-0498bb4d24f4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810907 8.764979 50.810902 8.764968 50.810902 8.764968 50.810907 8.764979 50.810907 8.764979</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_cbd6bc00-7429-4473-8cb2-bed3abeface5" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810998 8.765039 50.810998 8.765039 50.810992 8.765024 50.810992 8.765024 50.810998 8.765039</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_6360e7b3-37e6-42fe-a10b-91cb20ab9336" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810998 8.765039 50.810998 8.765039 50.810992 8.765024 50.810992 8.765024 50.810998 8.765039</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_5cc140d0-b402-41f9-aea8-4e3bfdd56f09" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810992 8.765024 50.810992 8.765024 50.810971 8.764974 50.810971 8.764974 50.810992 8.765024</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_2fdabbae-e99d-47ca-8d90-e90a3403471b" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810992 8.765024 50.810992 8.765024 50.810971 8.764974 50.810971 8.764974 50.810992 8.765024</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_62e56cec-3b8a-43e1-89cc-1f1a351efbcf" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810971 8.764974 50.810953 8.764931 50.810971 8.764974 50.810971 8.764974</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_59b1e1d3-a46f-4025-ace4-5f7fc91b6448" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810946 8.764916 50.810946 8.764916 50.810953 8.764931 50.810971 8.764974 50.810971 8.764974 50.810946 8.764916</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </bu-core3d:geometryMultiSurface>
+              <bu-core3d:terrainIntersection>
+                <!--Inlined geometry 'GEOMETRY_21554abf-4793-4a3f-9196-f254051bf5b3'-->
+                <gml:MultiCurve gml:id="GEOMETRY_21554abf-4793-4a3f-9196-f254051bf5b3" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_3d50b43b-f765-4eab-8392-eac745bc03d9" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810870 8.765018 50.810871 8.765022 50.810873 8.765025 50.810874 8.765028 50.810879 8.765040 50.810883 8.765049 50.810885 8.765054 50.810888 8.765063 50.810891 8.765068 50.810892 8.765071 50.810897 8.765082 50.810898 8.765085</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_2ce30477-ea67-4a94-bb66-fa72a5e3ebc6" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810907 8.764979 50.810903 8.764983 50.810902 8.764984 50.810901 8.764985 50.810896 8.764990 50.810892 8.764995 50.810891 8.764995 50.810889 8.764997 50.810885 8.765001 50.810883 8.765004 50.810880 8.765007 50.810876 8.765011 50.810875 8.765012 50.810874 8.765013 50.810870 8.765018</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_4f3e2d09-2e1e-4106-8f4e-3beaf8129d9d" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810902 8.764968 50.810903 8.764969 50.810907 8.764978 50.810907 8.764979</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_b61b5429-d4cd-414f-a38c-60af54189e9b" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810901 8.764963 50.810901 8.764964 50.810902 8.764968</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_032f1767-4521-49c3-8351-ae0de86ad537" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810946 8.764916 50.810946 8.764917 50.810942 8.764920 50.810937 8.764926 50.810937 8.764926 50.810937 8.764926 50.810931 8.764932 50.810928 8.764935 50.810926 8.764937 50.810923 8.764940 50.810920 8.764943 50.810919 8.764945 50.810915 8.764949 50.810910 8.764954 50.810910 8.764954 50.810909 8.764954 50.810904 8.764960 50.810901 8.764963 50.810901 8.764963</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_73eeb88c-bd74-4d36-9467-e14a160d8e47" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810946 8.764916 50.810951 8.764926 50.810955 8.764935 50.810957 8.764940 50.810960 8.764948 50.810962 8.764954 50.810964 8.764957 50.810968 8.764968 50.810971 8.764974</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_82667415-0188-416b-8ae2-75ae4d002816" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810971 8.764974 50.810973 8.764979 50.810974 8.764982 50.810977 8.764989 50.810980 8.764997 50.810982 8.765000 50.810986 8.765011 50.810991 8.765022 50.810992 8.765024</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_e3e6bfde-cbac-40dc-b5bc-adbd505585f0" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810992 8.765024 50.810992 8.765025 50.810994 8.765031 50.810998 8.765039</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_ec11b9f2-23d4-412a-b504-7853a69a2e48" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810998 8.765039 50.810998 8.765039 50.811000 8.765044 50.811004 8.765053 50.811009 8.765065 50.811010 8.765067</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_71175d4c-eb43-4a37-a731-271e5a8ee6c4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.811010 8.765067 50.811009 8.765067 50.811009 8.765068 50.811009 8.765068 50.811004 8.765073 50.811000 8.765077 50.810998 8.765079 50.810996 8.765082 50.810993 8.765085 50.810991 8.765086 50.810987 8.765090 50.810982 8.765096 50.810982 8.765096 50.810976 8.765101 50.810973 8.765105 50.810971 8.765107 50.810968 8.765110 50.810966 8.765113 50.810964 8.765114 50.810960 8.765118 50.810955 8.765124 50.810955 8.765124 50.810954 8.765124 50.810949 8.765130 50.810946 8.765133 50.810944 8.765135 50.810941 8.765139 50.810938 8.765141 50.810937 8.765142 50.810933 8.765147 50.810928 8.765152 50.810928 8.765152 50.810927 8.765153 50.810926 8.765153</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_e1a546e7-6b42-49f6-9cf3-6aa7f620555e" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810898 8.765085 50.810901 8.765092 50.810903 8.765096 50.810906 8.765103 50.810908 8.765110 50.810910 8.765114 50.810914 8.765125 50.810919 8.765136 50.810920 8.765139 50.810923 8.765144 50.810926 8.765153 50.810926 8.765153</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                </gml:MultiCurve>
+              </bu-core3d:terrainIntersection>
+              <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+              <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">2.0</bu-core3d:verticalGeometryEstimatedAccuracy>
+            </bu-core3d:BuildingGeometry3DLoD2>
+          </bu-core3d:geometry3DLoD2>
+        </bu-core3d:BuildingPart>
+      </bu-base:parts>
+      <bu-base:parts>
+        <!--Inlined feature 'BuildingPart_GUID_1592389822899_45832283'-->
+        <bu-core3d:BuildingPart gml:id="BuildingPart_GUID_1592389822899_45832283">
+          <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/BuildingPart_GUID_1592389822899_45832283</gml:identifier>
+          <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+          <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+          <bu-base:heightAboveGround>
+            <bu-base:HeightAboveGround>
+              <bu-base:heightReference xsi:nil="true"/>
+              <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+              <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+              <bu-base:value uom="m">9.034</bu-base:value>
+            </bu-base:HeightAboveGround>
+          </bu-base:heightAboveGround>
+          <bu-base:inspireId>
+            <base:Identifier>
+              <base:localId>BuildingPart_GUID_1592389822899_45832283</base:localId>
+              <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+            </base:Identifier>
+          </bu-base:inspireId>
+          <bu-core3d:geometry3DLoD2>
+            <bu-core3d:BuildingGeometry3DLoD2>
+              <bu-core3d:geometryMultiSurface>
+                <!--Inlined geometry 'GEOMETRY_ec5ed025-195e-44ec-88f1-79db2c24b59f'-->
+                <gml:MultiSurface gml:id="GEOMETRY_ec5ed025-195e-44ec-88f1-79db2c24b59f" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_91ffafdf-0288-4eb0-a63d-fa6933a54ca4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810946 8.764916 50.810955 8.764907 50.810959 8.764917 50.810970 8.764906 50.810982 8.764934 50.810997 8.764970 50.811010 8.765002 50.811017 8.765018 50.810998 8.765039 50.810992 8.765024 50.810971 8.764974 50.810946 8.764916</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_75e4a1a0-0679-471a-b0b0-1c3128b03215" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.811017 8.765018 50.810998 8.765039 50.810998 8.765039 50.811017 8.765018 50.811017 8.765018</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_b205ce24-5366-4a89-8874-01fe0fbb6ee6" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.811010 8.765002 50.811017 8.765018 50.811017 8.765018 50.811010 8.765002 50.811010 8.765002</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_1f5349fe-da0d-4ebb-a115-99b8ae5f76a6" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810997 8.764970 50.811010 8.765002 50.811010 8.765002 50.810997 8.764970 50.810997 8.764970</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_d5111f87-decf-4732-b844-8e201ddce7ec" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810970 8.764906 50.810982 8.764934 50.810982 8.764934 50.810970 8.764906 50.810970 8.764906</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_2c49ce05-39f4-4303-b25c-b39e6d0f37a7" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810982 8.764934 50.810997 8.764970 50.810997 8.764970 50.810982 8.764934 50.810982 8.764934</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_a2cd1199-6faf-4a8a-a4b5-3ca34dc6a610" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810946 8.764916 50.810955 8.764907 50.810955 8.764907 50.810946 8.764916 50.810946 8.764916 50.810946 8.764916</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_091029cb-7916-4ba3-9b7a-2a1c865a8d2b" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810998 8.765039 50.811017 8.765018 50.811010 8.765002 50.810997 8.764970 50.810982 8.764934 50.810970 8.764906 50.810959 8.764917 50.810955 8.764907 50.810946 8.764916 50.810953 8.764931 50.810971 8.764974 50.810992 8.765024 50.810998 8.765039</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_d9252697-f460-43b5-b818-9b07077e9c1a" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810955 8.764907 50.810959 8.764917 50.810959 8.764917 50.810955 8.764907 50.810955 8.764907</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_e33cf6fa-b953-4e16-a942-1af6c14d7a62" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810959 8.764917 50.810970 8.764906 50.810970 8.764906 50.810959 8.764917 50.810959 8.764917</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_9a426205-6784-425e-bcb8-51db93863c8f" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810946 8.764916 50.810953 8.764931 50.810946 8.764916 50.810946 8.764916</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_048bea1c-564b-4e5f-9171-959a1a231fcf" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810992 8.765024 50.810998 8.765039 50.810998 8.765039 50.810992 8.765024 50.810992 8.765024</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_54113c10-157c-497e-98f1-b7f9a62b8f83" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810971 8.764974 50.810992 8.765024 50.810992 8.765024 50.810971 8.764974 50.810971 8.764974</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_61720d36-f05d-4f30-b0d0-9121ebfb6dba" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810946 8.764916 50.810946 8.764916 50.810971 8.764974 50.810971 8.764974 50.810953 8.764931 50.810946 8.764916</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </bu-core3d:geometryMultiSurface>
+              <bu-core3d:terrainIntersection>
+                <!--Inlined geometry 'GEOMETRY_581a365d-b65a-4f65-b808-b35db24ae036'-->
+                <gml:MultiCurve gml:id="GEOMETRY_581a365d-b65a-4f65-b808-b35db24ae036" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_8d338206-ea90-4844-a767-6d04f3b6ea1c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810955 8.764907 50.810955 8.764907 50.810953 8.764909 50.810951 8.764912 50.810948 8.764915 50.810946 8.764916</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_e963b875-52bc-4fc8-8764-5aa7d1eb3a34" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810955 8.764907 50.810956 8.764911 50.810959 8.764917</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_1f78818b-9592-44e4-832a-2be3da77bc55" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810970 8.764906 50.810969 8.764906 50.810965 8.764911 50.810964 8.764912 50.810964 8.764913 50.810959 8.764917</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_1517c14f-a15d-4b30-819f-f5ccaa54a71c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810970 8.764906 50.810972 8.764911 50.810972 8.764911 50.810973 8.764912 50.810978 8.764926 50.810982 8.764933 50.810982 8.764934</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_ab4cf968-ebef-46d0-a1e9-f85e076b0bb4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810982 8.764934 50.810984 8.764940 50.810989 8.764952 50.810990 8.764954 50.810991 8.764955 50.810996 8.764968 50.810997 8.764970</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_13271483-c6e1-4c06-b8e3-9297bc15affd" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810997 8.764970 50.811000 8.764977 50.811002 8.764982 50.811006 8.764993 50.811008 8.764996 50.811009 8.764998 50.811010 8.765002</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_d51217ac-ca9e-4f62-bff5-4ba671450b64" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.811010 8.765002 50.811014 8.765011 50.811017 8.765018</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_629a75c2-7967-4913-a365-5109aa72c6ac" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.811017 8.765018 50.811015 8.765021 50.811011 8.765025 50.811010 8.765026 50.811009 8.765027 50.811004 8.765032 50.811000 8.765036 50.810999 8.765037 50.810998 8.765039</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_bea62475-9ad9-4adf-9bff-daba9dc091d3" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810946 8.764916 50.810951 8.764926 50.810955 8.764935 50.810957 8.764940 50.810960 8.764948 50.810962 8.764954 50.810964 8.764957 50.810968 8.764968 50.810973 8.764979 50.810974 8.764982 50.810977 8.764989 50.810980 8.764997 50.810982 8.765000 50.810986 8.765011 50.810991 8.765022 50.810992 8.765025 50.810994 8.765031 50.810998 8.765039</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                </gml:MultiCurve>
+              </bu-core3d:terrainIntersection>
+              <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+              <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+            </bu-core3d:BuildingGeometry3DLoD2>
+          </bu-core3d:geometry3DLoD2>
+        </bu-core3d:BuildingPart>
+      </bu-base:parts>
+    </bu-core3d:Building>
+  </wfs:member>
+  <wfs:member>
+    <bu-core3d:Building gml:id="Building_DEHE06210000EfpV">
+      <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/Building_DEHE06210000EfpV</gml:identifier>
+      <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+      <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+      <bu-base:externalReference>
+        <bu-base:ExternalReference>
+          <bu-base:informationSystem>http://repository.gdi-de.org/schemas/adv/citygml/fdv/art.htm#_9100</bu-base:informationSystem>
+          <bu-base:informationSystemName>
+            <gco:CharacterString>DEHE06210000EfpV</gco:CharacterString>
+          </bu-base:informationSystemName>
+          <bu-base:reference>urn:adv:oid:DEHE06210000EfpV</bu-base:reference>
+        </bu-base:ExternalReference>
+      </bu-base:externalReference>
+      <bu-base:inspireId>
+        <base:Identifier>
+          <base:localId>Building_DEHE06210000EfpV</base:localId>
+          <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+        </base:Identifier>
+      </bu-base:inspireId>
+      <bu-base:currentUse>
+        <bu-base:CurrentUse>
+          <bu-base:currentUse xlink:href="http://inspire.ec.europa.eu/codelist/CurrentUseValue/residential"/>
+          <bu-base:percentage xsi:nil="true"/>
+        </bu-base:CurrentUse>
+      </bu-base:currentUse>
+      <bu-base:parts>
+        <!--Inlined feature 'BuildingPart_UUID_a73c9f2a-a162-4af6-b435-139f07f948b5'-->
+        <bu-core3d:BuildingPart gml:id="BuildingPart_UUID_a73c9f2a-a162-4af6-b435-139f07f948b5">
+          <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/BuildingPart_UUID_a73c9f2a-a162-4af6-b435-139f07f948b5</gml:identifier>
+          <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+          <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+          <bu-base:heightAboveGround>
+            <bu-base:HeightAboveGround>
+              <bu-base:heightReference xsi:nil="true"/>
+              <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+              <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+              <bu-base:value uom="m">17.389</bu-base:value>
+            </bu-base:HeightAboveGround>
+          </bu-base:heightAboveGround>
+          <bu-base:inspireId>
+            <base:Identifier>
+              <base:localId>BuildingPart_UUID_a73c9f2a-a162-4af6-b435-139f07f948b5</base:localId>
+              <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+            </base:Identifier>
+          </bu-base:inspireId>
+          <bu-core3d:geometry3DLoD2>
+            <bu-core3d:BuildingGeometry3DLoD2>
+              <bu-core3d:geometryMultiSurface>
+                <!--Inlined geometry 'GEOMETRY_b6f2d7d1-8dc7-43fe-87b1-72c17efecca9'-->
+                <gml:MultiSurface gml:id="GEOMETRY_b6f2d7d1-8dc7-43fe-87b1-72c17efecca9" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_3a7aea27-12cc-4800-b34e-7a2707535685" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810917 8.764772 50.810882 8.764645 50.810870 8.764689 50.810844 8.764780 50.810844 8.764779 50.810835 8.764810 50.810826 8.764841 50.810844 8.764851 50.810866 8.764864 50.810890 8.764878 50.810917 8.764772</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_82dd7119-0ea3-4e92-b594-a6f1031c509a" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.811011 8.764733 50.811007 8.764747 50.811007 8.764747 50.811011 8.764733 50.811011 8.764733</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_ed59680a-dfed-4ef9-8f9b-2f734c7eb2b3" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810883 8.764643 50.810906 8.764660 50.810906 8.764660 50.810883 8.764643 50.810883 8.764643</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_197b29e1-3efb-494d-bf0f-06e288c4e64e" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810917 8.764772 50.810890 8.764878 50.810950 8.764912 50.810955 8.764907 50.810959 8.764917 50.810969 8.764880 50.811007 8.764747 50.811011 8.764733 50.810917 8.764772</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_f39f40f6-2676-4d06-8c19-2da75679d2a8" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810969 8.764880 50.810959 8.764917 50.810959 8.764917 50.810969 8.764880 50.810969 8.764880</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_3ccff1af-17db-4939-9bdd-e6a1d0228db0" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810906 8.764660 50.810995 8.764722 50.810995 8.764722 50.810906 8.764660 50.810906 8.764660</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_a8d0431e-a4a4-48ae-98f6-5c96279f2d65" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810955 8.764907 50.810950 8.764912 50.810950 8.764912 50.810950 8.764912 50.810955 8.764907 50.810955 8.764907</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_c447ca65-24e7-4b13-a6be-a7a9a4f8e945" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764780 50.810870 8.764689 50.810870 8.764689 50.810844 8.764780 50.810844 8.764780</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_d8ecc903-042a-4c5f-b44c-b48ca6a5efe4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764779 50.810844 8.764780 50.810870 8.764689 50.810882 8.764645 50.810883 8.764643 50.810906 8.764660 50.810995 8.764722 50.811011 8.764733 50.811011 8.764733 50.811007 8.764747 50.810969 8.764880 50.810959 8.764917 50.810955 8.764907 50.810950 8.764912 50.810890 8.764878 50.810881 8.764872 50.810844 8.764851 50.810826 8.764841 50.810835 8.764810 50.810844 8.764779</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_27014902-5e19-46a2-b88a-512df35097f8" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764779 50.810844 8.764780 50.810844 8.764780 50.810844 8.764779 50.810844 8.764779</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_cdf338e8-39be-4914-b73e-8f16ca064d07" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810870 8.764689 50.810882 8.764645 50.810882 8.764645 50.810870 8.764689 50.810870 8.764689</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_14cbb9db-8c2d-49ec-a4ee-af3b1ebf71d2" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810995 8.764722 50.811011 8.764733 50.811011 8.764733 50.810995 8.764722 50.810995 8.764722</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_38cd3d70-d87e-4a15-8a9d-f2d393fcc751" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810882 8.764645 50.810883 8.764643 50.810883 8.764643 50.810882 8.764645 50.810882 8.764645</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_8debfdf9-65ea-4ef6-9b5e-20e7de707f85" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810917 8.764772 50.811011 8.764733 50.811011 8.764733 50.810995 8.764722 50.810906 8.764660 50.810883 8.764643 50.810882 8.764645 50.810917 8.764772</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_40472d8f-2fe1-4105-9164-c29253a1d646" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810959 8.764917 50.810955 8.764907 50.810955 8.764907 50.810959 8.764917 50.810959 8.764917</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_a3caaa01-4ffb-45f1-a142-75ddfbf1ecdf" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.811007 8.764747 50.810969 8.764880 50.810969 8.764880 50.811007 8.764747 50.811007 8.764747</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_4fe56dd6-98b2-4d2c-8215-501ae999bca2" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.811011 8.764733 50.811011 8.764733 50.811011 8.764733 50.811011 8.764733 50.811011 8.764733</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_c076ca88-324b-4b85-bfa7-27de04c86c93" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810835 8.764810 50.810826 8.764841 50.810826 8.764841 50.810835 8.764810 50.810835 8.764810</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_cfb37e4e-f18b-4b44-8342-59efe1e2ab73" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764779 50.810835 8.764810 50.810835 8.764810 50.810844 8.764779 50.810844 8.764779</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_25b99386-8fa3-49a5-ab54-6ce9f3ec16a2" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810866 8.764864 50.810881 8.764872 50.810881 8.764872 50.810890 8.764878 50.810890 8.764878 50.810866 8.764864</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_9f8a0355-bda0-4997-9bd8-1468f203b795" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810881 8.764872 50.810881 8.764872 50.810890 8.764878 50.810890 8.764878 50.810881 8.764872</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_94fcd7b3-1d65-430c-b390-a647a68652b8" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764851 50.810844 8.764851 50.810881 8.764872 50.810881 8.764872 50.810881 8.764872 50.810866 8.764864 50.810844 8.764851</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_1ae815ed-520f-41a1-93d2-3cef5207c2db" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810826 8.764841 50.810826 8.764841 50.810844 8.764851 50.810844 8.764851 50.810826 8.764841</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_4fd172da-7d10-4ccb-898e-466b3f97449c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810890 8.764878 50.810950 8.764912 50.810950 8.764912 50.810890 8.764878 50.810890 8.764878</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_0953bf9d-1602-4643-9298-d529a3e97666" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810950 8.764912 50.810950 8.764912 50.810890 8.764878 50.810890 8.764878 50.810950 8.764912</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </bu-core3d:geometryMultiSurface>
+              <bu-core3d:terrainIntersection>
+                <!--Inlined geometry 'GEOMETRY_704109d5-8ec4-4334-bc55-2dde1372ec99'-->
+                <gml:MultiCurve gml:id="GEOMETRY_704109d5-8ec4-4334-bc55-2dde1372ec99" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_083333da-bcbf-4652-a16d-41ed78b43435" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810844 8.764779 50.810844 8.764780</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_26398621-d736-4abd-9367-1fe2d94b1659" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810870 8.764689 50.810869 8.764692 50.810867 8.764699 50.810866 8.764702 50.810864 8.764709 50.810863 8.764712 50.810863 8.764713 50.810861 8.764722 50.810859 8.764727 50.810858 8.764731 50.810855 8.764740 50.810855 8.764741 50.810855 8.764742 50.810852 8.764751 50.810851 8.764756 50.810850 8.764761 50.810847 8.764770 50.810847 8.764771 50.810846 8.764772 50.810844 8.764780</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_4cc0bd2d-b73b-4932-9110-2ec3e8af33b6" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810882 8.764645 50.810880 8.764653 50.810879 8.764656 50.810877 8.764663 50.810875 8.764671 50.810874 8.764673 50.810873 8.764677 50.810872 8.764682 50.810871 8.764685 50.810870 8.764689</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_4fd97a12-5d64-4bd8-bfbf-df9df3ad12ab" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810883 8.764643 50.810882 8.764645</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_10966bde-fa63-4def-8b5d-0d566edfb5aa" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810883 8.764643 50.810883 8.764644 50.810891 8.764649 50.810899 8.764655 50.810900 8.764656 50.810901 8.764656 50.810906 8.764660</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_4c34f826-1e42-43f5-84e9-957d256db3ea" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810906 8.764660 50.810909 8.764662 50.810916 8.764666 50.810918 8.764668 50.810921 8.764670 50.810927 8.764675 50.810932 8.764678 50.810936 8.764681 50.810941 8.764684 50.810945 8.764687 50.810948 8.764689 50.810954 8.764693 50.810961 8.764699 50.810963 8.764700 50.810964 8.764701 50.810972 8.764706 50.810981 8.764712 50.810981 8.764712 50.810982 8.764713 50.810990 8.764719 50.810995 8.764722</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_e839535f-814d-4adc-aeda-83eb01ed7a63" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810995 8.764722 50.810997 8.764724 50.810999 8.764725 50.811002 8.764727 50.811008 8.764731 50.811011 8.764733</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_1c8ed39c-42d2-4e83-9caa-cce383a674b9" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.811011 8.764733 50.811011 8.764733</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_09ae7820-589c-4af1-b9a1-b41b55898881" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.811011 8.764733 50.811008 8.764741 50.811008 8.764741 50.811008 8.764742 50.811007 8.764747</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_e49e607d-1349-4197-9e3e-363cf09849b6" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.811007 8.764747 50.811006 8.764751 50.811004 8.764755 50.811003 8.764761 50.811000 8.764769 50.811000 8.764771 50.810999 8.764774 50.810997 8.764780 50.810996 8.764784 50.810995 8.764790 50.810992 8.764798 50.810992 8.764800 50.810990 8.764805 50.810989 8.764810 50.810988 8.764812 50.810986 8.764820 50.810985 8.764826 50.810984 8.764830 50.810981 8.764837 50.810981 8.764839 50.810981 8.764840 50.810978 8.764849 50.810977 8.764855 50.810975 8.764859 50.810973 8.764869 50.810972 8.764869 50.810970 8.764879 50.810969 8.764880</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_248b868b-74cc-434b-9211-3478f5873f1a" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810969 8.764880 50.810969 8.764883 50.810967 8.764889 50.810965 8.764897 50.810964 8.764898 50.810964 8.764901 50.810962 8.764908 50.810961 8.764911 50.810959 8.764917</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_07fb405c-74c2-45af-9666-2b5e2004ea47" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810955 8.764907 50.810956 8.764911 50.810959 8.764917</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_e0c6564e-d3b9-47d2-87de-8929023cab5f" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810955 8.764907 50.810955 8.764907 50.810953 8.764909 50.810951 8.764912 50.810950 8.764912</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_a0e21990-4bff-445c-8b96-41776830a05c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810890 8.764878 50.810892 8.764879 50.810900 8.764883 50.810901 8.764884 50.810901 8.764884 50.810910 8.764889 50.810915 8.764893 50.810919 8.764894 50.810924 8.764897 50.810928 8.764900 50.810930 8.764901 50.810937 8.764905 50.810944 8.764909 50.810946 8.764910 50.810948 8.764912 50.810950 8.764912</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_05d9d268-6133-49dc-bac3-7dc2bca35550" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810826 8.764841 50.810827 8.764841 50.810829 8.764842 50.810829 8.764842 50.810838 8.764847 50.810844 8.764851 50.810847 8.764852 50.810851 8.764855 50.810856 8.764858 50.810858 8.764859 50.810865 8.764863 50.810872 8.764868 50.810874 8.764868 50.810875 8.764869 50.810883 8.764873 50.810887 8.764876 50.810890 8.764878</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_e22a2210-24db-428d-83cd-e7fdcd67364b" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810844 8.764779 50.810844 8.764780 50.810842 8.764784 50.810841 8.764790 50.810838 8.764799 50.810838 8.764800 50.810837 8.764802 50.810835 8.764809 50.810834 8.764813 50.810833 8.764819 50.810830 8.764827 50.810830 8.764829 50.810829 8.764834 50.810827 8.764839 50.810826 8.764841</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                </gml:MultiCurve>
+              </bu-core3d:terrainIntersection>
+              <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+              <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+            </bu-core3d:BuildingGeometry3DLoD2>
+          </bu-core3d:geometry3DLoD2>
+        </bu-core3d:BuildingPart>
+      </bu-base:parts>
+      <bu-base:parts>
+        <!--Inlined feature 'BuildingPart_GUID_1592389822899_45832732'-->
+        <bu-core3d:BuildingPart gml:id="BuildingPart_GUID_1592389822899_45832732">
+          <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/BuildingPart_GUID_1592389822899_45832732</gml:identifier>
+          <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+          <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+          <bu-base:heightAboveGround>
+            <bu-base:HeightAboveGround>
+              <bu-base:heightReference xsi:nil="true"/>
+              <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+              <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+              <bu-base:value uom="m">11.265</bu-base:value>
+            </bu-base:HeightAboveGround>
+          </bu-base:heightAboveGround>
+          <bu-base:inspireId>
+            <base:Identifier>
+              <base:localId>BuildingPart_GUID_1592389822899_45832732</base:localId>
+              <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+            </base:Identifier>
+          </bu-base:inspireId>
+          <bu-core3d:geometry3DLoD2>
+            <bu-core3d:BuildingGeometry3DLoD2>
+              <bu-core3d:geometryMultiSurface>
+                <!--Inlined geometry 'GEOMETRY_1cf58da3-1ee3-4c98-afa6-f9c7042c2038'-->
+                <gml:MultiSurface gml:id="GEOMETRY_1cf58da3-1ee3-4c98-afa6-f9c7042c2038" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_76f28219-ff2b-4361-9983-4ceed8bc2c29" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810950 8.764912 50.810901 8.764963 50.810901 8.764963 50.810950 8.764912 50.810950 8.764912</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_42582a34-fc42-497a-9646-a1866ed2e31d" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810901 8.764963 50.810902 8.764968 50.810902 8.764968 50.810901 8.764963 50.810901 8.764963</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_f3986259-bdc0-4c94-8868-2c5caa5d5af3" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810881 8.764872 50.810890 8.764878 50.810950 8.764912 50.810901 8.764963 50.810902 8.764968 50.810865 8.765006 50.810846 8.764998 50.810846 8.764998 50.810845 8.764998 50.810881 8.764872</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_65907850-099f-4748-bcf1-a5ae35be9c0f" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810865 8.765006 50.810846 8.764998 50.810846 8.764998 50.810865 8.765006 50.810865 8.765006</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_8dcde89e-2ae5-4fab-aa76-10e5a5b72ccb" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810846 8.764998 50.810846 8.764998 50.810846 8.764998 50.810846 8.764998 50.810846 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_faeb0943-9c5e-41bb-b5f2-47757e2a25c2" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810845 8.764998 50.810846 8.764998 50.810846 8.764998 50.810865 8.765006 50.810902 8.764968 50.810901 8.764963 50.810950 8.764912 50.810890 8.764878 50.810881 8.764872 50.810845 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_71ff5cd4-072b-44e3-a3b8-53a7e0fc1bdd" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810846 8.764998 50.810845 8.764998 50.810845 8.764998 50.810846 8.764998 50.810846 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_be442beb-fb63-4ea0-940d-e1d520335981" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810902 8.764968 50.810865 8.765006 50.810865 8.765006 50.810902 8.764968 50.810902 8.764968</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_a1818626-6921-4b0b-99fa-69edd6dadcdc" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810890 8.764878 50.810881 8.764872 50.810881 8.764872 50.810890 8.764878 50.810890 8.764878</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_0e555474-80ce-42a7-b54e-c895a42dbe37" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810950 8.764912 50.810890 8.764878 50.810890 8.764878 50.810950 8.764912 50.810950 8.764912</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_d2a9cd8f-2719-495a-8e86-b98cfb8b29d9" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810881 8.764872 50.810845 8.764998 50.810845 8.764998 50.810881 8.764872 50.810881 8.764872</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </bu-core3d:geometryMultiSurface>
+              <bu-core3d:terrainIntersection>
+                <!--Inlined geometry 'GEOMETRY_4e92642e-b5c7-41f1-9af8-e23440f481f2'-->
+                <gml:MultiCurve gml:id="GEOMETRY_4e92642e-b5c7-41f1-9af8-e23440f481f2" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_b969207c-1e85-422d-956a-75ca825dbb53" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810881 8.764872 50.810883 8.764873 50.810887 8.764876 50.810892 8.764879 50.810900 8.764883 50.810901 8.764884 50.810901 8.764884 50.810910 8.764889 50.810915 8.764893 50.810919 8.764894 50.810924 8.764897 50.810928 8.764900 50.810930 8.764901 50.810937 8.764905 50.810944 8.764909 50.810946 8.764910 50.810948 8.764912 50.810950 8.764912</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_382e5d5c-8819-4e84-a719-9fc66844b744" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810950 8.764912 50.810948 8.764915 50.810946 8.764917 50.810942 8.764920 50.810937 8.764926 50.810937 8.764926 50.810937 8.764926 50.810931 8.764932 50.810928 8.764935 50.810926 8.764937 50.810923 8.764940 50.810920 8.764943 50.810919 8.764945 50.810915 8.764949 50.810910 8.764954 50.810910 8.764954 50.810909 8.764954 50.810904 8.764960 50.810901 8.764963 50.810901 8.764963</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_4e16ddcf-d976-42ac-8669-f6b9cfa3d9ff" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810901 8.764963 50.810901 8.764964 50.810902 8.764968</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_ac378cd7-5746-4e63-8305-89b8f202850f" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810902 8.764968 50.810901 8.764969 50.810901 8.764969 50.810901 8.764969 50.810896 8.764975 50.810892 8.764979 50.810890 8.764980 50.810888 8.764983 50.810885 8.764986 50.810883 8.764988 50.810879 8.764992 50.810874 8.764997 50.810874 8.764997 50.810868 8.765003 50.810865 8.765006</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_88f209c5-8541-4468-8aeb-54effbd0295d" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810846 8.764998 50.810847 8.764998 50.810848 8.764999 50.810856 8.765002 50.810860 8.765004 50.810865 8.765006 50.810865 8.765006</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_d1c2109d-4d77-4b35-9aa2-f57f1fa2c782" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810846 8.764998 50.810846 8.764998</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_39d5f4fa-86bd-4d95-8667-306cb5e6fd78" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810845 8.764998 50.810846 8.764998</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_2d586cdb-5d83-4b0b-8e9b-0b9bf8520adb" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810881 8.764872 50.810879 8.764878 50.810878 8.764883 50.810876 8.764888 50.810874 8.764898 50.810871 8.764908 50.810870 8.764912 50.810868 8.764917 50.810866 8.764926 50.810865 8.764927 50.810865 8.764929 50.810863 8.764937 50.810862 8.764940 50.810860 8.764947 50.810858 8.764955 50.810857 8.764957 50.810856 8.764961 50.810854 8.764966 50.810854 8.764969 50.810852 8.764976 50.810850 8.764983 50.810849 8.764986 50.810847 8.764993 50.810846 8.764996 50.810846 8.764997 50.810845 8.764998</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                </gml:MultiCurve>
+              </bu-core3d:terrainIntersection>
+              <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+              <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+            </bu-core3d:BuildingGeometry3DLoD2>
+          </bu-core3d:geometry3DLoD2>
+        </bu-core3d:BuildingPart>
+      </bu-base:parts>
+      <bu-base:parts>
+        <!--Inlined feature 'BuildingPart_GUID_1592389822899_45832734'-->
+        <bu-core3d:BuildingPart gml:id="BuildingPart_GUID_1592389822899_45832734">
+          <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/BuildingPart_GUID_1592389822899_45832734</gml:identifier>
+          <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+          <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+          <bu-base:heightAboveGround>
+            <bu-base:HeightAboveGround>
+              <bu-base:heightReference xsi:nil="true"/>
+              <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+              <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+              <bu-base:value uom="m">17.389</bu-base:value>
+            </bu-base:HeightAboveGround>
+          </bu-base:heightAboveGround>
+          <bu-base:inspireId>
+            <base:Identifier>
+              <base:localId>BuildingPart_GUID_1592389822899_45832734</base:localId>
+              <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+            </base:Identifier>
+          </bu-base:inspireId>
+          <bu-core3d:geometry3DLoD2>
+            <bu-core3d:BuildingGeometry3DLoD2>
+              <bu-core3d:geometryMultiSurface>
+                <!--Inlined geometry 'GEOMETRY_a8d6ccf2-4526-45c6-9087-0cfa0e5025ac'-->
+                <gml:MultiSurface gml:id="GEOMETRY_a8d6ccf2-4526-45c6-9087-0cfa0e5025ac" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_5769b990-f77c-4941-b860-7d7440f329a3" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810779 8.764926 50.810785 8.764903 50.810785 8.764903 50.810779 8.764926 50.810779 8.764926</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_b9ae1aa3-29e0-4d63-ab1e-15ed533e7e44" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810764 8.764978 50.810779 8.764926 50.810779 8.764926 50.810764 8.764978 50.810764 8.764978</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_0b2a4714-3ef9-417e-8a58-a91a18b35050" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764851 50.810806 8.764829 50.810785 8.764903 50.810779 8.764926 50.810764 8.764978 50.810798 8.765002 50.810844 8.764851</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_baeb35c6-4eab-401c-9e91-653f43ae07ca" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810837 8.765029 50.810798 8.765002 50.810798 8.765002 50.810837 8.765029 50.810837 8.765029</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_a85bc69a-666e-4e64-ab19-584402b5b1cc" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810846 8.764998 50.810837 8.765029 50.810837 8.765029 50.810846 8.764998 50.810846 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_b9cca85d-833a-4f9d-be84-0840527ef98a" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810798 8.765002 50.810837 8.765029 50.810846 8.764998 50.810845 8.764998 50.810881 8.764872 50.810866 8.764864 50.810844 8.764851 50.810798 8.765002</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_67ef891b-4a29-40c7-bf02-f0121a001d83" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810798 8.765002 50.810764 8.764978 50.810764 8.764978 50.810798 8.765002 50.810798 8.765002</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_8dc09421-9916-406c-997b-cc36ad4214ac" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810798 8.765002 50.810764 8.764978 50.810779 8.764926 50.810785 8.764903 50.810806 8.764829 50.810826 8.764841 50.810844 8.764851 50.810881 8.764872 50.810845 8.764998 50.810846 8.764998 50.810837 8.765029 50.810798 8.765002</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_72dfbfac-de2b-4ea8-a735-8794d901cf15" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810785 8.764903 50.810806 8.764829 50.810806 8.764829 50.810806 8.764829 50.810785 8.764903 50.810785 8.764903</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_9eeb6485-4c32-404e-964c-58ff2e3752a7" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810845 8.764998 50.810846 8.764998 50.810846 8.764998 50.810845 8.764998 50.810845 8.764998 50.810845 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_ab23eccd-2f39-42d3-ab50-e17de9c0a368" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810845 8.764998 50.810881 8.764872 50.810881 8.764872 50.810845 8.764998 50.810845 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_f0418d16-89b1-4900-9073-8d18e93dfe94" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810845 8.764998 50.810845 8.764998 50.810881 8.764872 50.810881 8.764872 50.810845 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_5079d855-850b-4828-b225-365466017374" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810866 8.764864 50.810844 8.764851 50.810844 8.764851 50.810866 8.764864</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_21743bc7-c9ce-41c0-8540-0b3517301faa" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810881 8.764872 50.810881 8.764872 50.810881 8.764872 50.810844 8.764851 50.810844 8.764851 50.810866 8.764864 50.810881 8.764872</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_b385f023-4d7c-48e3-8baa-fea4bac58292" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764851 50.810826 8.764841 50.810826 8.764841 50.810806 8.764829 50.810806 8.764829 50.810844 8.764851 50.810844 8.764851</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_a2c0e548-bfb0-4bd9-bd6b-b8556e014180" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764851 50.810826 8.764841 50.810826 8.764841 50.810844 8.764851 50.810844 8.764851</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_aabea0d4-47ee-41fd-894c-52dd88410c89" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810826 8.764841 50.810806 8.764829 50.810806 8.764829 50.810826 8.764841 50.810826 8.764841 50.810826 8.764841</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </bu-core3d:geometryMultiSurface>
+              <bu-core3d:terrainIntersection>
+                <!--Inlined geometry 'GEOMETRY_d50c02af-c476-455e-9a7c-d5f8fce13df4'-->
+                <gml:MultiCurve gml:id="GEOMETRY_d50c02af-c476-455e-9a7c-d5f8fce13df4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_b7ea48b6-a342-4b8a-8bd1-9507a3f5873c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810764 8.764978 50.810766 8.764979 50.810772 8.764983 50.810775 8.764985 50.810777 8.764987 50.810784 8.764991 50.810792 8.764997 50.810793 8.764998 50.810793 8.764998 50.810798 8.765002</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_d704058e-cac1-43f9-9bc4-42175b06e356" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810779 8.764926 50.810779 8.764927 50.810777 8.764931 50.810775 8.764941 50.810775 8.764941 50.810772 8.764951 50.810771 8.764955 50.810769 8.764960 50.810767 8.764969 50.810766 8.764970 50.810766 8.764972 50.810764 8.764978</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_4f2925cb-b07b-411f-8758-14e88345dec5" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810785 8.764903 50.810784 8.764909 50.810783 8.764911 50.810783 8.764912 50.810780 8.764921 50.810779 8.764926</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_84c65a22-f27f-49b3-a266-15241a7bfb09" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810806 8.764829 50.810805 8.764833 50.810803 8.764841 50.810802 8.764843 50.810802 8.764845 50.810800 8.764852 50.810799 8.764856 50.810797 8.764862 50.810795 8.764870 50.810794 8.764872 50.810793 8.764877 50.810791 8.764882 50.810791 8.764884 50.810789 8.764892 50.810787 8.764898 50.810786 8.764901 50.810785 8.764903</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_ff57ffe4-551b-4c80-b7dc-99804758f037" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810806 8.764829 50.810811 8.764832 50.810815 8.764834 50.810820 8.764837 50.810827 8.764841 50.810829 8.764842 50.810829 8.764842 50.810838 8.764847 50.810844 8.764851 50.810844 8.764851</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_d0698758-5324-43cc-a367-f767207cd3c9" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810844 8.764851 50.810847 8.764852 50.810851 8.764855 50.810856 8.764858 50.810858 8.764859 50.810865 8.764863 50.810872 8.764868 50.810874 8.764868 50.810875 8.764869 50.810881 8.764872</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_e8a298e9-31ea-41b1-8698-5d019af1c4a3" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810881 8.764872 50.810879 8.764878 50.810878 8.764883 50.810876 8.764888 50.810874 8.764898 50.810871 8.764908 50.810870 8.764912 50.810868 8.764917 50.810866 8.764926 50.810865 8.764927 50.810865 8.764929 50.810863 8.764937 50.810862 8.764940 50.810860 8.764947 50.810858 8.764955 50.810857 8.764957 50.810856 8.764961 50.810854 8.764966 50.810854 8.764969 50.810852 8.764976 50.810850 8.764983 50.810849 8.764986 50.810847 8.764993 50.810846 8.764996 50.810846 8.764997 50.810845 8.764998</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_21e89cf8-22da-40bc-a2d3-bfe3c77bc2f5" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810845 8.764998 50.810846 8.764998</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_be834345-0f1a-4a90-8c91-7cf7efbc6402" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810846 8.764998 50.810843 8.765006 50.810842 8.765011 50.810841 8.765016 50.810838 8.765026 50.810837 8.765029</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_df99b32c-c739-4853-afa9-c63e5f5b07ba" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810798 8.765002 50.810802 8.765004 50.810810 8.765009 50.810811 8.765010 50.810813 8.765012 50.810820 8.765017 50.810826 8.765021 50.810829 8.765023 50.810833 8.765026 50.810837 8.765029</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                </gml:MultiCurve>
+              </bu-core3d:terrainIntersection>
+              <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+              <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+            </bu-core3d:BuildingGeometry3DLoD2>
+          </bu-core3d:geometry3DLoD2>
+        </bu-core3d:BuildingPart>
+      </bu-base:parts>
+      <bu-base:parts>
+        <!--Inlined feature 'BuildingPart_GUID_1592389822899_45832731'-->
+        <bu-core3d:BuildingPart gml:id="BuildingPart_GUID_1592389822899_45832731">
+          <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/BuildingPart_GUID_1592389822899_45832731</gml:identifier>
+          <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+          <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+          <bu-base:heightAboveGround>
+            <bu-base:HeightAboveGround>
+              <bu-base:heightReference xsi:nil="true"/>
+              <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+              <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+              <bu-base:value uom="m">16.835</bu-base:value>
+            </bu-base:HeightAboveGround>
+          </bu-base:heightAboveGround>
+          <bu-base:inspireId>
+            <base:Identifier>
+              <base:localId>BuildingPart_GUID_1592389822899_45832731</base:localId>
+              <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+            </base:Identifier>
+          </bu-base:inspireId>
+          <bu-core3d:geometry3DLoD2>
+            <bu-core3d:BuildingGeometry3DLoD2>
+              <bu-core3d:geometryMultiSurface>
+                <!--Inlined geometry 'GEOMETRY_85b0ac09-b49f-4a53-8f0a-c3be289f7c34'-->
+                <gml:MultiSurface gml:id="GEOMETRY_85b0ac09-b49f-4a53-8f0a-c3be289f7c34" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_9ac96776-48c5-4091-aabf-30e104327af0" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810815 8.764798 50.810806 8.764829 50.810826 8.764841 50.810835 8.764810 50.810815 8.764798</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_df2eae8b-db38-48d4-9b9d-50ba3eeaa57c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810815 8.764798 50.810824 8.764765 50.810824 8.764765 50.810815 8.764798 50.810815 8.764798</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_3616960a-898e-498b-9263-7eba49670092" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810806 8.764829 50.810815 8.764798 50.810815 8.764798 50.810806 8.764829 50.810806 8.764829</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_1975e751-15a9-44dc-919c-e4e2793f02d8" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810815 8.764798 50.810824 8.764765 50.810844 8.764779 50.810835 8.764810 50.810826 8.764841 50.810806 8.764829 50.810815 8.764798</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_ce84fa87-44cb-4c7b-9fdb-8c77005ebdeb" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810835 8.764810 50.810844 8.764779 50.810824 8.764765 50.810815 8.764798 50.810835 8.764810</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_482c59a1-3b43-409c-9967-b69edf7c1541" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810824 8.764765 50.810844 8.764779 50.810844 8.764779 50.810844 8.764779 50.810824 8.764765 50.810824 8.764765</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_ffa2d0d6-faf5-483b-9607-3d4b683cf5a4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810826 8.764841 50.810826 8.764841 50.810826 8.764841 50.810806 8.764829 50.810806 8.764829 50.810826 8.764841</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_b8cf8d1a-ecc6-43e9-8586-e9256975f1c1" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810826 8.764841 50.810826 8.764841 50.810835 8.764810 50.810835 8.764810 50.810826 8.764841</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_a6dc6f67-3ae7-49c6-b587-3381f2b33b58" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810826 8.764841 50.810826 8.764841 50.810835 8.764810 50.810835 8.764810 50.810826 8.764841</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_431dff71-e487-46bc-adfb-b814f254fe3f" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810835 8.764810 50.810844 8.764779 50.810844 8.764779 50.810835 8.764810 50.810835 8.764810</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_e2177494-a2fc-4b1d-9212-d8cd51c4c70e" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810844 8.764779 50.810844 8.764779 50.810835 8.764810 50.810835 8.764810 50.810844 8.764779</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </bu-core3d:geometryMultiSurface>
+              <bu-core3d:terrainIntersection>
+                <!--Inlined geometry 'GEOMETRY_80639ff6-ee56-4121-a7d5-0c59f90b4495'-->
+                <gml:MultiCurve gml:id="GEOMETRY_80639ff6-ee56-4121-a7d5-0c59f90b4495" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_56f65a4b-31f2-4d3d-9a70-b106beebeed3" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810824 8.764765 50.810823 8.764770 50.810822 8.764774 50.810819 8.764782 50.810819 8.764784 50.810819 8.764784 50.810816 8.764793 50.810815 8.764798</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_489c7ba5-aa2d-4099-8ebe-3ce28ca34e85" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810824 8.764765 50.810826 8.764767 50.810828 8.764768 50.810831 8.764770 50.810837 8.764775 50.810843 8.764778 50.810844 8.764779</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_879572c1-5ada-4aa8-b8cb-c0abd0c6262b" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810844 8.764779 50.810844 8.764780 50.810842 8.764784 50.810841 8.764790 50.810838 8.764799 50.810838 8.764800 50.810837 8.764802 50.810835 8.764809 50.810835 8.764810</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_0bcfbe4e-d44e-4884-83e0-80f745be938f" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810835 8.764810 50.810834 8.764813 50.810833 8.764819 50.810830 8.764827 50.810830 8.764829 50.810829 8.764834 50.810827 8.764839 50.810826 8.764841</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_f994edc9-0db3-49b5-b7f1-5b3327e1e5fb" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810806 8.764829 50.810811 8.764832 50.810815 8.764834 50.810820 8.764837 50.810826 8.764841</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_78b8d0d8-cb64-4b3e-9442-e2f2cae5cdb6" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810815 8.764798 50.810815 8.764799 50.810813 8.764803 50.810811 8.764813 50.810811 8.764813 50.810810 8.764813 50.810808 8.764823 50.810807 8.764827 50.810806 8.764829</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                </gml:MultiCurve>
+              </bu-core3d:terrainIntersection>
+              <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+              <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+            </bu-core3d:BuildingGeometry3DLoD2>
+          </bu-core3d:geometry3DLoD2>
+        </bu-core3d:BuildingPart>
+      </bu-base:parts>
+    </bu-core3d:Building>
+  </wfs:member>
+  <wfs:member>
+    <bu-core3d:Building gml:id="Building_DEHE06210000Efq3">
+      <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/Building_DEHE06210000Efq3</gml:identifier>
+      <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+      <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+      <bu-base:externalReference>
+        <bu-base:ExternalReference>
+          <bu-base:informationSystem>http://repository.gdi-de.org/schemas/adv/citygml/fdv/art.htm#_9100</bu-base:informationSystem>
+          <bu-base:informationSystemName>
+            <gco:CharacterString>DEHE06210000Efq3</gco:CharacterString>
+          </bu-base:informationSystemName>
+          <bu-base:reference>urn:adv:oid:DEHE06210000Efq3</bu-base:reference>
+        </bu-base:ExternalReference>
+      </bu-base:externalReference>
+      <bu-base:inspireId>
+        <base:Identifier>
+          <base:localId>Building_DEHE06210000Efq3</base:localId>
+          <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+        </base:Identifier>
+      </bu-base:inspireId>
+      <bu-base:currentUse>
+        <bu-base:CurrentUse>
+          <bu-base:currentUse xlink:href="http://inspire.ec.europa.eu/codelist/CurrentUseValue/residential"/>
+          <bu-base:percentage xsi:nil="true"/>
+        </bu-base:CurrentUse>
+      </bu-base:currentUse>
+      <bu-base:parts>
+        <!--Inlined feature 'BuildingPart_UUID_d2da0e30-6d8c-448e-8b5f-5798adcfcf12'-->
+        <bu-core3d:BuildingPart gml:id="BuildingPart_UUID_d2da0e30-6d8c-448e-8b5f-5798adcfcf12">
+          <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/BuildingPart_UUID_d2da0e30-6d8c-448e-8b5f-5798adcfcf12</gml:identifier>
+          <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+          <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+          <bu-base:heightAboveGround>
+            <bu-base:HeightAboveGround>
+              <bu-base:heightReference xsi:nil="true"/>
+              <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+              <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+              <bu-base:value uom="m">11.056</bu-base:value>
+            </bu-base:HeightAboveGround>
+          </bu-base:heightAboveGround>
+          <bu-base:inspireId>
+            <base:Identifier>
+              <base:localId>BuildingPart_UUID_d2da0e30-6d8c-448e-8b5f-5798adcfcf12</base:localId>
+              <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+            </base:Identifier>
+          </bu-base:inspireId>
+          <bu-core3d:geometry3DLoD2>
+            <bu-core3d:BuildingGeometry3DLoD2>
+              <bu-core3d:geometryMultiSurface>
+                <!--Inlined geometry 'GEOMETRY_ac145679-c97d-4ae8-a451-73eb73ee2f89'-->
+                <gml:MultiSurface gml:id="GEOMETRY_ac145679-c97d-4ae8-a451-73eb73ee2f89" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_b9049366-39fc-400c-aa06-762c2118b81c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810823 8.765046 50.810835 8.765035 50.810837 8.765029 50.810764 8.764978 50.810759 8.764997 50.810759 8.764998 50.810823 8.765046</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_90b949f9-7aa3-4439-8334-f0228972d457" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810759 8.764998 50.810759 8.764997 50.810764 8.764978 50.810837 8.765029 50.810835 8.765035 50.810823 8.765046 50.810759 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_50da4754-f3b6-43ee-b7a4-8bf53eca4d62" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810759 8.764998 50.810759 8.764997 50.810759 8.764997 50.810759 8.764998 50.810759 8.764998 50.810759 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_927d0e0c-425f-4081-a49e-8b1db44c5fa4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810764 8.764978 50.810837 8.765029 50.810837 8.765029 50.810764 8.764978 50.810764 8.764978</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_61f56933-f8a6-4bbd-87c6-d109135d5813" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810837 8.765029 50.810835 8.765035 50.810835 8.765035 50.810837 8.765029 50.810837 8.765029</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_b979aa74-d0bd-405f-9728-6eef3ac99bac" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810835 8.765035 50.810823 8.765046 50.810823 8.765046 50.810823 8.765046 50.810835 8.765035 50.810835 8.765035</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_0f15b81f-cecf-4995-b6e8-7855c5b58b4c" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810759 8.764997 50.810764 8.764978 50.810764 8.764978 50.810759 8.764997 50.810759 8.764997</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_e8449600-7987-4885-b8bb-e97f4ca25a28" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810759 8.764998 50.810823 8.765046 50.810823 8.765046 50.810759 8.764998 50.810759 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_52dec961-8ed4-4dd7-ba99-d51ad9ef07a4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810759 8.764998 50.810759 8.764998 50.810823 8.765046 50.810823 8.765046 50.810759 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </bu-core3d:geometryMultiSurface>
+              <bu-core3d:terrainIntersection>
+                <!--Inlined geometry 'GEOMETRY_01bf6452-9988-4223-a572-7df473829e88'-->
+                <gml:MultiCurve gml:id="GEOMETRY_01bf6452-9988-4223-a572-7df473829e88" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_07ee2a9b-dbed-4af8-bb4e-27885b439124" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810759 8.764997 50.810759 8.764998 50.810759 8.764998</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_56f95b9f-acb8-48d5-abc3-fc7fd8d7027a" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810764 8.764978 50.810764 8.764980 50.810763 8.764983 50.810761 8.764990 50.810759 8.764997</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_8f41aa0d-f2aa-495b-b5f4-87999b2833e4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810764 8.764978 50.810766 8.764979 50.810772 8.764983 50.810775 8.764985 50.810777 8.764987 50.810784 8.764991 50.810792 8.764997 50.810793 8.764998 50.810793 8.764998 50.810802 8.765004 50.810810 8.765009 50.810811 8.765010 50.810813 8.765012 50.810820 8.765017 50.810826 8.765021 50.810829 8.765023 50.810833 8.765026 50.810837 8.765029</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_ca1ea8a4-b6cf-443c-9a85-38310a1b9c39" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810837 8.765029 50.810835 8.765035</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_b3223f00-8eef-4a02-9cd6-d4d102f9377d" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810835 8.765035 50.810835 8.765035 50.810830 8.765040 50.810829 8.765041 50.810829 8.765041 50.810824 8.765046 50.810823 8.765046</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_79a9cbdd-8cfb-4c33-8d8e-39128bdde230" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810823 8.765046 50.810823 8.765046</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_41c6d60b-7db2-4e1d-a5a2-a7dd160cc375" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810759 8.764998 50.810766 8.765003 50.810773 8.765008 50.810775 8.765010 50.810777 8.765012 50.810784 8.765017 50.810790 8.765021 50.810793 8.765023 50.810796 8.765026 50.810802 8.765030 50.810807 8.765034 50.810811 8.765037 50.810815 8.765040 50.810820 8.765044 50.810823 8.765046</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                </gml:MultiCurve>
+              </bu-core3d:terrainIntersection>
+              <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+              <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+            </bu-core3d:BuildingGeometry3DLoD2>
+          </bu-core3d:geometry3DLoD2>
+        </bu-core3d:BuildingPart>
+      </bu-base:parts>
+      <bu-base:parts>
+        <!--Inlined feature 'BuildingPart_GUID_1592389822899_45832459'-->
+        <bu-core3d:BuildingPart gml:id="BuildingPart_GUID_1592389822899_45832459">
+          <gml:identifier codeSpace="http://inspire.ec.europa.eu/ids">https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2/BuildingPart_GUID_1592389822899_45832459</gml:identifier>
+          <bu-base:beginLifespanVersion>2021-08-14T22:00:00Z</bu-base:beginLifespanVersion>
+          <bu-base:conditionOfConstruction xsi:nil="true" nilReason="other:unpopulated"/>
+          <bu-base:heightAboveGround>
+            <bu-base:HeightAboveGround>
+              <bu-base:heightReference xsi:nil="true"/>
+              <bu-base:lowReference xsi:nil="true" nilReason="unknown"/>
+              <bu-base:status xlink:href="http://inspire.ec.europa.eu/codelist/HeightStatusValue/measured"/>
+              <bu-base:value uom="m">6.401</bu-base:value>
+            </bu-base:HeightAboveGround>
+          </bu-base:heightAboveGround>
+          <bu-base:inspireId>
+            <base:Identifier>
+              <base:localId>BuildingPart_GUID_1592389822899_45832459</base:localId>
+              <base:namespace>https://registry.gdi-de.org/id/de.he.0462.de7.bu-3d.lod2</base:namespace>
+            </base:Identifier>
+          </bu-base:inspireId>
+          <bu-core3d:geometry3DLoD2>
+            <bu-core3d:BuildingGeometry3DLoD2>
+              <bu-core3d:geometryMultiSurface>
+                <!--Inlined geometry 'GEOMETRY_6aaaecbe-20cf-44a0-8f01-d385213e8424'-->
+                <gml:MultiSurface gml:id="GEOMETRY_6aaaecbe-20cf-44a0-8f01-d385213e8424" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_0684536c-795a-4963-afd9-7d2d8d8432d5" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810759 8.764998 50.810823 8.765046 50.810802 8.765066 50.810759 8.764998</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_e9f62921-b330-401d-b9df-2d6a6d941f3e" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810802 8.765066 50.810759 8.764998 50.810759 8.764998 50.810802 8.765066 50.810802 8.765066</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_bcd63f81-268a-4788-869f-b60c5a49fe70" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810823 8.765046 50.810802 8.765066 50.810802 8.765066 50.810823 8.765046 50.810823 8.765046</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_9968e582-58bc-46e4-a33b-8427f17476bb" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810802 8.765066 50.810823 8.765046 50.810759 8.764998 50.810802 8.765066</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                  <gml:surfaceMember>
+                    <gml:Polygon gml:id="GEOMETRY_75eb5f34-c5ab-479a-aa78-83922d8192d1" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:exterior>
+                        <gml:LinearRing>
+                          <gml:posList>50.810823 8.765046 50.810759 8.764998 50.810759 8.764998 50.810823 8.765046 50.810823 8.765046</gml:posList>
+                        </gml:LinearRing>
+                      </gml:exterior>
+                    </gml:Polygon>
+                  </gml:surfaceMember>
+                </gml:MultiSurface>
+              </bu-core3d:geometryMultiSurface>
+              <bu-core3d:terrainIntersection>
+                <!--Inlined geometry 'GEOMETRY_1a0cfa3b-9dd3-4e6d-8148-e4ecf4b5d2f7'-->
+                <gml:MultiCurve gml:id="GEOMETRY_1a0cfa3b-9dd3-4e6d-8148-e4ecf4b5d2f7" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_ead8e5ec-7da2-45ad-ae20-e4d872b5d2eb" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810759 8.764998 50.810766 8.765003 50.810773 8.765008 50.810775 8.765010 50.810777 8.765012 50.810784 8.765017 50.810790 8.765021 50.810793 8.765023 50.810796 8.765026 50.810802 8.765030 50.810807 8.765034 50.810811 8.765037 50.810815 8.765040 50.810820 8.765044 50.810823 8.765046</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_ca8639dd-0ff8-44e3-98b3-4d8cf69d1576" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810823 8.765046 50.810823 8.765046</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_ec6cc2e5-0483-4de6-bf77-7e714b1ce8c3" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810823 8.765046 50.810820 8.765049 50.810818 8.765051 50.810815 8.765054 50.810812 8.765056 50.810811 8.765058 50.810807 8.765062 50.810802 8.765066 50.810802 8.765066</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                  <gml:curveMember>
+                    <gml:LineString gml:id="GEOMETRY_0f84b78b-cc17-4102-a48f-f2f3064569d4" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
+                      <gml:posList>50.810759 8.764998 50.810766 8.765009 50.810768 8.765012 50.810775 8.765023 50.810777 8.765026 50.810784 8.765038 50.810785 8.765040 50.810793 8.765052 50.810794 8.765054 50.810802 8.765066</gml:posList>
+                    </gml:LineString>
+                  </gml:curveMember>
+                </gml:MultiCurve>
+              </bu-core3d:terrainIntersection>
+              <bu-core3d:horizontalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:horizontalGeometryEstimatedAccuracy>
+              <bu-core3d:verticalGeometryEstimatedAccuracy uom="m">0.5</bu-core3d:verticalGeometryEstimatedAccuracy>
+            </bu-core3d:BuildingGeometry3DLoD2>
+          </bu-core3d:geometry3DLoD2>
+        </bu-core3d:BuildingPart>
+      </bu-base:parts>
+    </bu-core3d:Building>
+  </wfs:member>
+</wfs:FeatureCollection>
