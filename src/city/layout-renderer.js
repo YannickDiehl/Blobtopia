@@ -499,14 +499,23 @@ export async function createCityFromLayout () {
       obj.rotation.y = rot
 
       // Road tiles: add flat road-colored ground plane underneath to fill gaps
-      // Kenney tiles have built-in grass/sidewalk borders that leave visible seams
+      // and apply polygonOffset to road meshes to prevent z-fighting
       if (isRoadTile) {
         var roadGroundGeo = new THREE.PlaneBufferGeometry(CELL_SIZE, CELL_SIZE)
-        var roadGroundMat = new THREE.MeshLambertMaterial({ color: 0x444444 })
+        var roadGroundMat = new THREE.MeshLambertMaterial({ color: 0x444444, depthWrite: false })
         var roadGroundPlane = new THREE.Mesh(roadGroundGeo, roadGroundMat)
         roadGroundPlane.rotation.x = -Math.PI / 2
         roadGroundPlane.position.set(p.x, 0.0, p.z)
+        roadGroundPlane.renderOrder = -1
         kenneyGroup.add(roadGroundPlane)
+        // Fix z-fighting within Kenney road models
+        obj.traverse(function (c) {
+          if (c.isMesh && c.material) {
+            c.material.polygonOffset = true
+            c.material.polygonOffsetFactor = -1
+            c.material.polygonOffsetUnits = -1
+          }
+        })
       }
 
       // Bridge tiles over water: add blue water surface underneath
@@ -521,28 +530,7 @@ export async function createCityFromLayout () {
         kenneyGroup.add(waterPlane)
       }
 
-      // Dead-end caps: semicircle at the open end of dead-end road tiles
-      if (isRoadTile && p.deadEnd) {
-        var capGeo = new THREE.CircleBufferGeometry(CELL_SIZE * 0.48, 16, 0, Math.PI)
-        var capMat = new THREE.MeshLambertMaterial({ color: 0x444444 })
-        var cap = new THREE.Mesh(capGeo, capMat)
-        cap.rotation.x = -Math.PI / 2
-        cap.position.y = 0.82
-        // Orient cap toward open end (away from the single neighbor)
-        // deadEndMask: 0=isolated, 1=N, 2=E, 4=S, 8=W
-        var capRotY = 0  // default: open toward south
-        var dm = p.deadEndMask || 0
-        if (dm === 0) capRotY = 0           // isolated — arbitrary
-        else if (dm === 1) capRotY = Math.PI  // neighbor N → open S
-        else if (dm === 2) capRotY = Math.PI * 1.5  // neighbor E → open W
-        else if (dm === 4) capRotY = 0       // neighbor S → open N
-        else if (dm === 8) capRotY = Math.PI * 0.5  // neighbor W → open E
-        cap.rotation.z = capRotY
-        var capGroup = new THREE.Group()
-        capGroup.position.set(p.x, 0, p.z)
-        capGroup.add(cap)
-        kenneyGroup.add(capGroup)
-      }
+      // Dead-end caps removed — they caused Z-fighting with road surface
 
       const dist = getDistrictAt(p.x, p.z)
       const kbId = p.id || advanceBuildingId()
