@@ -249,9 +249,9 @@ impl LatentTraits {
         income: f64,
         rng: &mut SmallRng,
     ) -> f64 {
-        let education_effect = (education_level as f64) * 0.8;
+        let education_effect = (education_level as f64) * 0.55; // reduced from 0.8 — still primary driver but less dominant
         let income_effect = (income - 5.0) * 0.3;
-        let noise: f64 = rng.gen_range(-0.5..0.5);
+        let noise: f64 = rng.gen_range(-1.0..1.0); // doubled from ±0.5 — more individual variation
         (district_base + education_effect + income_effect + noise).clamp(0.0, 10.0)
     }
 
@@ -267,39 +267,39 @@ impl LatentTraits {
         (district_base + age_effect + income_effect + noise).clamp(0.0, 10.0)
     }
 
-    /// Autoritarismus: höher bei niedriger Bildung, höherem Alter,
-    /// und in konservativen/benachteiligten Distrikten.
+    /// Autoritarismus: stärker persönlichkeits- und altersgetrieben,
+    /// schwächerer Bildungseffekt für bessere diskriminante Validität.
     fn compute_authoritarianism_latent(
         district_base: f64,
         education_level: u8,
         age_group: u8,
         rng: &mut SmallRng,
     ) -> f64 {
-        let education_effect = -(education_level as f64) * 0.6; // höhere Bildung → weniger autoritär
-        let age_effect = (age_group as f64) * 0.5; // älter → etwas autoritärer
-        let noise: f64 = rng.gen_range(-0.8..0.8);
+        let education_effect = -(education_level as f64) * 0.20; // reduced from -0.6 — prevents Bildungs-Faktor collapse
+        let age_effect = (age_group as f64) * 0.65; // increased from 0.5 — age is primary driver (Feldman & Stenner 1997)
+        let noise: f64 = rng.gen_range(-1.5..1.5); // increased from ±0.8 — more personality-driven individual variation
         (district_base + education_effect + age_effect + noise).clamp(0.0, 10.0)
     }
 
-    /// Politikverdrossenheit: invers korreliert mit Efficacy,
-    /// höher bei niedrigem Einkommen und Bildung.
+    /// Politikverdrossenheit: primär einkommensgetrieben (ökonomische Deprivation),
+    /// schwacher Bildungseffekt, keine Efficacy-Kopplung (CFA-Diskriminanz).
     fn compute_alienation_latent(
         district_base: f64,
         education_level: u8,
         income: f64,
-        efficacy_latent: f64,
+        _efficacy_latent: f64,
         rng: &mut SmallRng,
     ) -> f64 {
-        let efficacy_effect = -efficacy_latent * 0.1; // reduced from 0.3 — was creating r=-.93 with efficacy (CFA would fail)
-        let education_effect = -(education_level as f64) * 0.4;
-        let income_effect = -(income - 5.0) * 0.2;
-        let noise: f64 = rng.gen_range(-0.5..0.5);
-        (district_base + efficacy_effect + education_effect + income_effect + noise)
+        // Efficacy coupling REMOVED entirely — was r=-.81 even at 0.1, destroying discriminant validity
+        let education_effect = -(education_level as f64) * 0.10; // reduced from -0.4 — prevents Bildungs-Faktor collapse
+        let income_effect = -(income - 5.0) * 0.35; // increased from -0.2 — economic deprivation is primary driver
+        let noise: f64 = rng.gen_range(-1.2..1.2); // increased from ±0.5 — more individual variation
+        (district_base + education_effect + income_effect + noise)
             .clamp(0.0, 10.0)
     }
 
-    /// Materialismus: höher bei niedrigerem Einkommen/Bildung, älteren Globs,
-    /// und ökonomisch orientierten Distrikten.
+    /// Materialismus: primär einkommens- und altersgetrieben (Inglehart),
+    /// schwacher Bildungseffekt für bessere Konstrukt-Diskriminanz.
     fn compute_materialism_latent(
         district_base: f64,
         education_level: u8,
@@ -307,10 +307,10 @@ impl LatentTraits {
         age_group: u8,
         rng: &mut SmallRng,
     ) -> f64 {
-        let education_effect = -(education_level as f64) * 0.5;
-        let income_effect = -(income - 5.0) * 0.25; // höheres Einkommen → weniger materialistisch
-        let age_effect = (age_group as f64) * 0.4; // ältere = materialistischer (Inglehart)
-        let noise: f64 = rng.gen_range(-0.6..0.6);
+        let education_effect = -(education_level as f64) * 0.15; // reduced from -0.5 — prevents Bildungs-Faktor collapse
+        let income_effect = -(income - 5.0) * 0.30; // slightly increased: economic insecurity → materialism (Inglehart)
+        let age_effect = (age_group as f64) * 0.55; // increased from 0.4 — older cohorts more materialist (socialization hypothesis)
+        let noise: f64 = rng.gen_range(-1.0..1.0); // increased from ±0.6 — more individual variation
         (district_base + education_effect + income_effect + age_effect + noise).clamp(0.0, 10.0)
     }
 

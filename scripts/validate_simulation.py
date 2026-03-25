@@ -41,7 +41,7 @@ def main():
     parser.add_argument(
         "--layer",
         type=int,
-        choices=[1, 2, 3, 4, 5, 6],
+        choices=[1, 2, 3, 4, 5, 6, 7],
         help="Nur einen bestimmten Layer ausführen",
     )
     parser.add_argument(
@@ -64,7 +64,7 @@ def main():
 
     report = ValidationReport()
 
-    layers_to_run = [args.layer] if args.layer else [1, 2, 3, 5, 6]
+    layers_to_run = [args.layer] if args.layer else [1, 2, 3, 5, 6, 7]
     if args.with_llm and (args.layer is None or args.layer == 4):
         if 4 not in layers_to_run:
             layers_to_run.append(4)
@@ -105,6 +105,12 @@ def main():
             print("\nLayer 6: Tweet-Qualität ...")
             from validation.layer6_tweets import run_layer6
             for result in run_layer6(conn):
+                report.add(result)
+
+        elif layer_num == 7:
+            print("\nLayer 7: Tiefenplausibilität ...")
+            from validation.layer7_plausibility_deep import run_layer7
+            for result in run_layer7(conn):
                 report.add(result)
 
     conn.close()

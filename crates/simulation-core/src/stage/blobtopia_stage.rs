@@ -71,7 +71,7 @@ impl BlobtopiaLayout {
                     income_range: (1200.0, 3500.0),  // wider, more overlap with other districts
                     attitude_ranges: AttitudeRanges {
                         satisfaction: (3.0, 7.0),    // wider range (was 3.0-5.0)
-                        ideology: (5.05, 7.75),      // narrower conservative (1-10 scale)
+                        ideology: (4.5, 8.5),        // widened conservative (was 5.05-7.75, +individual noise)
                         trust: (2.5, 6.0),           // raised floor (was 2.0-5.0)
                     },
                     latent_bases: LatentBases {
@@ -102,7 +102,7 @@ impl BlobtopiaLayout {
                     income_range: (2500.0, 5500.0),   // lowered floor for overlap
                     attitude_ranges: AttitudeRanges {
                         satisfaction: (4.0, 8.0),
-                        ideology: (3.7, 6.4),         // progressive-leaning (1-10 scale)
+                        ideology: (2.8, 6.8),         // widened progressive (was 3.7-6.4, +individual noise)
                         trust: (4.0, 7.5),
                     },
                     latent_bases: LatentBases {
@@ -132,7 +132,7 @@ impl BlobtopiaLayout {
                     income_range: (1200.0, 4500.0),
                     attitude_ranges: AttitudeRanges {
                         satisfaction: (2.5, 7.5),    // slightly narrowed extremes
-                        ideology: (3.25, 7.75),      // most diverse district (1-10 scale)
+                        ideology: (2.5, 8.5),        // widened diverse (was 3.25-7.75, +individual noise)
                         trust: (2.5, 7.0),           // raised floor
                     },
                     latent_bases: LatentBases {
@@ -163,7 +163,7 @@ impl BlobtopiaLayout {
                     income_range: (1800.0, 4500.0),   // wider
                     attitude_ranges: AttitudeRanges {
                         satisfaction: (3.5, 7.5),     // wider (was 4.0-7.0)
-                        ideology: (4.15, 6.85),       // centrist (1-10 scale)
+                        ideology: (3.5, 7.5),         // widened centrist (was 4.15-6.85, +individual noise)
                         trust: (3.5, 7.0),            // slightly wider
                     },
                     latent_bases: LatentBases {
@@ -194,7 +194,7 @@ impl BlobtopiaLayout {
                     income_range: (1200.0, 3200.0),   // wider overlap
                     attitude_ranges: AttitudeRanges {
                         satisfaction: (2.5, 6.5),     // raised floor+ceiling (was 1.5-5.0)
-                        ideology: (3.7, 7.3),         // symmetric (1-10 scale)
+                        ideology: (3.0, 8.0),         // widened symmetric (was 3.7-7.3, +individual noise)
                         trust: (2.0, 5.5),            // raised floor (was 0.5-5.0)
                     },
                     latent_bases: LatentBases {

@@ -89,6 +89,7 @@ class ValidationReport:
                     "4": "Layer 4: LLM-Kalibrierung",
                     "5": "Layer 5: Temporale Konsistenz",
                     "6": "Layer 6: Tweet-Qualität",
+                    "7": "Layer 7: Tiefenplausibilität",
                 }
                 print(f"\n--- {layer_names.get(layer, f'Layer {layer}')} ---")
 

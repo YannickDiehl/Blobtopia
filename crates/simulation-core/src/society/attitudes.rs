@@ -60,6 +60,8 @@ impl Attitudes {
         // Demographic modifiers
         ideology += (education_level as f64 - 1.5) * -0.27;
         ideology += (age as f64 - 45.0) * 0.009;
+        // Individual noise for realistic within-district variance (target SD ≈ 1.5-2.0)
+        ideology += rng.gen_range(-1.0..1.0);
         satisfaction += (income - 3000.0) / 2000.0 * 0.7;
         satisfaction += (education_level as f64 - 1.5) * 0.25;
         trust += (education_level as f64 - 1.5) * 0.3;
