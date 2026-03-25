@@ -930,11 +930,8 @@ impl BlobtopiaSim {
                             reassign_leisure_spot_single(blob, city, 0.15, &mut rng);
                         }
 
-                        // Log Erstwähler event
-                        events_processed.push(format!(
-                            "{} wird volljährig und darf erstmals wählen.",
-                            blob.name,
-                        ));
+                        // Coming-of-age is an internal transition, not a public event.
+                        // No event logged — keeps the timeline focused on political events.
                     }
                 }
             }
