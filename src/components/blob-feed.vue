@@ -141,11 +141,17 @@ export default {
       const month = Math.floor((tick % 365) / 30) + 1
       return `J${year}/M${month}`
     }
+    , tickToDate(tick) {
+      const year = Math.floor(tick / 365) + 1
+      const month = Math.floor((tick % 365) / 30) + 1
+      const day = (tick % 365) % 30 + 1
+      return `Jahr ${year}, Monat ${month}, Tag ${day}`
+    }
     , downloadTweets() {
-      const header = 'name,district,topic,sentiment,tick,trigger_type,content'
+      const header = 'name,district,topic,date,content'
       const csvRows = this.filteredTweets.map(t =>
         [t.name, this.districtName(t._district), this.topicLabel(t.topic),
-         t.sentiment, t.tick, t.trigger_type,
+         '"' + this.tickToDate(t.tick) + '"',
          '"' + (t._text || '').replace(/"/g, '""') + '"'].join(',')
       )
       const csv = '\uFEFF' + [header, ...csvRows].join('\n') // BOM for Excel UTF-8
