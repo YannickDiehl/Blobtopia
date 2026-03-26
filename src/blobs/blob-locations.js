@@ -1,5 +1,6 @@
 import { ACTIVITY_MAP, buildSchedule } from './blob-schedule'
 import { walkableGrid } from '@/city'
+import { randomWalkableNear } from '@/lib/pathfinder'
 
 // ── Outdoor leisure zones: named areas with real city coordinates ──
 // Each zone is a walkable outdoor area where blobs go for leisure/lunch.
@@ -23,31 +24,59 @@ export const OUTDOOR_ZONES = [
   {
     id: 'hafenpromenade',
     name: 'Hafenpromenade',
-    x: 752, z: 784, // Western edge of harbor lantern path
-    walkRadius: 250,
-    microWalk: { radius: 250, intervalMs: 35000 },  // long promenade stroll
-    district: 2, // Hafenviertel
-    // Social blobs enjoy flanieren together
+    x: 848, z: 752, // North edge of harbor basin — pavement row z=752, x=720-976
+    walkRadius: 150,
+    microWalk: { radius: 150, intervalMs: 30000 },
+    district: 2,
+    // Social evening stroll along the harbor — high base weight
     weights: (t) => {
       const community = t.community_participation || 5
       const neighborTrust = t.neighbor_trust || 5
       const genTrust = t.generalized_trust || 5
-      return (community * 0.4) + (neighborTrust * 0.3) + (genTrust * 0.3)
+      return 3 + (community * 0.35) + (neighborTrust * 0.2) + (genTrust * 0.2)
+    }
+  },
+  {
+    id: 'hafenufer-west',
+    name: 'Westliches Hafenufer',
+    x: 720, z: 864, // West edge of harbor basin — pavement column x=720, z=752-976
+    walkRadius: 130,
+    microWalk: { radius: 130, intervalMs: 35000 },
+    district: 2,
+    // Nature-loving, relaxed blobs walk along the waterfront
+    weights: (t) => {
+      const envOverEcon = t.environment_over_economy || 5
+      const lowPowerless = 10 - (t.powerlessness || 5)
+      const community = t.community_participation || 5
+      return 2 + (envOverEcon * 0.3) + (lowPowerless * 0.2) + (community * 0.25)
+    }
+  },
+  {
+    id: 'laternenstrasse',
+    name: 'Laternenstraße',
+    x: 500, z: 720, // Lantern-lit promenade street z=720, x=272-720
+    walkRadius: 230,
+    microWalk: { radius: 230, intervalMs: 30000 },
+    district: 2,
+    // Evening flaneurs under the lanterns
+    weights: (t) => {
+      const community = t.community_participation || 5
+      const genTrust = t.generalized_trust || 5
+      return 1 + (community * 0.3) + (genTrust * 0.25)
     }
   },
   {
     id: 'marktplatz',
     name: 'Marktplatz',
     x: 528, z: 560, // Central civic area near Rathaus
-    walkRadius: 100,
-    microWalk: { radius: 100, intervalMs: 40000 },  // dense social gathering
+    walkRadius: 120,
+    microWalk: { radius: 120, intervalMs: 40000 },
     district: -1, // Any district (central)
-    // Mixed: both materialists (shopping) and social blobs (meeting)
+    // Reduced weight — LEISURE server-schedule already sends many blobs here
     weights: (t) => {
       const econPriority = t.economic_security_priority || 5
       const community = t.community_participation || 5
-      const neighborTrust = t.neighbor_trust || 5
-      return (econPriority * 0.3) + (community * 0.4) + (neighborTrust * 0.3)
+      return (econPriority * 0.2) + (community * 0.25)
     }
   },
   {
@@ -330,27 +359,24 @@ export function assignLocations(blob, phase, registry, serverX, serverY, rng){
   const restaurantThreshold = outdoorThreshold + (income > 6 || socialCapital > 6 ? 0.15 : 0.05)
   if (lunchRoll < outdoorThreshold) {
     const lunchZone = chooseOutdoorZone(c, rng)
-    const lunchOffX = (rng() - 0.5) * lunchZone.walkRadius * 0.3
-    const lunchOffZ = (rng() - 0.5) * lunchZone.walkRadius * 0.3
-    lunchSpot = snapToPath(lunchZone.x + lunchOffX, lunchZone.z + lunchOffZ)
+    const lunchRwn = randomWalkableNear(lunchZone.x, lunchZone.z, lunchZone.walkRadius, walkableGrid, rng)
+    lunchSpot = lunchRwn || snapToPath(lunchZone.x, lunchZone.z)
     lunchOutdoor = true
   } else if (lunchRoll < restaurantThreshold && socialSpot) {
     lunchSpot = socialSpot  // Lunch at café/restaurant
   } else if (serverLunch) {
     lunchSpot = { x: serverLunch.x, z: serverLunch.z }
   } else {
-    const lx = workplace.x + (rng() - 0.5) * 80
-    const lz = workplace.z + (rng() - 0.5) * 80
-    lunchSpot = snapToPath(lx, lz)
+    const lunchNearWork = randomWalkableNear(workplace.x, workplace.z, 80, walkableGrid, rng)
+    lunchSpot = lunchNearWork || { x: workplace.x, z: workplace.z }
   }
 
   // ── Leisure spot: outdoor zones driven by latent constructs ──
   let leisureSpot
   let leisureZone = null
   leisureZone = chooseOutdoorZone(c, rng)
-  const offsetX = (rng() - 0.5) * leisureZone.walkRadius * 0.4
-  const offsetZ = (rng() - 0.5) * leisureZone.walkRadius * 0.4
-  leisureSpot = snapToPath(leisureZone.x + offsetX, leisureZone.z + offsetZ)
+  const rwn = randomWalkableNear(leisureZone.x, leisureZone.z, leisureZone.walkRadius, walkableGrid, rng)
+  leisureSpot = rwn || snapToPath(leisureZone.x, leisureZone.z)
 
   // ── Daily schedule: use server-provided if available ──
   let schedule

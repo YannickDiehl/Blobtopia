@@ -57,15 +57,19 @@ export function buildSchedule(phase, ageGroup, edu, income, district, c){
                   : ageGroup === 2 ? 21                          // older: 21
                   : 22 + (rOff > 5 ? 1 : 0)               // middle: 22-23
 
+  // ── Stroll phase: walk to outdoor zone after work, then transition to leisure ──
+  const strollEnd = workEnd + 2  // 2h of visible walking around the harbor/park
+
   // Build the schedule
-  s.push({ hour: 0,          state: 'SLEEPING',     building_id: null })
-  s.push({ hour: wakeHour,   state: 'GO_TO_WORK',   building_id: null })
-  s.push({ hour: workStart,  state: 'AT_WORK',      building_id: null })
-  s.push({ hour: lunchStart, state: 'GO_TO_LUNCH',  building_id: null })
-  s.push({ hour: lunchEnd,   state: 'AT_WORK',      building_id: null })
-  s.push({ hour: workEnd,    state: 'GO_TO_LEISURE', building_id: null })
-  s.push({ hour: homeHour,   state: 'GO_TO_HOME',   building_id: null })
-  s.push({ hour: sleepHour,  state: 'SLEEPING',     building_id: null })
+  s.push({ hour: 0,          state: 'SLEEPING',      building_id: null })
+  s.push({ hour: wakeHour,   state: 'GO_TO_WORK',    building_id: null })
+  s.push({ hour: workStart,  state: 'AT_WORK',       building_id: null })
+  s.push({ hour: lunchStart, state: 'GO_TO_LUNCH',   building_id: null })
+  s.push({ hour: lunchEnd,   state: 'AT_WORK',       building_id: null })
+  s.push({ hour: workEnd,    state: 'GO_TO_STROLL',  building_id: null })
+  s.push({ hour: strollEnd,  state: 'GO_TO_LEISURE', building_id: null })
+  s.push({ hour: homeHour,   state: 'GO_TO_HOME',    building_id: null })
+  s.push({ hour: sleepHour,  state: 'SLEEPING',      building_id: null })
 
   // Sort by hour (should already be, but be safe)
   s.sort((a, b) => a.hour - b.hour)

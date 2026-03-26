@@ -10,6 +10,7 @@ import { assignLocations, findNearestBuilding, resolveBuildingPos, findCivicBuil
 import { getScheduledState } from './blob-schedule'
 import { snapToWalkable } from './blob-movement'
 import { computeHourPositions, interpolateAlongPath, getCachedPath } from './position-cache'
+import { computeWanderPosition } from './film-wander'
 
 // Deterministic PRNG (mulberry32) — same seed = same sequence on all clients
 function mulberry32 (seed) {
@@ -69,9 +70,10 @@ export default {
     // Per-blob animation state (persistent across frames, survives tick updates)
     this._cx = null  // current smoothed x
     this._cy = null  // current smoothed y
-    // Deterministic phase from blob ID
+    // Deterministic phase and seed from blob ID
     const idHash = (this.creature.id || '').toString().split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 0)
-    this._rng = mulberry32(Math.abs(idHash))
+    this._blobSeed = Math.abs(idHash)
+    this._rng = mulberry32(this._blobSeed)
     this._phase = this._rng() * Math.PI * 2
     this._frameCount = 0
 
@@ -463,31 +465,6 @@ export default {
         const kf = this._hourPositions[hour]
         if (!kf) return
 
-        // Snap keyframe position to nearest road/Gehweg if on grass (one-time fix per keyframe)
-        if (!kf._snapped && !kf.indoor && walkableGrid.grid) {
-          const { grid, size: gs, gridRes: gr } = walkableGrid
-          const kgx = Math.floor(kf.x / gr), kgz = Math.floor(kf.z / gr)
-          if (kgx >= 0 && kgx < gs && kgz >= 0 && kgz < gs) {
-            const kv = grid[kgz * gs + kgx]
-            if (kv !== 1 && kv !== 2) {
-              for (let kr = 1; kr <= 10; kr++) {
-                let kfound = false
-                for (let kdx = -kr; kdx <= kr && !kfound; kdx++) {
-                  for (const kdz of [-kr, kr]) {
-                    const knx = kgx + kdx, knz = kgz + kdz
-                    if (knx >= 0 && knx < gs && knz >= 0 && knz < gs) {
-                      const kvv = grid[knz * gs + knx]
-                      if (kvv === 1 || kvv === 2) { kf.x = knx * gr + gr / 2; kf.z = knz * gr + gr / 2; kfound = true; break }
-                    }
-                  }
-                }
-                if (kfound) break
-              }
-            }
-          }
-          kf._snapped = true
-        }
-
         // Indoor states: hide blob
         if (kf.indoor) {
           this._fadeOpacity = Math.max(0, this._fadeOpacity - 0.1)
@@ -505,19 +482,18 @@ export default {
         const isIdle = kf.state.startsWith('AT_')
 
         if (isTransit) {
-          // Transit: interpolate along A* path between previous position and target
-          const nextHour = Math.min(hour + 1, 23)
-          const nextKf = this._hourPositions[nextHour]
-          // Find the start position (last non-transit position before this hour)
+          // Transit: interpolate along A* path to transit target (kf position)
+          // startPos = last keyframe with a DIFFERENT state (handles consecutive different transits
+          // without teleporting back to the last idle position)
           let startPos = { x: kf.x, z: kf.z }
           for (let h = hour - 1; h >= 0; h--) {
             const prev = this._hourPositions[h]
-            if (!prev.state.startsWith('GO_TO_')) {
+            if (prev.state !== kf.state) {
               startPos = { x: prev.x, z: prev.z }
               break
             }
           }
-          const endPos = { x: nextKf ? nextKf.x : kf.x, z: nextKf ? nextKf.z : kf.z }
+          const endPos = { x: kf.x, z: kf.z }
 
           // Get cached A* path
           const pk = `${Math.round(startPos.x)},${Math.round(startPos.z)}→${Math.round(endPos.x)},${Math.round(endPos.z)}`
@@ -546,84 +522,83 @@ export default {
           const hoursElapsed = hour - transitStart + frac
           const transitFrac = Math.min(1, hoursElapsed / totalTransitHours)
 
-          const interpPos = interpolateAlongPath(this._filmPath, transitFrac)
-          this._cx = interpPos.x
-          this._cy = interpPos.z
+          // If arrived at destination, wander around using waypoint patrol
+          if (transitFrac >= 1.0) {
+            const deterministicTime = tick * 24 + hour + frac
+            const isStroll = kf.state === 'GO_TO_STROLL'
+            const radius = isStroll ? 60 : 20
+            const wp = computeWanderPosition(
+              kf.x, kf.z, deterministicTime, this._phase,
+              this._blobSeed, this._wanderSpeed, radius
+            )
+            this._cx = wp.x
+            this._cy = wp.z
+          } else {
+            const interpPos = interpolateAlongPath(this._filmPath, transitFrac)
+            this._cx = interpPos.x
+            this._cy = interpPos.z
 
-          // Snap transit position to nearest road/Gehweg if on grass
-          if (walkableGrid.grid) {
-            const { grid, size: gs, gridRes: gr } = walkableGrid
-            const tgx = Math.floor(this._cx / gr), tgz = Math.floor(this._cy / gr)
-            if (tgx >= 0 && tgx < gs && tgz >= 0 && tgz < gs) {
-              const tv = grid[tgz * gs + tgx]
-              if (tv !== 1 && tv !== 2) {
-                // BFS for nearest path cell
-                for (let sr = 1; sr <= 5; sr++) {
-                  let sf = false
-                  for (let sdx = -sr; sdx <= sr && !sf; sdx++) {
-                    for (const sdz of [-sr, sr]) {
-                      const snx = tgx + sdx, snz = tgz + sdz
-                      if (snx >= 0 && snx < gs && snz >= 0 && snz < gs) {
-                        const sv = grid[snz * gs + snx]
-                        if (sv === 1 || sv === 2) { this._cx = snx * gr + gr / 2; this._cy = snz * gr + gr / 2; sf = true; break }
-                      }
-                    }
-                  }
-                  if (sf) break
-                }
+            // Perpendicular lane offset: each blob walks on a slightly different
+            // "lane" of the road, preventing pile-ups at grid cell centers.
+            // Compute movement direction from path to get perpendicular vector.
+            if (this._filmPath && this._filmPath.length > 1) {
+              const pathIdx = Math.min(Math.floor(transitFrac * (this._filmPath.length - 1)), this._filmPath.length - 2)
+              const pA = this._filmPath[pathIdx]
+              const pB = this._filmPath[pathIdx + 1]
+              const pdx = pB.x - pA.x
+              const pdz = pB.z - pA.z
+              const pLen = Math.sqrt(pdx * pdx + pdz * pdz)
+              if (pLen > 0.1) {
+                // Perpendicular: rotate direction 90° → (-dz, dx), normalise, scale by phase-based offset
+                const laneOffset = (this._phase / (Math.PI * 2) - 0.5) * 10  // ±5 world units
+                this._cx += (-pdz / pLen) * laneOffset
+                this._cy += (pdx / pLen) * laneOffset
               }
             }
           }
 
-          // Face direction of movement
-          if (this._filmPath && this._filmPath.length > 1) {
+          // Face direction of movement (transit path or wander waypoint)
+          let fdx = 0, fdz = 0
+          if (transitFrac >= 1.0) {
+            // Wandering: use waypoint direction
+            const deterministicTime2 = tick * 24 + hour + frac
+            const isStroll2 = kf.state === 'GO_TO_STROLL'
+            const wp2 = computeWanderPosition(kf.x, kf.z, deterministicTime2, this._phase, this._blobSeed, this._wanderSpeed, isStroll2 ? 60 : 20)
+            fdx = wp2.dirX; fdz = wp2.dirZ
+          } else if (this._filmPath && this._filmPath.length > 1) {
+            // In-transit: use path direction
             const nextIdx = Math.min(Math.floor(transitFrac * (this._filmPath.length - 1)) + 1, this._filmPath.length - 1)
             const faceTarget = this._filmPath[nextIdx]
-            const fdx = faceTarget.x - this._cx
-            const fdz = faceTarget.z - this._cy
-            if (Math.abs(fdx) > 0.5 || Math.abs(fdz) > 0.5) {
-              const targetAng = Math.atan2(fdx, fdz)
-              const rot = this.v3object.rotation
-              let diff = targetAng - rot.y
-              while (diff > Math.PI) diff -= Math.PI * 2
-              while (diff < -Math.PI) diff += Math.PI * 2
-              rot.y += diff * 0.1
-            }
+            fdx = faceTarget.x - this._cx
+            fdz = faceTarget.z - this._cy
+          }
+          if (Math.abs(fdx) > 0.5 || Math.abs(fdz) > 0.5) {
+            const targetAng = Math.atan2(fdx, fdz)
+            const rot = this.v3object.rotation
+            let diff = targetAng - rot.y
+            while (diff > Math.PI) diff -= Math.PI * 2
+            while (diff < -Math.PI) diff += Math.PI * 2
+            rot.y += diff * 0.1
           }
         } else if (isIdle) {
-          // Idle: deterministic sinusoidal drift around keyframe position
+          // Idle: waypoint-based wandering around keyframe position
           const deterministicTime = tick * 24 + hour + frac
-          const speed = 0.15 * this._wanderSpeed
           const IDLE_RADIUS = {
-            'AT_LUNCH': 5, 'AT_SHOP': 3, 'AT_SOCIAL': 4, 'AT_LEISURE': 8, 'AT_STROLL': 25, 'AT_PROTEST': 4
+            'AT_LUNCH': 12, 'AT_SHOP': 15, 'AT_SOCIAL': 20,
+            'AT_LEISURE': 40, 'AT_STROLL': 60, 'AT_PROTEST': 20
           }
-          // Outdoor zones get larger drift radius for visible movement
-          let radius = IDLE_RADIUS[kf.state] || 3
+          let radius = IDLE_RADIUS[kf.state] || 10
           if ((kf.state === 'AT_LEISURE' && this._leisureZone) || (kf.state === 'AT_STROLL' && this._strollZone)) {
-            radius = 25  // Much wider drift at outdoor zones
+            radius = 80
           } else if (kf.state === 'AT_LUNCH' && this._lunchOutdoor) {
-            radius = 15  // Wider lunch walk outdoors
+            radius = 40
           }
-          let ox = Math.sin(deterministicTime * 0.7 + this._phase) * radius
-          let oz = Math.cos(deterministicTime * 0.5 + this._phase * 1.3) * radius
-          let targetX = kf.x + ox
-          let targetZ = kf.z + oz
-          // Constrain drift to walkable cells (roads/Gehwege), avoid grass
-          if (walkableGrid.grid) {
-            const { grid, size, gridRes } = walkableGrid
-            const gx = Math.floor(targetX / gridRes)
-            const gz = Math.floor(targetZ / gridRes)
-            if (gx >= 0 && gx < size && gz >= 0 && gz < size) {
-              const cellVal = grid[gz * size + gx]
-              // Only allow drift onto roads (1) or Gehwege/deco (2); block grass (4), entrances (3), blocked (0)
-              if (cellVal !== 1 && cellVal !== 2) {
-                targetX = kf.x
-                targetZ = kf.z
-              }
-            }
-          }
-          this._cx = targetX
-          this._cy = targetZ
+          const wp = computeWanderPosition(
+            kf.x, kf.z, deterministicTime, this._phase,
+            this._blobSeed, this._wanderSpeed, radius
+          )
+          this._cx = wp.x
+          this._cy = wp.z
         } else {
           // SLEEPING or other — just set position to keyframe
           this._cx = kf.x

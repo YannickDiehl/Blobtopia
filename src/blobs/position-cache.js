@@ -43,7 +43,7 @@ export function clearPathCache () {
 /**
  * States where the blob is indoors (invisible).
  */
-const INDOOR_STATES = new Set(['SLEEPING', 'AT_WORK'])
+const INDOOR_STATES = new Set(['SLEEPING', 'AT_WORK', 'AT_LUNCH', 'AT_SHOP', 'AT_SOCIAL'])
 
 /**
  * States where the blob is in transit (walking between buildings).
