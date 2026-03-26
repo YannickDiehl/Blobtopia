@@ -262,13 +262,13 @@ export default {
   line-height: 1.35
   color: $grey-lighter
 
-  /deep/ .hashtag
+  ::v-deep .hashtag
     color: #64b5f6
     cursor: pointer
     &:hover
       text-decoration: underline
 
-  /deep/ .mention
+  ::v-deep .mention
     color: #4ecca3
     cursor: pointer
     font-weight: 600
