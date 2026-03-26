@@ -34,13 +34,13 @@
               .download-item(@click="downloadJSON")
                 b-icon(icon="code-json", size="is-small")
                 span JSON (.json)
-              .download-item(@click="printNewspaper")
-                b-icon(icon="printer", size="is-small")
-                span Drucken / PDF
               .download-sep
               .download-item(@click="downloadAllTXT")
                 b-icon(icon="file-multiple-outline", size="is-small")
                 span Alle Ausgaben (.txt)
+              .download-item(@click="downloadAllJSON")
+                b-icon(icon="code-braces-box", size="is-small")
+                span Alle Ausgaben (.json)
         button.tool-btn(@click="$emit('close')", title="Schließen (Esc)")
           b-icon(icon="close", size="is-small")
 
@@ -177,9 +177,17 @@ export default {
       )
       this.showDownloads = false
     }
-    , printNewspaper() {
+    , downloadAllJSON() {
+      const paperIssues = this.issues
+        .filter(i => i.newspaper === this.paper)
+        .sort((a, b) => a.tick - b.tick)
+      if (!paperIssues.length) return
+      const paperName = this.paper === 'kurier' ? 'Blobtopia_Kurier' : 'Der_Blobspiegel'
+      this.triggerDownload(
+        new Blob([JSON.stringify(paperIssues, null, 2)], { type: 'application/json' })
+        , `${paperName}_alle_ausgaben.json`
+      )
       this.showDownloads = false
-      this.$nextTick(() => window.print())
     }
     , downloadAllTXT() {
       const paperIssues = this.issues
