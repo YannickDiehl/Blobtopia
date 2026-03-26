@@ -52,6 +52,13 @@ public/models/
 src/assets/models/
 *.glb
 
+# Temporary LLM batch/result files (intermediate generation artifacts)
+data/_batch_*.json
+data/_result_*.json
+data/_tweet_batch_*.json
+data/_tweet_result_*.json
+data/_sample_*.json
+
 # Deployment
 .vercel
 .now

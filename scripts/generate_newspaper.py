@@ -22,7 +22,7 @@ import argparse
 import uuid
 
 from newspaper_config import (
-    NEWSPAPERS, PILOT_EVENTS, DISTRICT_NAMES, DISTRICT_DISPLAY,
+    NEWSPAPERS, ALL_EVENTS, DISTRICT_NAMES, DISTRICT_DISPLAY,
     PARTY_NAMES, TICKS_PER_YEAR,
 )
 
@@ -775,7 +775,7 @@ def main():
 
     all_issues = []
 
-    for tick, event_mapping in sorted(PILOT_EVENTS.items()):
+    for tick, event_mapping in sorted(ALL_EVENTS.items()):
         print(f"\n{'='*60}")
         print(f"Event: {event_mapping['event_label']} (Tick {tick}, Year {tick // TICKS_PER_YEAR + 1})")
         print(f"{'='*60}")
