@@ -4,6 +4,8 @@
     b-icon(icon="rss", size="is-small")
     span BlobFeed
     span.tweet-count(v-if="tweets && tweets.length") {{ tweets.length }}
+    button.download-btn(@click="downloadTweets", title="Tweets als CSV herunterladen")
+      b-icon(icon="download", size="is-small")
 
   //- Filter bar (collapsible)
   .filter-bar
@@ -35,12 +37,6 @@
             )
               .mini-badge(:style="{ backgroundColor: districtColor(d - 1) }")
               | {{ districtName(d - 1) }}
-        .filter-row
-          label.filter-label Stimmung
-          .filter-chips
-            span.chip(:class="{ active: !filterSentiment }", @click="setFilter('sentiment', null)") Alle
-            span.chip.chip-pos(:class="{ active: filterSentiment === 'positive' }", @click="setFilter('sentiment', 'positive')") Positiv
-            span.chip.chip-neg(:class="{ active: filterSentiment === 'negative' }", @click="setFilter('sentiment', 'negative')") Negativ
 
   .tweet-list.scrollbars(ref="tweetList")
     .tweet(v-for="tweet in filteredTweets", :key="tweet._key")
@@ -84,7 +80,6 @@ export default {
     showFilters: false
     , filterTopic: null
     , filterDistrict: null
-    , filterSentiment: null
   })
   , computed: {
     topicOptions() {
@@ -94,7 +89,6 @@ export default {
       let n = 0
       if (this.filterTopic) n++
       if (this.filterDistrict !== null) n++
-      if (this.filterSentiment) n++
       return n
     }
     , normalizedTweets() {
@@ -123,11 +117,6 @@ export default {
       if (this.filterDistrict !== null) {
         list = list.filter(t => t._district === this.filterDistrict)
       }
-      if (this.filterSentiment === 'positive') {
-        list = list.filter(t => t.sentiment > 0.2)
-      } else if (this.filterSentiment === 'negative') {
-        list = list.filter(t => t.sentiment < -0.2)
-      }
       return list
     }
   }
@@ -152,10 +141,25 @@ export default {
       const month = Math.floor((tick % 365) / 30) + 1
       return `J${year}/M${month}`
     }
+    , downloadTweets() {
+      const header = 'name,district,topic,sentiment,tick,trigger_type,content'
+      const csvRows = this.filteredTweets.map(t =>
+        [t.name, this.districtName(t._district), this.topicLabel(t.topic),
+         t.sentiment, t.tick, t.trigger_type,
+         '"' + (t._text || '').replace(/"/g, '""') + '"'].join(',')
+      )
+      const csv = '\uFEFF' + [header, ...csvRows].join('\n') // BOM for Excel UTF-8
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'blobfeed-tweets.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
     , setFilter(key, value) {
       if (key === 'topic') this.filterTopic = this.filterTopic === value ? null : value
       else if (key === 'district') this.filterDistrict = this.filterDistrict === value ? null : value
-      else if (key === 'sentiment') this.filterSentiment = this.filterSentiment === value ? null : value
     }
   }
   , watch: {
@@ -204,6 +208,23 @@ export default {
     padding: 1px 7px
     border-radius: 10px
     margin-left: auto
+
+  .download-btn
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    background: none
+    border: 1px solid rgba(255, 255, 255, 0.15)
+    border-radius: 4px
+    color: $grey-light
+    cursor: pointer
+    padding: 2px 6px
+    margin-left: 0.3rem
+    transition: all 0.15s
+    &:hover
+      background: rgba(29, 161, 242, 0.15)
+      border-color: rgba(29, 161, 242, 0.4)
+      color: #64b5f6
 
 // --- Filter bar ---
 .filter-bar
@@ -287,14 +308,6 @@ export default {
     background: rgba(29, 161, 242, 0.12)
     color: #64b5f6
     font-weight: 600
-  &.chip-pos.active
-    border-color: rgba(78, 204, 163, 0.5)
-    background: rgba(78, 204, 163, 0.12)
-    color: #4ecca3
-  &.chip-neg.active
-    border-color: rgba(231, 76, 60, 0.5)
-    background: rgba(231, 76, 60, 0.12)
-    color: #e74c3c
 
 .mini-badge
   width: 7px
