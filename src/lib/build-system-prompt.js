@@ -66,7 +66,7 @@ export function buildSystemPrompt(blob, sg, tick, tpy, changeSummary, activity, 
   var year = Math.floor(tick / tpy)
   var month = Math.floor((tick % tpy) / 30) + 1
   var edu = sg.education_level || 0
-  var job = sg.job || 'Buerger/in'
+  var job = sg.job || blob.job || 'Buerger/in'
   var income = blob.income || sg.income || 2500
   var persona = sg.persona_text || (name + ' ist ein/e Einwohner/in von Blobtopia.')
   var districtName = DISTRICT_NAMES[sg.district] || ('Distrikt ' + (sg.district || 0))
