@@ -15,6 +15,7 @@ import json
 import sys
 import os
 import argparse
+from collections import defaultdict
 
 # Import scheduling logic from existing generate_tweets.py
 from generate_tweets import (
@@ -25,7 +26,71 @@ from generate_tweets import (
 )
 
 
-def tweet_spec_to_context(spec):
+HASHTAG_POOL = {
+    "wirtschaft": ["Wirtschaft", "Arbeit", "Einkommen", "Krise", "Aufschwung", "Ungleichheit", "Reform"],
+    "umwelt": ["Klimaschutz", "Umwelt", "Nachhaltigkeit", "Zukunft", "Natur", "Verantwortung"],
+    "sicherheit": ["Sicherheit", "Ordnung", "Zusammenleben", "Kriminalität", "Polizei", "Freiheit"],
+    "vertrauen": ["Vertrauen", "Politik", "Demokratie", "Wahlen", "Transparenz", "Korruption"],
+    "teilhabe": ["Mitbestimmung", "Beteiligung", "Engagement", "Zusammenhalt", "Gemeinschaft"],
+    "persoenlich": ["Alltag", "MeinLeben", "Nachbarschaft", "Globtopia", "Gedanken"],
+}
+
+
+def build_contact_graph(conn):
+    """Reconstruct contact graph from shared buildings (mirrors Rust ContactGraph::build)."""
+    rows = conn.execute(
+        "SELECT id, name, home_building_id, workplace_id, leisure_spot_id, lunch_spot_id "
+        "FROM blobs WHERE age >= 18"
+    ).fetchall()
+
+    blob_info = {}
+    for r in rows:
+        blob_info[r["id"]] = {
+            "name": r["name"],
+            "home": r["home_building_id"],
+            "work": r["workplace_id"],
+            "leisure": r["leisure_spot_id"],
+            "lunch": r["lunch_spot_id"],
+        }
+
+    # Group by building → relationship type (priority: household > work > leisure > lunch)
+    building_groups = [
+        ("home_building_id", "household", 2.0),
+        ("workplace_id", "coworker", 1.0),
+        ("leisure_spot_id", "friend", 0.5),
+        ("lunch_spot_id", "acquaintance", 0.2),
+    ]
+
+    contacts = defaultdict(dict)  # blob_id → {other_id: {"name", "type", "weight"}}
+
+    for col, rel_type, weight in building_groups:
+        by_building = defaultdict(list)
+        for r in rows:
+            bid = r[col]
+            if bid is not None:
+                by_building[bid].append(r["id"])
+
+        for building_id, members in by_building.items():
+            if len(members) < 2 or len(members) > 50:  # skip oversized groups
+                continue
+            for i, a in enumerate(members):
+                for b in members[i + 1:]:
+                    # Keep strongest relationship (first match wins due to priority order)
+                    if b not in contacts[a]:
+                        contacts[a][b] = {"name": blob_info[b]["name"], "type": rel_type, "weight": weight}
+                    if a not in contacts[b]:
+                        contacts[b][a] = {"name": blob_info[a]["name"], "type": rel_type, "weight": weight}
+
+    # Cap at 15 per blob, sorted by weight descending
+    result = {}
+    for blob_id, contact_dict in contacts.items():
+        sorted_contacts = sorted(contact_dict.values(), key=lambda c: -c["weight"])[:15]
+        result[blob_id] = sorted_contacts
+
+    return result
+
+
+def tweet_spec_to_context(spec, contact_graph=None):
     """Convert a tweet plan spec into a serializable context dict."""
     blob = spec["blob"]
     traits = spec["traits"]
@@ -64,7 +129,7 @@ def tweet_spec_to_context(spec):
     elif nfc > 6.5:
         nfc_note = "Formuliert klar und eindeutig, keine Graustufen."
 
-    return {
+    ctx = {
         "blob_id": blob["id"],
         "blob_name": blob["name"],
         "first_name": first_name,
@@ -94,7 +159,24 @@ def tweet_spec_to_context(spec):
             "zeitgeist": zeitgeist_summary,
         },
         "sentiment": round((blob.get("satisfaction", 5.0) - 5.0) / 5.0, 2),
+        "contacts": [],
+        "household": [],
+        "hashtag_hints": [],
     }
+
+    # Inject contacts from graph
+    if contact_graph and blob["id"] in contact_graph:
+        blob_contacts = contact_graph[blob["id"]]
+        ctx["contacts"] = [c["name"] for c in blob_contacts[:5]]
+        ctx["household"] = [c["name"] for c in blob_contacts if c["type"] == "household"]
+
+    # Hashtag hints based on topic
+    import random
+    topic = spec["topic"]
+    pool = HASHTAG_POOL.get(topic, HASHTAG_POOL["persoenlich"])
+    ctx["hashtag_hints"] = random.sample(pool, min(4, len(pool)))
+
+    return ctx
 
 
 def main():
@@ -139,10 +221,15 @@ def main():
         by_trigger[t] = by_trigger.get(t, 0) + 1
     print(f"  Triggers: {dict(sorted(by_trigger.items()))}")
 
+    print("Building contact graph from shared buildings...")
+    contact_graph = build_contact_graph(conn)
+    avg_contacts = sum(len(v) for v in contact_graph.values()) / max(len(contact_graph), 1)
+    print(f"  {len(contact_graph)} blobs with contacts, avg {avg_contacts:.1f} contacts/blob")
+
     print("Extracting context for each tweet...")
     tweets_context = []
     for i, spec in enumerate(tweet_plan):
-        ctx = tweet_spec_to_context(spec)
+        ctx = tweet_spec_to_context(spec, contact_graph)
         tweets_context.append(ctx)
         if (i + 1) % 100 == 0:
             print(f"  {i + 1}/{len(tweet_plan)}...")
