@@ -187,12 +187,7 @@ const initialState = {
   , tweetPollingTimer: null
   , demographics: null
   , dashboardCache: {
-    attitudes: null
-    , latentTraits: null
-    , elections: null
-    , eventsImpact: null
-    , blobList: null
-    , blobHistory: {}
+    eventsImpact: null
   }
 }
 
@@ -230,12 +225,6 @@ export const simulation = {
     , timelineEvents: state => state.timelineMeta ? state.timelineMeta.events : []
     , electionTicks: state => state.timelineMeta ? state.timelineMeta.election_ticks : []
     , dashboardCache: state => state.dashboardCache
-    , dashboardAttitudes: state => state.dashboardCache.attitudes
-    , dashboardLatentTraits: state => state.dashboardCache.latentTraits
-    , dashboardElections: state => state.dashboardCache.elections
-    , dashboardEventsImpact: state => state.dashboardCache.eventsImpact
-    , dashboardBlobList: state => state.dashboardCache.blobList
-    , dashboardBlobHistory: state => state.dashboardCache.blobHistory
     // UI Mode getters
     , uiMode: state => state.uiMode
     , rightPanelOpen: state => state.rightPanelOpen
@@ -293,33 +282,6 @@ export const simulation = {
     }
 
     // ── Dashboard Data (from static JSON files) ────────────────────────
-    , async fetchDashboardAttitudes({ commit, state }) {
-      if (state.dashboardCache.attitudes) return state.dashboardCache.attitudes
-      try {
-        const res = await fetch(`${DATA_BASE}/stats/attitudes.json`)
-        const data = await res.json()
-        commit('setDashboardCache', { key: 'attitudes', data })
-        return data
-      } catch (e) { console.warn('[Dashboard] attitudes fetch failed:', e); return null }
-    }
-    , async fetchDashboardLatentTraits({ commit, state }) {
-      if (state.dashboardCache.latentTraits) return state.dashboardCache.latentTraits
-      try {
-        const res = await fetch(`${DATA_BASE}/stats/latent-traits.json`)
-        const data = await res.json()
-        commit('setDashboardCache', { key: 'latentTraits', data })
-        return data
-      } catch (e) { console.warn('[Dashboard] latent-traits fetch failed:', e); return null }
-    }
-    , async fetchDashboardElections({ commit, state }) {
-      if (state.dashboardCache.elections) return state.dashboardCache.elections
-      try {
-        const res = await fetch(`${DATA_BASE}/stats/elections.json`)
-        const data = await res.json()
-        commit('setDashboardCache', { key: 'elections', data })
-        return data
-      } catch (e) { console.warn('[Dashboard] elections fetch failed:', e); return null }
-    }
     , async fetchDashboardEventsImpact({ commit, state }) {
       if (state.dashboardCache.eventsImpact) return state.dashboardCache.eventsImpact
       try {
@@ -328,24 +290,6 @@ export const simulation = {
         commit('setDashboardCache', { key: 'eventsImpact', data })
         return data
       } catch (e) { console.warn('[Dashboard] events/impact fetch failed:', e); return null }
-    }
-    , async fetchDashboardBlobList({ commit, state }) {
-      if (state.dashboardCache.blobList) return state.dashboardCache.blobList
-      try {
-        const res = await fetch(`${DATA_BASE}/stats/blob-list.json`)
-        const data = await res.json()
-        commit('setDashboardCache', { key: 'blobList', data })
-        return data
-      } catch (e) { console.warn('[Dashboard] blob-list fetch failed:', e); return null }
-    }
-    , async fetchDashboardBlobHistory({ commit, state }, blobId) {
-      if (state.dashboardCache.blobHistory[blobId]) return state.dashboardCache.blobHistory[blobId]
-      try {
-        const res = await fetch(`${DATA_BASE}/blobs/${blobId}.json`)
-        const data = await res.json()
-        commit('setDashboardBlobHistory', { blobId, data })
-        return data
-      } catch (e) { console.warn('[Dashboard] blob history fetch failed:', e); return null }
     }
 
     // ── Demographics (no separate endpoint in static mode) ─────────────
@@ -641,9 +585,6 @@ export const simulation = {
     }
     , setDashboardCache(state, { key, data }) {
       Vue.set(state.dashboardCache, key, data)
-    }
-    , setDashboardBlobHistory(state, { blobId, data }) {
-      Vue.set(state.dashboardCache.blobHistory, blobId, data)
     }
     , setUiMode(state, mode){
       state.uiMode = mode

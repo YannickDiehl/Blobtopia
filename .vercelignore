@@ -4,3 +4,12 @@
 scripts/
 tests/
 node_modules_old/
+target/
+crates/
+data/
+
+# Large generated timeline data (loaded from pre-built dist/)
+public/data/timeline/ticks/
+public/data/timeline/blobs/
+public/data/timeline/globs/
+public/data/timeline/stats/

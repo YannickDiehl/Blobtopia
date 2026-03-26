@@ -4,7 +4,7 @@ import Router from 'vue-router'
 import About from '@/pages/about'
 import Simulation from '@/pages/simulation'
 import CityEditor from '@/pages/city-editor'
-const Dashboard = () => import('@/pages/dashboard')
+
 
 Vue.use(Router)
 
@@ -47,12 +47,6 @@ const router = new Router({
         name: 'simulation'
         , params: { generationIndex: to.params.generationIndex }
       })
-    }
-    , {
-      path: '/s/:generationIndex/dashboard'
-      , name: 'dashboard'
-      , component: Dashboard
-      , props: true
     }
     , {
       path: '/s/:generationIndex/about'

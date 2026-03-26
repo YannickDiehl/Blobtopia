@@ -45,7 +45,7 @@
           li #[strong Interviews:] Klicke auf einen Blob und wähle „Interview führen" — stelle Fragen zu Leben, Meinungen und Sorgen
           li #[strong BlobFeed:] Im Feed rechts siehst du Tweets der Blobs — sie spiegeln Stimmungen und Reaktionen auf Events wider
           li #[strong Zeitleiste:] Reise durch 22 Jahre Geschichte und beobachte, wie Events die Gesellschaft verändern
-          li #[strong Dashboard:] Im Statistik-Tab findest du Distrikt-Vergleiche und Entwicklungen über die Zeit
+          li #[strong BlobGazetta:] In der Gazette findest du Nachrichtenartikel über aktuelle Ereignisse in Blobtopia
 
         h3.title.is-size-4 Für die Methodenlehre
 
