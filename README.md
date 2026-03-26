@@ -10,11 +10,13 @@ Teil des **Globtopia-Lehrkonzepts** für das Proseminar *Methoden I* (B.A. Polit
 
 ## Inspiration & Credits
 
-Blobtopia baut auf zwei Projekten auf, ohne die es nicht existieren würde:
+Blobtopia baut auf drei Projekten auf, ohne die es nicht existieren würde:
 
-- **[minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator)** von Jasper Palfree -- Die ursprüngliche Simulationsplattform (Vue.js + Three.js), deren Architektur und Rendering-Pipeline als Grundlage für Blobtopia dient. Die Blob-Kreaturen, das Komponentensystem und der 3D-Viewer stammen aus diesem Projekt.
+- **[minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator)** von Jasper Palfree (GPL-3.0) -- Die ursprüngliche Simulationsplattform (Vue.js + Three.js), deren Architektur und Rendering-Pipeline als Grundlage für Blobtopia dient. Die Blob-Kreaturen, das Komponentensystem und der 3D-Viewer stammen aus diesem Projekt.
 
 - **[Primer Learning](https://www.youtube.com/@PrimerLearning)** -- Der YouTube-Kanal von Justin Helps, dessen Simulationsvideos zu Evolution, natürlicher Selektion und emergenten Gesellschaften die Idee inspirierten, kugelförmige Agenten (*Blobs*) als intuitive Repräsentationen sozialer Akteure einzusetzen.
+
+- **[Kenney](https://kenney.nl)** -- Die 3D-Stadtmodelle (Gebäude, Straßen, Vegetation, Infrastruktur) stammen aus den Asset-Packs von Kenney Vleugels, insbesondere den Packs *City Kit (Suburban)*, *City Kit (Commercial)* und *Nature Kit*. Alle Kenney-Assets sind unter **CC0 1.0 Universal (Public Domain)** lizenziert.
 
 Blobtopia transformiert die biologische Evolutionssimulation in eine **politikwissenschaftliche Gesellschaftssimulation**: Statt Nahrungssuche und Reproduktion modelliert es Einstellungen, Wahlen, soziale Netzwerke und politische Krisen.
 
@@ -341,4 +343,12 @@ npm run export
 
 ## Lizenz
 
-Dieses Projekt ist Teil eines universitären Lehrprojekts an der Philipps-Universität Marburg und nicht zur allgemeinen Weiterverwendung vorgesehen. Die Simulationsplattform basiert auf [minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator) (MIT-Lizenz).
+Dieses Projekt steht unter der **GNU General Public License v3.0** (GPL-3.0), da es auf [minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator) aufbaut, welches unter GPL-3.0 lizenziert ist. Siehe [LICENSE](LICENSE) für den vollständigen Lizenztext.
+
+**Drittanbieter-Lizenzen:**
+
+| Komponente | Lizenz | Quelle |
+|---|---|---|
+| evolution-simulator | GPL-3.0 | [minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator) |
+| Kenney 3D-Assets | CC0 1.0 (Public Domain) | [kenney.nl](https://kenney.nl) |
+| Vue.js, Three.js, Buefy | MIT | Jeweilige Repositories |
