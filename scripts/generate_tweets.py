@@ -797,15 +797,16 @@ def build_tweet_plan(conn, blobs, events, max_tweets=None):
         zeitgeist = compute_zeitgeist(evt_tick, events)
 
         # How many tweets? Major events get more.
+        # Scaled up for network density (target ~2000 total tweets)
         desc = event["description"]
         if any(kw in desc for kw in ["Wahl", "Krise", "Korruption"]):
-            n_tweets = 12
+            n_tweets = 25
         elif "Kultur" in desc:
-            n_tweets = 2
+            n_tweets = 6
         elif any(kw in desc for kw in ["Ungleichheit", "Skandal", "Naturkatastrophe"]):
-            n_tweets = 8
+            n_tweets = 18
         else:
-            n_tweets = 5
+            n_tweets = 12
 
         # Score all blobs
         candidates = []
@@ -844,13 +845,13 @@ def build_tweet_plan(conn, blobs, events, max_tweets=None):
                 "event_desc": tweet_event, "zeitgeist": zeitgeist,
             })
 
-    # === Type 2: Threshold Tweets (~50-100 tweets) ===
-    for tick in range(0, max_tick, 90):  # every ~3 months instead of monthly
+    # === Type 2: Threshold Tweets (~80-150 tweets) ===
+    for tick in range(0, max_tick, 45):  # every ~6 weeks
         zeitgeist = compute_zeitgeist(tick, events)
         extremes = find_extreme_blobs(conn, blobs, tick)
         for enriched, traits in extremes:
             aff = tweet_affinity(enriched, traits)
-            if rng.random() < aff * 0.08:  # much lower probability
+            if rng.random() < aff * 0.15:  # moderate probability
                 tweet_topic, tweet_event = select_tweet_topic(
                     enriched, traits, zeitgeist, topic_counts=topic_counts, rng=rng)
                 _append_tweet({
@@ -859,8 +860,8 @@ def build_tweet_plan(conn, blobs, events, max_tweets=None):
                     "event_desc": tweet_event, "zeitgeist": zeitgeist,
                 })
 
-    # === Type 3: Periodic Opinion (~100-150 tweets) ===
-    for tick in range(90, max_tick, 180):
+    # === Type 3: Periodic Opinion (~200-400 tweets) ===
+    for tick in range(90, max_tick, 90):
         zeitgeist = compute_zeitgeist(tick, events)
         high_eff = []
         for blob in blobs:
@@ -870,7 +871,7 @@ def build_tweet_plan(conn, blobs, events, max_tweets=None):
             if traits.get("self_efficacy", 5.0) > 6.0 and tweet_affinity(enriched, traits) > 0.25:
                 high_eff.append((enriched, traits))
 
-        n_select = min(len(high_eff), 4)
+        n_select = min(len(high_eff), 8)
         if n_select > 0:
             selected = rng.sample(high_eff, n_select)
             for enriched, traits in selected:
@@ -886,8 +887,8 @@ def build_tweet_plan(conn, blobs, events, max_tweets=None):
                     "event_desc": tweet_event, "zeitgeist": zeitgeist,
                 })
 
-    # === Type 4: Background Chatter (~50-100 tweets) ===
-    for tick in range(30, max_tick, 60):
+    # === Type 4: Background Chatter (~200-400 tweets) ===
+    for tick in range(30, max_tick, 30):
         if has_nearby_event(events, tick, window=15):
             continue
         zeitgeist = compute_zeitgeist(tick, events)
@@ -899,7 +900,7 @@ def build_tweet_plan(conn, blobs, events, max_tweets=None):
             if tweet_affinity(enriched, traits) > 0.25:
                 high_aff.append((enriched, traits))
 
-        n_select = rng.randint(1, 2)
+        n_select = rng.randint(2, 4)
         if len(high_aff) >= n_select:
             selected = rng.sample(high_aff, n_select)
             for enriched, traits in selected:
