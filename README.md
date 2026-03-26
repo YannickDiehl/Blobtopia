@@ -1,8 +1,16 @@
-# Blobtopia
+<p align="center">
+  <img src="public/blobtopia-logo.png" alt="Blobtopia Logo" width="400">
+</p>
 
-**Eine interaktive 3D-Gesellschaftssimulation als Lehrwerkzeug für empirische Sozialforschung.**
+<h1 align="center">Blobtopia</h1>
 
-**[Blobtopia live ausprobieren](https://blobtopia.vercel.app/#/s/0?intro=1)**
+<p align="center">
+  <strong>Eine interaktive 3D-Gesellschaftssimulation als Lehrwerkzeug für empirische Sozialforschung.</strong>
+</p>
+
+<p align="center">
+  <a href="https://blobtopia.vercel.app/#/s/0?intro=1"><strong>Blobtopia live ausprobieren</strong></a>
+</p>
 
 Blobtopia ist eine simulierte Stadt mit 500 kugelförmigen Wesen -- den *Blobs* -- die in fünf Distrikten leben, arbeiten, wählen und protestieren. Studierende erforschen diese Gesellschaft wie echte Sozialforscher\*innen: durch Beobachtung, Interviews, Datenanalyse und Inhaltsanalyse.
 
