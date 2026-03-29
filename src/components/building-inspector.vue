@@ -1,6 +1,6 @@
 <template lang="pug">
-.building-inspector(:class="{ 'has-timeline': timelineMode }", @click.self="$emit('close')")
-  .inspector-card
+.building-inspector(:class="{ 'has-timeline': timelineMode }", :style="panelStyle", @click.self="$emit('close')")
+  .inspector-card(:style="cardStyle")
     .inspector-header
       .building-icon
         b-icon(:icon="buildingIcon", size="is-small")
@@ -92,6 +92,7 @@
 <script>
 import { DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 import { visualPositions } from '@/blobs/visual-positions'
+import draggablePanel from '@/mixins/draggable-panel'
 
 const FUNCTIONAL_LABELS = {
   apartment: 'Mehrfamilienhaus', rowhouse: 'Reihenhaus', villa: 'Villa'
@@ -105,6 +106,7 @@ const FUNCTIONAL_LABELS = {
 
 export default {
   name: 'BuildingInspector'
+  , mixins: [draggablePanel]
   , props: {
     building: { type: Object, required: true }
     , timelineMode: { type: Boolean, default: false }
@@ -118,7 +120,24 @@ export default {
     }
   }
   , computed: {
-    displayName(){
+    panelConfig() {
+      return {
+        storageKey: 'blobtopia_panel_buildingInspector'
+        , minWidth: 260
+        , maxWidth: 500
+        , minHeight: 200
+        , maxHeight: Math.round(window.innerHeight * 0.8)
+        , headerSelector: '.inspector-header'
+        , resizable: true
+      }
+    }
+    , cardStyle() {
+      if (this.panelW !== null || this.panelH !== null) {
+        return { width: '100%', height: '100%', maxHeight: 'none' }
+      }
+      return {}
+    }
+    , displayName(){
       if (this.building.label && this.building.label !== this.building.type) {
         return this.building.label
       }
@@ -278,6 +297,9 @@ export default {
   gap: 0.5rem
   padding: 0.6rem 0.75rem
   border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+  cursor: grab
+  &:active
+    cursor: grabbing
 
   .building-icon
     width: 28px

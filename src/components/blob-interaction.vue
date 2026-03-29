@@ -1,6 +1,6 @@
 <template lang="pug">
-.blob-interaction(:class="{ 'has-timeline': timelineMode }", @click.self="$emit('close')")
-  .interaction-card(:class="{ 'chat-mode': mode === 'chat' }")
+.blob-interaction(:class="{ 'has-timeline': timelineMode }", :style="panelStyle", @click.self="$emit('close')")
+  .interaction-card(:class="{ 'chat-mode': mode === 'chat' }", :style="cardStyle")
     //- Header (shared across both modes)
     .interaction-header
       .district-badge(:style="{ backgroundColor: districtHex }")
@@ -236,9 +236,11 @@
 import { mapState, mapGetters } from 'vuex'
 import { DISTRICT_COLORS } from '@/lib/blob-adapter'
 import BlobChatExport from './blob-chat-export'
+import draggablePanel from '@/mixins/draggable-panel'
 
 export default {
   name: 'BlobInteraction'
+  , mixins: [draggablePanel]
   , components: { BlobChatExport }
   , props: {
     blob: {
@@ -267,8 +269,25 @@ export default {
     }
   }
   , computed: {
-    ...mapState('chat', { chatLoading: 'isLoading', chatError: 'error' })
+    panelConfig() {
+      return {
+        storageKey: 'blobtopia_panel_blobInteraction'
+        , minWidth: 300
+        , maxWidth: 700
+        , minHeight: 250
+        , maxHeight: Math.round(window.innerHeight * 0.9)
+        , headerSelector: '.interaction-header'
+        , resizable: true
+      }
+    }
+    , ...mapState('chat', { chatLoading: 'isLoading', chatError: 'error' })
     , ...mapGetters('chat', ['activeSession', 'activeMessages'])
+    , cardStyle() {
+      if (this.panelW !== null || this.panelH !== null) {
+        return { width: '100%', height: '100%', maxHeight: 'none' }
+      }
+      return {}
+    }
     , districtHex() {
       const hex = DISTRICT_COLORS[this.blob.district] || 0x999999
       return '#' + hex.toString(16).padStart(6, '0')
@@ -530,6 +549,9 @@ export default {
   padding: 0.6rem 0.75rem
   border-bottom: 1px solid rgba(255, 255, 255, 0.1)
   flex-shrink: 0
+  cursor: grab
+  &:active
+    cursor: grabbing
 
   .district-badge
     width: 12px
