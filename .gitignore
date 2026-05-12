@@ -62,3 +62,9 @@ data/_sample_*.json
 # Deployment
 .vercel
 .now
+
+# Per-blob histories (not loaded by frontend, ~500 MB - cleanup 2026-05-12)
+public/data/timeline/blobs/
+
+# Backup files (any *.bak* under data/)
+data/*.bak*
