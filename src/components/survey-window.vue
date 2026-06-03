@@ -30,7 +30,7 @@
               option(value="open") Offen
             span.action-btn.del(@click="removeItem(i)", title="Entfernen")
               b-icon(icon="close", size="is-small")
-          textarea.survey-input.item-text(v-model="it.text", rows="2", placeholder="Fragetext …")
+          textarea.survey-input.item-text(v-model="it.text", rows="2", placeholder="Fragetext …", @blur="maybeSuggest(it)")
           .scale-params(v-if="it.type === 'scale'")
             span.mini-label von
             input.survey-input.mini(type="number", v-model.number="it.scale.min")
@@ -40,6 +40,12 @@
             input.survey-input.label-in(v-model="it.scale.maxLabel", placeholder="Label hoch")
           .choice-params(v-else-if="it.type === 'choice'")
             input.survey-input(:value="it.choices.join(', ')", @input="setChoices(it, $event.target.value)", placeholder="Antwortoptionen, mit Komma getrennt")
+          .construct-row
+            span.mini-label misst
+            select.survey-input.construct-select(v-model="it.construct")
+              option(:value="null") — frei (nur LLM)
+              optgroup(v-for="g in constructGroups", :key="g.name", :label="g.name")
+                option(v-for="c in g.items", :key="c.key", :value="c.key") {{ c.label }}
           .item-preview(v-if="it.text")
             .preview-label So wird gefragt
             .preview-text {{ previewQuestion(it) }}
@@ -101,16 +107,27 @@
 
       //- ═══ FIELDWORK ═══
       .survey-section(v-else-if="step === 'field'")
-        p.hint Die ausgewählten Blobs werden per LLM authentisch befragt.
-        .info-item
-          span.info-label Items im Fragebogen
-          span.info-value {{ localItems.length }}
+        .field-row
+          label Antwortquelle
+          .mode-toggle
+            label.mode-opt(:class="{ active: design.mode === 'synthetic' }")
+              input(type="radio", value="synthetic", v-model="design.mode")
+              span Synthetik · gratis
+            label.mode-opt(:class="{ active: design.mode === 'llm' }")
+              input(type="radio", value="llm", v-model="design.mode")
+              span LLM · kostet
+        p.hint(v-if="design.mode === 'synthetic'") Antworten aus den gespeicherten Werten + Rauschen — kostenlos und reproduzierbar. {{ boundCount }} von {{ localItems.length }} Items sind einem Konstrukt zugeordnet (nur diese werden beantwortet).
+        p.hint(v-else) Jeder Blob wird einzeln per LLM befragt — authentisch, aber kostenpflichtig.
         .info-item
           span.info-label Geplante Stichprobe (n)
           span.info-value {{ design.n }}
+        .info-item(v-if="design.mode === 'llm'")
+          span.info-label Geschätzte LLM-Aufrufe
+          span.info-value ≈ {{ estimatedCalls }}
+        .cost-warn(v-if="design.mode === 'llm' && estimatedCalls > 80") Hohe Aufrufzahl — erwäge ein kleineres n oder den Synthetik-Modus.
         button.survey-btn.primary(:disabled="!localItems.length || isRunning", @click="onRun")
-          b-icon(icon="play", size="is-small")
-          span Befragung starten
+          b-icon(:icon="design.mode === 'llm' ? 'play' : 'flash'", size="is-small")
+          span {{ design.mode === 'llm' ? 'LLM-Befragung starten' : 'Synthetische Befragung starten' }}
         .progress-line(v-if="progress && progress.total")
           span Befragt: {{ progress.done }} / {{ progress.total }}
         .error-banner(v-if="error") {{ error }}
@@ -134,6 +151,7 @@
 import { mapState } from 'vuex'
 import draggablePanel from '@/mixins/draggable-panel'
 import { formatQuestion } from '@/lib/survey'
+import { CONSTRUCTS, suggestConstruct } from '@/lib/survey-constructs'
 
 function clone(x) { return JSON.parse(JSON.stringify(x)) }
 
@@ -149,6 +167,7 @@ export default {
       , localItems: []
       , design: {
         technique: 'srs'
+        , mode: 'synthetic'
         , n: 40
         , seed: 12345
         , strataVar: 'district'
@@ -181,6 +200,21 @@ export default {
       if (!this.dist) return 1
       return Math.max(1, ...Object.keys(this.dist).map(k => this.dist[k]))
     }
+    , constructGroups() {
+      const groups = []
+      const byName = {}
+      for (const c of CONSTRUCTS) {
+        if (!byName[c.group]) { byName[c.group] = { name: c.group, items: [] }; groups.push(byName[c.group]) }
+        byName[c.group].items.push(c)
+      }
+      return groups
+    }
+    , estimatedCalls() {
+      return (Number(this.design.n) || 0) * this.localItems.length
+    }
+    , boundCount() {
+      return this.localItems.filter(it => it.construct && it.type !== 'open' && it.type !== 'choice').length
+    }
     , ...mapState('survey', ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'])
   }
   , created() {
@@ -196,6 +230,7 @@ export default {
       this.design.strataVar = (d.strataVars && d.strataVars[0]) || 'district'
       this.design.clusterVar = d.clusterVar || 'district'
       this.design.numClusters = d.numClusters || 2
+      this.design.mode = d.mode || 'synthetic'
       this.design.excludeMinors = !(d.eligibility && d.eligibility.excludeMinors === false)
     }
   }
@@ -232,9 +267,16 @@ export default {
     , previewQuestion(it) {
       try { return formatQuestion(it) } catch (e) { return '' }
     }
+    , maybeSuggest(it) {
+      if (!it.construct) {
+        const s = suggestConstruct(it.text)
+        if (s) it.construct = s
+      }
+    }
     , canonicalDesign() {
       return {
         technique: this.design.technique
+        , mode: this.design.mode
         , n: Number(this.design.n) || 0
         , seed: Number(this.design.seed) || 0
         , strataVars: [this.design.strataVar]
@@ -454,6 +496,43 @@ export default {
   font-size: 0.75rem
   color: $grey-light
   cursor: pointer
+
+.construct-row
+  display: flex
+  align-items: center
+  gap: 0.3rem
+  margin-bottom: 0.4rem
+
+  .construct-select
+    flex: 1
+
+.mode-toggle
+  display: flex
+  gap: 0.4rem
+
+  .mode-opt
+    flex: 1
+    display: flex
+    align-items: center
+    justify-content: center
+    gap: 0.3rem
+    padding: 0.35rem
+    border: 1px solid rgba(255, 255, 255, 0.18)
+    border-radius: 5px
+    cursor: pointer
+    font-size: 0.72rem
+    color: $grey-light
+    input
+      display: none
+    &.active
+      border-color: $primary
+      color: $primary
+      background: rgba(255, 255, 255, 0.05)
+
+.cost-warn
+  margin-top: 0.4rem
+  font-size: 0.7rem
+  color: #f0c929
 
 .survey-btn
   display: inline-flex

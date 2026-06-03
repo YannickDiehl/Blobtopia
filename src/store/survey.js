@@ -14,12 +14,14 @@ import {
 } from '@/lib/survey-sampling'
 import { toCSV } from '@/lib/survey-dataset'
 import { runSurvey, makeChatSender } from '@/lib/survey-engine'
+import { runSyntheticSurvey } from '@/lib/survey-synthetic'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
 import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
 import { CHAT_API } from '@/config/api'
 
 const DEFAULT_DESIGN = () => ({
   technique: SAMPLING.SRS
+  , mode: 'synthetic' // 'synthetic' (free, default) | 'llm'
   , n: 40
   , seed: 12345
   , strataVars: ['district']
@@ -104,8 +106,7 @@ export const survey = {
       commit('SET_SAMPLE', { sample, dist })
     }
 
-    // Live LLM fieldwork: draw the sample, build each blob's persona prompt,
-    // then administer the questionnaire via the chat proxy (survey-engine).
+    // Run the fieldwork: synthetic (free, default) or live LLM.
     , async runFieldwork({ commit, state, rootState, rootGetters }) {
       commit('SET_ERROR', null)
       if (!state.items.length) { commit('SET_ERROR', 'Bitte zuerst mindestens eine Frage anlegen.'); return }
@@ -116,45 +117,54 @@ export const survey = {
       const sample = drawSample(blobs, design)
       if (!sample.units.length) { commit('SET_ERROR', 'Die Stichprobe ist leer — bitte das Design prüfen.'); return }
 
-      const tick = (rootState.simulation && rootState.simulation.tick) || 0
-      const tpy = (rootState.simulation.timelineMeta && rootState.simulation.timelineMeta.ticks_per_year) || 365
-      const token = localStorage.getItem('blobtopia_chat_token')
-      const sendFn = makeChatSender(CHAT_API, token)
+      const demographics = b => ({
+        district: b.district
+        , age: b.age
+        , education_level: b.education_level
+        , party: b.party_name
+      })
+      const strataVar = (state.design.strataVars && state.design.strataVars[0]) || 'district'
 
       commit('SET_RUNNING', true)
       commit('SET_RESULT', null)
       commit('SET_PROGRESS', { done: 0, total: sample.units.length })
       try {
-        // Pre-build each blob's persona prompt (needs async static data) so
-        // survey-engine can call buildPrompt synchronously.
-        const promptByBlob = {}
-        for (const u of sample.units) {
-          const b = u.blob
-          const sg = await getBlobStatic(b.id)
-          const cs = await getChangeSummary(b.id, tick)
-          const ctx = resolveActivity(rootState, b)
-          promptByBlob[b.id] = buildSystemPrompt(b, sg || {}, tick, tpy, cs, ctx.activity, ctx.hour)
-        }
-
-        const result = await runSurvey(sample.units, {
-          sendFn: sendFn
-          , buildPrompt: u => promptByBlob[u.blob.id]
-          , items: state.items
-          , tick: tick
-          , concurrency: 4
-          , maxRetries: 1
-          , demographics: b => ({
-            district: b.district
-            , age: b.age
-            , education_level: b.education_level
-            , party: b.party_name
+        let result
+        if (state.design.mode === 'llm') {
+          // Live LLM fieldwork — one chat call per (blob × item).
+          const tick = (rootState.simulation && rootState.simulation.tick) || 0
+          const tpy = (rootState.simulation.timelineMeta && rootState.simulation.timelineMeta.ticks_per_year) || 365
+          const sendFn = makeChatSender(CHAT_API, localStorage.getItem('blobtopia_chat_token'))
+          // Pre-build each persona prompt (async static data) so runSurvey can
+          // call buildPrompt synchronously.
+          const promptByBlob = {}
+          for (const u of sample.units) {
+            const b = u.blob
+            const sg = await getBlobStatic(b.id)
+            const cs = await getChangeSummary(b.id, tick)
+            const ctx = resolveActivity(rootState, b)
+            promptByBlob[b.id] = buildSystemPrompt(b, sg || {}, tick, tpy, cs, ctx.activity, ctx.hour)
+          }
+          result = await runSurvey(sample.units, {
+            sendFn: sendFn
+            , buildPrompt: u => promptByBlob[u.blob.id]
+            , items: state.items
+            , tick: tick
+            , concurrency: 4
+            , maxRetries: 1
+            , demographics: demographics
+            , onProgress: (done, total) => commit('SET_PROGRESS', { done: done, total: total })
           })
-          , onProgress: (done, total) => commit('SET_PROGRESS', { done: done, total: total })
-        })
-
+        } else {
+          // Synthetic (free, instant): answers from stored values + noise.
+          result = runSyntheticSurvey(sample.units, state.items, {
+            seed: state.design.seed
+            , demographics: demographics
+          })
+          commit('SET_PROGRESS', { done: result.rows.length, total: result.rows.length })
+        }
         commit('SET_RESULT', result)
-        const v = (state.design.strataVars && state.design.strataVars[0]) || 'district'
-        commit('SET_SAMPLE', { sample: sample, dist: realizedDistribution(sample.units, v, design) })
+        commit('SET_SAMPLE', { sample: sample, dist: realizedDistribution(sample.units, strataVar, design) })
       } catch (e) {
         commit('SET_ERROR', e && e.message ? e.message : String(e))
       } finally {
