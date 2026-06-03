@@ -1,64 +1,6 @@
-import { CHAT_API, DATA_BASE } from '@/config/api'
+import { CHAT_API } from '@/config/api'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
-
-// Cache for static blob data (loaded once)
-let blobStaticMap = null
-let changeSummaries = null
-
-/**
- * Determine the blob's current activity from the schedule and hour.
- * The schedule is on the adapted blob object as server_schedule (set by blob-adapter.js).
- */
-function resolveActivity(rootState, blob) {
-  var hour = rootState.simulation.hour != null ? rootState.simulation.hour : 14
-  var schedule = (blob && blob.server_schedule) || null
-  var activity = 'Leisure'
-  if (schedule && schedule.entries) {
-    for (var i = schedule.entries.length - 1; i >= 0; i--) {
-      if (hour >= schedule.entries[i].hour) {
-        activity = schedule.entries[i].activity
-        break
-      }
-    }
-  }
-  return { activity: activity, hour: hour }
-}
-
-async function getBlobStatic(blobId) {
-  if (!blobStaticMap) {
-    try {
-      const res = await fetch(DATA_BASE + '/blobs-static.json')
-      const data = await res.json()
-      blobStaticMap = {}
-      for (const g of data) { blobStaticMap[g.id] = g }
-    } catch (e) {
-      console.warn('Failed to load blob static data for chat:', e)
-      return null
-    }
-  }
-  return blobStaticMap[blobId] || null
-}
-
-async function getChangeSummary(globId, tick) {
-  if (!changeSummaries) {
-    try {
-      const res = await fetch(DATA_BASE + '/change-summaries.json')
-      changeSummaries = await res.json()
-    } catch (e) {
-      console.warn('Failed to load change summaries:', e)
-      changeSummaries = {}
-    }
-  }
-  var entries = changeSummaries[globId]
-  if (!entries || entries.length === 0) return null
-  // Find the nearest summary at or before the current tick
-  var best = null
-  for (var i = 0; i < entries.length; i++) {
-    if (entries[i].tick <= tick) best = entries[i]
-    else break
-  }
-  return best ? best.summary : null
-}
+import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
 
 export const chat = {
   namespaced: true

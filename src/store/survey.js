@@ -13,6 +13,10 @@ import {
   SAMPLING, drawSample, eligibleFrame, realizedDistribution, ACCESSORS
 } from '@/lib/survey-sampling'
 import { toCSV } from '@/lib/survey-dataset'
+import { runSurvey, makeChatSender } from '@/lib/survey-engine'
+import { buildSystemPrompt } from '@/lib/build-system-prompt'
+import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
+import { CHAT_API } from '@/config/api'
 
 const DEFAULT_DESIGN = () => ({
   technique: SAMPLING.SRS
@@ -100,10 +104,62 @@ export const survey = {
       commit('SET_SAMPLE', { sample, dist })
     }
 
-    // STAGE 3 — live LLM fieldwork (wires survey-engine.runSurvey + makeChatSender).
-    // Intentionally a graceful placeholder until the prompt/transport wiring lands.
-    , runFieldwork({ commit }) {
-      commit('SET_ERROR', 'Die Live-Feldphase (LLM) wird im nächsten Schritt angebunden.')
+    // Live LLM fieldwork: draw the sample, build each blob's persona prompt,
+    // then administer the questionnaire via the chat proxy (survey-engine).
+    , async runFieldwork({ commit, state, rootState, rootGetters }) {
+      commit('SET_ERROR', null)
+      if (!state.items.length) { commit('SET_ERROR', 'Bitte zuerst mindestens eine Frage anlegen.'); return }
+      const blobs = currentBlobs(rootGetters)
+      if (!blobs.length) { commit('SET_ERROR', 'Keine Population geladen.'); return }
+
+      const design = buildDrawDesign(state.design, blobs)
+      const sample = drawSample(blobs, design)
+      if (!sample.units.length) { commit('SET_ERROR', 'Die Stichprobe ist leer — bitte das Design prüfen.'); return }
+
+      const tick = (rootState.simulation && rootState.simulation.tick) || 0
+      const tpy = (rootState.simulation.timelineMeta && rootState.simulation.timelineMeta.ticks_per_year) || 365
+      const token = localStorage.getItem('blobtopia_chat_token')
+      const sendFn = makeChatSender(CHAT_API, token)
+
+      commit('SET_RUNNING', true)
+      commit('SET_RESULT', null)
+      commit('SET_PROGRESS', { done: 0, total: sample.units.length })
+      try {
+        // Pre-build each blob's persona prompt (needs async static data) so
+        // survey-engine can call buildPrompt synchronously.
+        const promptByBlob = {}
+        for (const u of sample.units) {
+          const b = u.blob
+          const sg = await getBlobStatic(b.id)
+          const cs = await getChangeSummary(b.id, tick)
+          const ctx = resolveActivity(rootState, b)
+          promptByBlob[b.id] = buildSystemPrompt(b, sg || {}, tick, tpy, cs, ctx.activity, ctx.hour)
+        }
+
+        const result = await runSurvey(sample.units, {
+          sendFn: sendFn
+          , buildPrompt: u => promptByBlob[u.blob.id]
+          , items: state.items
+          , tick: tick
+          , concurrency: 4
+          , maxRetries: 1
+          , demographics: b => ({
+            district: b.district
+            , age: b.age
+            , education_level: b.education_level
+            , party: b.party_name
+          })
+          , onProgress: (done, total) => commit('SET_PROGRESS', { done: done, total: total })
+        })
+
+        commit('SET_RESULT', result)
+        const v = (state.design.strataVars && state.design.strataVars[0]) || 'district'
+        commit('SET_SAMPLE', { sample: sample, dist: realizedDistribution(sample.units, v, design) })
+      } catch (e) {
+        commit('SET_ERROR', e && e.message ? e.message : String(e))
+      } finally {
+        commit('SET_RUNNING', false)
+      }
     }
 
     , exportCsv({ state }) {
