@@ -49,6 +49,10 @@
     button.top-btn(:class="{ active: showNewspaper }", @click="$emit('toggle-newspaper')", title="Zeitung ein-/ausblenden (N)")
       b-icon(icon="newspaper", size="is-small")
 
+    //- Befragungsinstitut toggle
+    button.top-btn(:class="{ active: showSurvey }", @click="$emit('toggle-survey')", title="Befragungsinstitut (B)")
+      b-icon(icon="poll", size="is-small")
+
     button.top-btn(@click="$emit('toggle-command-palette')", title="Command Palette (Cmd+K)")
       b-icon(icon="magnify", size="is-small")
 
@@ -67,6 +71,7 @@ export default {
   , props: {
     showFeed: Boolean
     , showNewspaper: Boolean
+    , showSurvey: Boolean
   }
   , computed: {
     connectionClass(){

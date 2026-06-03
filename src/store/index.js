@@ -4,6 +4,7 @@ import Vuex from 'vuex'
 import { alerts } from './alerts'
 import { chat } from './chat'
 import { simulation } from './simulation'
+import { survey } from './survey'
 
 Vue.use(Vuex)
 
@@ -13,5 +14,6 @@ export default new Vuex.Store({
     alerts
     , chat
     , simulation
+    , survey
   }
 })

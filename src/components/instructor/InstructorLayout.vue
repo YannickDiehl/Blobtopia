@@ -4,8 +4,10 @@
   TopBar(
     :show-feed="showFeed"
     , :show-newspaper="showNewspaper"
+    , :show-survey="surveyOpen"
     , @toggle-feed="showFeed = !showFeed"
     , @toggle-newspaper="showNewspaper = !showNewspaper"
+    , @toggle-survey="toggleSurvey"
     , @toggle-pause="toggleServerPause"
     , @toggle-command-palette="showCommandPalette = true"
     , @fire-event="fireEvent"
@@ -60,6 +62,14 @@
       , @select-blob="blob => onTapBlob({ blob })"
     )
 
+  //- Befragungsinstitut (survey institute) window
+  transition(name="fade")
+    SurveyWindow(
+      v-if="surveyOpen"
+      , :timeline-mode="timelineMode"
+      , @close="$store.commit('survey/CLOSE_SURVEY')"
+    )
+
   //- BlobFeed (slide-in from right)
   transition(name="slide-right")
     BlobFeed(v-if="showFeed", :tweets="tweets")
@@ -98,6 +108,7 @@ import SpotlightOverlay from './SpotlightOverlay'
 import CommandPalette from './CommandPalette'
 import TimelineBar from '@/components/timeline/TimelineBar'
 import NewspaperOverlay from './NewspaperOverlay'
+import SurveyWindow from '@/components/survey-window'
 
 export default {
   name: 'InstructorLayout'
@@ -112,6 +123,7 @@ export default {
     , CommandPalette
     , TimelineBar
     , NewspaperOverlay
+    , SurveyWindow
   }
   , provide(){
     return {
@@ -166,6 +178,9 @@ export default {
       , newspapers: 'newspapers'
       , connectionStatus: 'connectionStatus'
     })
+    , surveyOpen(){
+      return this.$store.state.survey.isOpen
+    }
   }
   , watch: {
     generation(newGen) {
@@ -258,6 +273,9 @@ export default {
     , onCommandSelectBlob(blob){
       this.onTapBlob({ blob })
     }
+    , toggleSurvey(){
+      this.$store.commit(this.$store.state.survey.isOpen ? 'survey/CLOSE_SURVEY' : 'survey/OPEN_SURVEY')
+    }
 
     // --- Spotlight ---
     , deactivateSpotlight(){
@@ -290,6 +308,7 @@ export default {
       // Escape
       if (e.key === 'Escape') {
         e.preventDefault()
+        if (this.surveyOpen) { this.$store.commit('survey/CLOSE_SURVEY'); return }
         if (this.showNewspaper) { this.showNewspaper = false; return }
         if (this.showCommandPalette) { this.showCommandPalette = false; return }
         if (this.spotlightActive) { this.deactivateSpotlight(); return }
@@ -301,6 +320,12 @@ export default {
       // Newspaper toggle
       if (e.key === 'n' || e.key === 'N') {
         this.showNewspaper = !this.showNewspaper
+        return
+      }
+
+      // Befragungsinstitut toggle
+      if (e.key === 'b' || e.key === 'B') {
+        this.toggleSurvey()
         return
       }
 
