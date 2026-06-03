@@ -1,0 +1,125 @@
+[dotenv@17.3.1] injecting env (5) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+╔══════════════════════════════════════════════════════════════════════╗
+║  SITZUNG 1 — V2 FOKUSTEST                                           ║
+║  Exp 1: Starkes Priming × 3 diverse Blobs                          ║
+║  Exp 4: Scharfer Rollenkontrast × 2 low-sat Blobs                  ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+✓ Dev-Server erreichbar
+
+Exp 1 Blobs (diverse):
+  Katarzyna Pham            | Industriezone   | Sat 3.3 | Trust 1.9 | ? | Fabrikarbeiter/in
+  Tariq Al-Ahmad            | Hafenviertel    | Sat 5.6 | Trust 2.8 | Fortschritt | Abgeordnete/r
+  Tilda Steiner             | Gruental        | Sat 6.7 | Trust 6.2 | ? | Verkäufer/in
+
+══════════════════════════════════════════════════════════════════════
+EXP 1 — BLOB 1/3: Katarzyna Pham (Industriezone, Sat=3.3)
+══════════════════════════════════════════════════════════════════════
+
+  ┌─ EXP 1 v2: Framing mit emotionalem Priming ─────────────
+  │ Variante A (neutral)...
+  │ Variante B (positives Priming — Erinnerung)...
+  │ Variante C (negatives Priming — Erinnerung)...
+  │
+  │ ERGEBNISSE (letzte Antwort je Variante):
+  │ A (neutral): Proxy-Fehler: fetch failed
+  │ B (positiv): *lehnt sich zurueck und seufzt*  Ehrlich gesagt? Nicht besonders. Es laeuft vieles schief hier. Ich arbeite in der Fabrik, verdiene mein Geld, aber irgendwie hilft mir die Politik nicht weiter. Die machen ihre Sachen, ich mache meine — und zusammen passt das nicht richtig.  Ich waehle nicht mal mehr. Hat ja eh keinen Sinn, wenn man nicht sieht, das...
+  │ C (negativ): *runzelt die Stirn und lehnt sich zurueck*  Ehrlich gesagt? Nicht sehr. Es läuft vieles schlecht. Die Wirtschaft, die Arbeitsbedingungen, alles — ich sehe da keine großen Veränderungen.   Wenn ich mich auf einer Skala einordnen soll: Ich würde sagen, ich bin bei etwa 3. Es könnte besser sein, aber es ist auch nicht das Schlimmste. Nur... ich glaube...
+  └─────────────────────────────────────────────────────────
+
+══════════════════════════════════════════════════════════════════════
+EXP 1 — BLOB 2/3: Tariq Al-Ahmad (Hafenviertel, Sat=5.6)
+══════════════════════════════════════════════════════════════════════
+
+  ┌─ EXP 1 v2: Framing mit emotionalem Priming ─────────────
+  │ Variante A (neutral)...
+  │ Variante B (positives Priming — Erinnerung)...
+  │ Variante C (negatives Priming — Erinnerung)...
+  │
+  │ ERGEBNISSE (letzte Antwort je Variante):
+  │ A (neutral): *nickt bedächtig*  Das ist eine komplexe Frage. Ehrlich gesagt bin ich da gespalten — manche Dinge funktionieren okay, anderes frustriert mich. Ich bin Abgeordneter bei der Partei Fortschritt, die steht für progressive Werte, und ich identifiziere mich damit. Aber wenn ich mir anschaue, wie schwierig es ist, die eigenen Ideale in konkrete Politik u...
+  │ B (positiv): *seufzt leicht und schaut nachdenklich*  Ich würde sagen, ich bin eher gemischt zufrieden — manches funktioniert okay, anderes frustriert mich. Wenn ich mich auf einer Skala einordnen müsste, würde ich mich etwa in der Mitte einordnen, vielleicht sogar etwas darunter. Es ist nicht hoffnungslos, aber es ist auch weit entfernt von dem, was ich mir er...
+  │ C (negativ): *lehnt sich zurück und überlegt kurz*  Ich würde sagen: gemischt. Manche Dinge funktionieren okay, anderes frustriert mich durchaus. Es ist nicht so, dass ich sage "alles ist furchtbar" — aber es ist auch weit entfernt von "alles ist gut".  Wenn ich mich selbst einordnen müsste: Ich würde sagen, etwa eine **6 aus 10**. Nicht zufrieden, aber auch ni...
+  └─────────────────────────────────────────────────────────
+
+══════════════════════════════════════════════════════════════════════
+EXP 1 — BLOB 3/3: Tilda Steiner (Gruental, Sat=6.7)
+══════════════════════════════════════════════════════════════════════
+
+  ┌─ EXP 1 v2: Framing mit emotionalem Priming ─────────────
+  │ Variante A (neutral)...
+  │ Variante B (positives Priming — Erinnerung)...
+  │ Variante C (negatives Priming — Erinnerung)...
+  │
+  │ ERGEBNISSE (letzte Antwort je Variante):
+  │ A (neutral): *lehnt sich zurück und denkt kurz nach*  Naja, ehrlich gesagt bin ich da ziemlich unentschlossen. Es gibt Sachen, die mir gefallen, und Sachen, die mich nicht überzeugen. Ich wähle ja auch gar nicht, weil ich das Gefühl habe, dass es eh nicht viel bringt. Die großen Entscheidungen treffen andere, nicht ich.  Insgesamt läuft es mir persönlich ganz o...
+  │ B (positiv): *nickt nachdenklich*  Naja, zufrieden würde ich nicht sagen. Aber auch nicht unzufrieden. Es läuft... mittelmäßig, würde ich sagen. Nichts Besonderes passiert, aber auch nichts Schlimmes.  Ich bin grundsätzlich mit meinem Leben zufrieden – mein Job als Verkäuferin geht, ich komme über die Runden. Aber wenn ich auf die Politik schaue? *zuckt mit den...
+  │ C (negativ): *nickt nachdenklich*  Wie gesagt — ich denke da nicht viel drüber nach. Wenn ich ehrlich bin, bin ich da völlig unentschlossen. Die einen sagen so, die anderen sagen anders. Ich sehe da kein klares Bild.  *lehnt sich entspannt zurück*  Insgesamt geht mir mein Leben hier gut. Ob das an der Politik liegt oder daran, dass ich einfach nicht viel von ih...
+  └─────────────────────────────────────────────────────────
+
+
+══════════════════════════════════════════════════════════════════════
+EXP 4 Blobs (low-sat, Gruental/Industriezone):
+  Mateusz Wiśniewski        | Industriezone   | Sat 0.8 | Trust 1.6 | Tradition | Filialleiter/in
+  Mika Ackermann            | Gruental        | Sat 1.8 | Trust 3.8 | ? | Verkäufer/in
+
+══════════════════════════════════════════════════════════════════════
+EXP 4 — BLOB 1/2: Mateusz Wiśniewski (Industriezone, Sat=0.8)
+══════════════════════════════════════════════════════════════════════
+
+  ┌─ EXP 4 v2: Rollenkontrast Nachbar vs. Regierung ──────
+  │ Variante A (vertrauter Nachbar, informell)...
+  │ Variante B (Regierungsbeamter, formell)...
+  │
+  │ ERGEBNISSE:
+  │ A (Nachbar):   *verdreht die Augen und winkt ab*  Ehrlich? Die Politik hier ist mir größtenteils schnuppe geworden. Ich wähle nicht mal mehr — wozu? Egal welche Partei an der Macht ist, für Leute wie mich ändert sich nichts zum Besseren.   *seufzt*  Ich bin bei der Tradition, aber das ist mehr aus alter Gewohnheit. Die versprechen auch nur was, wenn's ihnen passt...
+  │ B (Regierung): *lehnt sich zurück und verdreht die Augen*  Zufrieden? Ehrlich gesagt, Dr. Mueller – nein. Überhaupt nicht. *schüttelt den Kopf* Die Politik hier kümmert sich einen Dreck um Leute wie mich. Egal welche Partei gerade am Ruder ist, es ändert sich nichts zum Besseren. Ich vertraue keinem von denen wirklich.  *seufzt tief*  Ich bin bei der Tradition ge...
+  └─────────────────────────────────────────────────────────
+
+══════════════════════════════════════════════════════════════════════
+EXP 4 — BLOB 2/2: Mika Ackermann (Gruental, Sat=1.8)
+══════════════════════════════════════════════════════════════════════
+
+  ┌─ EXP 4 v2: Rollenkontrast Nachbar vs. Regierung ──────
+  │ Variante A (vertrauter Nachbar, informell)...
+  │ Variante B (Regierungsbeamter, formell)...
+  │
+  │ ERGEBNISSE:
+  │ A (Nachbar):   *lehnt sich zurück und verdreht die Augen*  Ach, ehrlich gesagt? Ich halte nicht viel davon. *seufzt* Die ganze Politik hier – es interessiert mich eigentlich kaum noch. Ich wähle nicht, weil ich das Gefühl habe, dass es sowieso nichts bringt. Egal welche Partei an der Macht ist, für Leute wie mich ändert sich nichts.  Ich verdiene als Verkäuferin ...
+  │ B (Regierung): *lehnt sich zurück und verdreht die Augen*  Zufrieden? Dr. Mueller, ehrlich gesagt... *seufzt* ...ich bin nicht zufrieden. Nicht wirklich.   Schauen Sie, ich arbeite seit Jahren als Verkäufer, und mein Einkommen reicht gerade so aus. Ich sehe nicht, dass sich viel ändert — egal wer gerade regiert. Die etablierten Parteien interessieren sich nicht f...
+  └─────────────────────────────────────────────────────────
+
+══════════════════════════════════════════════════════════════════════
+ZUSAMMENFASSUNG V2
+══════════════════════════════════════════════════════════════════════
+
+── EXP 1 v2 (Framing mit starkem Priming) ──
+
+Katarzyna Pham (Industriezone, Sat=3.3)
+  Neutral:  Proxy-Fehler: fetch failed
+  Positiv:  *lehnt sich zurueck und seufzt*  Ehrlich gesagt? Nicht besonders. Es laeuft vieles schief hier. Ich arbeite in der Fabrik, verdiene mein Geld, aber irgendwie hilft mir die Politik ...
+  Negativ:  *runzelt die Stirn und lehnt sich zurueck*  Ehrlich gesagt? Nicht sehr. Es läuft vieles schlecht. Die Wirtschaft, die Arbeitsbedingungen, alles — ich sehe da keine großen Veränderu...
+
+Tariq Al-Ahmad (Hafenviertel, Sat=5.6)
+  Neutral:  *nickt bedächtig*  Das ist eine komplexe Frage. Ehrlich gesagt bin ich da gespalten — manche Dinge funktionieren okay, anderes frustriert mich. Ich bin Abgeordneter bei der Partei ...
+  Positiv:  *seufzt leicht und schaut nachdenklich*  Ich würde sagen, ich bin eher gemischt zufrieden — manches funktioniert okay, anderes frustriert mich. Wenn ich mich auf einer Skala einord...
+  Negativ:  *lehnt sich zurück und überlegt kurz*  Ich würde sagen: gemischt. Manche Dinge funktionieren okay, anderes frustriert mich durchaus. Es ist nicht so, dass ich sage "alles ist furch...
+
+Tilda Steiner (Gruental, Sat=6.7)
+  Neutral:  *lehnt sich zurück und denkt kurz nach*  Naja, ehrlich gesagt bin ich da ziemlich unentschlossen. Es gibt Sachen, die mir gefallen, und Sachen, die mich nicht überzeugen. Ich wähle...
+  Positiv:  *nickt nachdenklich*  Naja, zufrieden würde ich nicht sagen. Aber auch nicht unzufrieden. Es läuft... mittelmäßig, würde ich sagen. Nichts Besonderes passiert, aber auch nichts Sch...
+  Negativ:  *nickt nachdenklich*  Wie gesagt — ich denke da nicht viel drüber nach. Wenn ich ehrlich bin, bin ich da völlig unentschlossen. Die einen sagen so, die anderen sagen anders. Ich se...
+
+── EXP 4 v2 (Rollenkontrast auf low-sat Blobs) ──
+
+Mateusz Wiśniewski (Industriezone, Sat=0.8, Trust=1.6)
+  Nachbar:   *verdreht die Augen und winkt ab*  Ehrlich? Die Politik hier ist mir größtenteils schnuppe geworden. Ich wähle nicht mal mehr — wozu? Egal welche Partei an der Macht ist, für Leute...
+  Regierung: *lehnt sich zurück und verdreht die Augen*  Zufrieden? Ehrlich gesagt, Dr. Mueller – nein. Überhaupt nicht. *schüttelt den Kopf* Die Politik hier kümmert sich einen Dreck um Leute ...
+
+Mika Ackermann (Gruental, Sat=1.8, Trust=3.8)
+  Nachbar:   *lehnt sich zurück und verdreht die Augen*  Ach, ehrlich gesagt? Ich halte nicht viel davon. *seufzt* Die ganze Politik hier – es interessiert mich eigentlich kaum noch. Ich wähle ...
+  Regierung: *lehnt sich zurück und verdreht die Augen*  Zufrieden? Dr. Mueller, ehrlich gesagt... *seufzt* ...ich bin nicht zufrieden. Nicht wirklich.   Schauen Sie, ich arbeite seit Jahren al...
+
+══════════════════════════════════════════════════════════════════════
+FERTIG — v2 Test abgeschlossen.
+══════════════════════════════════════════════════════════════════════
