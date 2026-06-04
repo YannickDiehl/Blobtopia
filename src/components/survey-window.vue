@@ -23,32 +23,17 @@
         .item-card(v-for="(it, i) in localItems", :key="i")
           .item-head
             span.item-num {{ i + 1 }}
-            select.survey-input.type-select(v-model="it.type")
-              option(value="scale") Skala
-              option(value="binary") Ja / Nein
-              option(value="choice") Auswahl
-              option(value="open") Offen
             span.action-btn.del(@click="removeItem(i)", title="Entfernen")
               b-icon(icon="close", size="is-small")
-          textarea.survey-input.item-text(v-model="it.text", rows="2", placeholder="Fragetext …", @blur="maybeSuggest(it)")
-          .scale-params(v-if="it.type === 'scale'")
-            span.mini-label von
-            input.survey-input.mini(type="number", v-model.number="it.scale.min")
-            span.mini-label bis
-            input.survey-input.mini(type="number", v-model.number="it.scale.max")
-            input.survey-input.label-in(v-model="it.scale.minLabel", placeholder="Label niedrig")
-            input.survey-input.label-in(v-model="it.scale.maxLabel", placeholder="Label hoch")
-          .choice-params(v-else-if="it.type === 'choice'")
-            input.survey-input(:value="it.choices.join(', ')", @input="setChoices(it, $event.target.value)", placeholder="Antwortoptionen, mit Komma getrennt")
-          .construct-row
-            span.mini-label misst
-            select.survey-input.construct-select(v-model="it.construct")
-              option(:value="null") — frei (nur LLM)
+          textarea.survey-input.item-text(v-model="it.text", rows="3", placeholder="Frage UND Antwortskala selbst formulieren — z. B. „Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht und 10 = völlig.“", @input="onItemText(it)")
+          .detect-chip(v-if="it.text")
+            span.detect-label erkannt:
+            select.detect-construct(v-model="it.construct")
+              option(:value="null") — Konstrukt wählen
               optgroup(v-for="g in constructGroups", :key="g.name", :label="g.name")
                 option(v-for="c in g.items", :key="c.key", :value="c.key") {{ c.label }}
-          .item-preview(v-if="it.text")
-            .preview-label So wird gefragt
-            .preview-text {{ previewQuestion(it) }}
+            span.detect-scale · Skala {{ it.scale.min }}–{{ it.scale.max }}{{ it.scale.format === 'binary' ? ' (Ja/Nein)' : (it.scale.format === 'likert' ? ' (Likert)' : '') }}
+            span.detect-warn(v-if="!it.construct") ⚠ Konstrukt nicht erkannt — bitte zuordnen
         button.survey-btn.add-btn(@click="addItem")
           b-icon(icon="plus", size="is-small")
           span Item hinzufügen
@@ -107,27 +92,16 @@
 
       //- ═══ FIELDWORK ═══
       .survey-section(v-else-if="step === 'field'")
-        .field-row
-          label Antwortquelle
-          .mode-toggle
-            label.mode-opt(:class="{ active: design.mode === 'synthetic' }")
-              input(type="radio", value="synthetic", v-model="design.mode")
-              span Synthetik · gratis
-            label.mode-opt(:class="{ active: design.mode === 'llm' }")
-              input(type="radio", value="llm", v-model="design.mode")
-              span LLM · kostet
-        p.hint(v-if="design.mode === 'synthetic'") Antworten aus den gespeicherten Werten + Rauschen — kostenlos und reproduzierbar. {{ boundCount }} von {{ localItems.length }} Items sind einem Konstrukt zugeordnet (nur diese werden beantwortet).
-        p.hint(v-else) Jeder Blob wird einzeln per LLM befragt — authentisch, aber kostenpflichtig.
+        p.hint Die gezogenen Blobs antworten synthetisch — kostenlos & reproduzierbar, inkl. modellierter Fragebogeneffekte. {{ boundCount }} von {{ localItems.length }} Items sind einem Konstrukt zugeordnet (nur diese werden beantwortet).
         .info-item
           span.info-label Geplante Stichprobe (n)
           span.info-value {{ design.n }}
-        .info-item(v-if="design.mode === 'llm'")
-          span.info-label Geschätzte LLM-Aufrufe
-          span.info-value ≈ {{ estimatedCalls }}
-        .cost-warn(v-if="design.mode === 'llm' && estimatedCalls > 80") Hohe Aufrufzahl — erwäge ein kleineres n oder den Synthetik-Modus.
+        .info-item
+          span.info-label Zugeordnete Items
+          span.info-value {{ boundCount }} / {{ localItems.length }}
         button.survey-btn.primary(:disabled="!localItems.length || isRunning", @click="onRun")
-          b-icon(:icon="design.mode === 'llm' ? 'play' : 'flash'", size="is-small")
-          span {{ design.mode === 'llm' ? 'LLM-Befragung starten' : 'Synthetische Befragung starten' }}
+          b-icon(icon="flash", size="is-small")
+          span Synthetische Befragung starten
         .progress-line(v-if="progress && progress.total")
           span Befragt: {{ progress.done }} / {{ progress.total }}
         .error-banner(v-if="error") {{ error }}
@@ -150,8 +124,8 @@
 <script>
 import { mapState } from 'vuex'
 import draggablePanel from '@/mixins/draggable-panel'
-import { formatQuestion } from '@/lib/survey'
-import { CONSTRUCTS, suggestConstruct } from '@/lib/survey-constructs'
+import { CONSTRUCTS } from '@/lib/survey-constructs'
+import { parseItem } from '@/lib/survey-parse'
 
 function clone(x) { return JSON.parse(JSON.stringify(x)) }
 
@@ -209,9 +183,6 @@ export default {
       }
       return groups
     }
-    , estimatedCalls() {
-      return (Number(this.design.n) || 0) * this.localItems.length
-    }
     , boundCount() {
       return this.localItems.filter(it => it.construct && it.type !== 'open' && it.type !== 'choice').length
     }
@@ -248,11 +219,10 @@ export default {
     blankItem(i) {
       return {
         id: 'q' + i
-        , type: 'scale'
         , text: ''
-        , scale: { min: 1, max: 10, minLabel: '', maxLabel: '' }
-        , choices: []
+        , scale: { min: 1, max: 10, minLabel: '', maxLabel: '', format: 'numeric' }
         , construct: null
+        , wording: {}
       }
     }
     , addItem() {
@@ -261,17 +231,11 @@ export default {
     , removeItem(i) {
       this.localItems.splice(i, 1)
     }
-    , setChoices(it, val) {
-      it.choices = String(val).split(',').map(s => s.trim()).filter(Boolean)
-    }
-    , previewQuestion(it) {
-      try { return formatQuestion(it) } catch (e) { return '' }
-    }
-    , maybeSuggest(it) {
-      if (!it.construct) {
-        const s = suggestConstruct(it.text)
-        if (s) it.construct = s
-      }
+    , onItemText(it) {
+      const p = parseItem(it.text)
+      it.scale = p.scale
+      it.wording = p.wording
+      if (!it.construct) it.construct = p.construct // don't override a manual choice
     }
     , canonicalDesign() {
       return {
@@ -459,6 +423,32 @@ export default {
 
 .choice-params
   margin-bottom: 0.4rem
+
+.detect-chip
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: 0.3rem
+  margin-top: 0.1rem
+  font-size: 0.68rem
+  color: $grey
+
+  .detect-construct
+    background: rgba(255, 255, 255, 0.06)
+    border: 1px solid rgba(255, 255, 255, 0.18)
+    border-radius: 4px
+    color: $primary
+    font-size: 0.68rem
+    font-family: inherit
+    padding: 1px 3px
+    outline: none
+
+  .detect-scale
+    color: $grey-light
+
+  .detect-warn
+    color: #f0c929
+    width: 100%
 
 .item-preview
   background: rgba(255, 255, 255, 0.04)
