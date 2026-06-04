@@ -17,6 +17,14 @@
  */
 import { makeRng } from './survey-sampling.js'
 import { CONSTRUCTS_BY_KEY } from './survey-constructs.js'
+import { detectWording } from './survey-parse.js'
+
+// Modeled questionnaire-effect magnitudes (on the 0–10 latent scale). These are
+// deterministic systematic biases (not noise), so the SAME construct asked two
+// ways yields a visibly different mean — the teachable point.
+const ACQUIESCENCE = 0.8   // agree/disagree scales pull toward agreement
+const FRAMING = 1.0        // loaded positive/negative wording
+const SOCIAL_DESIRABILITY = 0.7
 
 const DEFAULT_NOISE_SD = 1.3
 
@@ -55,12 +63,10 @@ function trait(blob, key) {
   return (v == null || isNaN(v)) ? null : v
 }
 
-function syntheticAnswer(blob, item, itemId, runSeed, noiseSd) {
+function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording) {
+  // Synthetic answers need a construct binding (which stored value to draw from).
   const ck = item.construct
-  // Synthetic answers need a construct binding and a numeric (scale/binary) item.
-  if (!ck || item.type === 'open' || item.type === 'choice') {
-    return { status: 'unsupported', value: null, verbatim: '' }
-  }
+  if (!ck) return { status: 'unsupported', value: null, verbatim: '' }
   const stored = trait(blob, ck)
   if (stored == null) return { status: 'unsupported', value: null, verbatim: '' }
 
@@ -76,8 +82,21 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd) {
   if (roll < pRefuse) return { status: 'refused', value: null, verbatim: '' }
   if (roll < pRefuse + pDontKnow) return { status: 'dontknow', value: null, verbatim: '' }
 
-  const noisy = stored + gaussian(rng) * noiseSd
-  if (item.type === 'binary') {
+  // Modeled questionnaire effects from the wording (deterministic shifts).
+  let shifted = stored
+  if (wording) {
+    const edu = blob.education_level != null ? blob.education_level : 1.5
+    const eduNorm = Math.max(0, Math.min(1, edu / 3))
+    if (wording.agreeScale) shifted += ACQUIESCENCE * (1 - eduNorm) // acquiescence, stronger at low education
+    if (wording.loadedPositive) shifted += FRAMING
+    if (wording.loadedNegative) shifted -= FRAMING
+    if (wording.socialDesirability) shifted += SOCIAL_DESIRABILITY
+  }
+  shifted = clamp(shifted, 0, 10)
+
+  const noisy = shifted + gaussian(rng) * noiseSd
+  const format = (item.scale && item.scale.format) || 'numeric'
+  if (format === 'binary') {
     return { status: 'answered', value: noisy >= 5 ? 1 : 0, verbatim: '' }
   }
   return { status: 'answered', value: rescaleToItem(noisy, item), verbatim: '' }
@@ -96,13 +115,15 @@ export function runSyntheticSurvey(units, items, opts) {
   const noiseSd = opts.noiseSd != null ? opts.noiseSd : DEFAULT_NOISE_SD
   const demographics = typeof opts.demographics === 'function' ? opts.demographics : () => ({})
 
+  // Wording features per item drive the modeled questionnaire effects.
+  const wordingByItem = items.map(it => it.wording || detectWording(it.text || ''))
   const rows = units.map(u => {
     const b = u.blob
     const answers = {}
     for (let qi = 0; qi < items.length; qi++) {
       const item = items[qi]
       const id = item.id || ('item_' + qi)
-      answers[id] = syntheticAnswer(b, item, id, runSeed, noiseSd)
+      answers[id] = syntheticAnswer(b, item, id, runSeed, noiseSd, wordingByItem[qi])
     }
     return Object.assign(
       { blobId: b.id, stratum: u.stratum, weight: u.weight }
