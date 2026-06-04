@@ -65,21 +65,47 @@ function blobAge(b) {
 }
 
 /**
+ * Build a subpopulation predicate from a structured filter spec.
+ * filter: { districts:[], education:[], ageMin, ageMax, parties:[], incomeMin, incomeMax }
+ * Empty/undefined arrays mean "no restriction on that variable".
+ */
+export function buildFilterPredicate(filter, design) {
+  if (!filter) return null
+  const accD = accessorFor('district', design)
+  const accE = accessorFor('education_level', design)
+  const accP = accessorFor('party', design)
+  return b => {
+    if (filter.districts && filter.districts.length && filter.districts.indexOf(accD(b)) < 0) return false
+    if (filter.education && filter.education.length && filter.education.indexOf(accE(b)) < 0) return false
+    const age = b.age != null ? b.age : b.age_years
+    if (filter.ageMin != null && age != null && age < filter.ageMin) return false
+    if (filter.ageMax != null && age != null && age > filter.ageMax) return false
+    if (filter.parties && filter.parties.length && filter.parties.indexOf(accP(b)) < 0) return false
+    if (filter.incomeMin != null && b.income != null && b.income < filter.incomeMin) return false
+    if (filter.incomeMax != null && b.income != null && b.income > filter.incomeMax) return false
+    return true
+  }
+}
+
+/**
  * Build the eligible sampling frame: defines the target population.
  * @param {Array} blobs
- * @param {Object} [opts] { excludeMinors=true, minAge=18, predicate }
+ * @param {Object} [opts] { excludeMinors=true, minAge=18, filter, predicate, manualExclude }
  */
 export function eligibleFrame(blobs, opts) {
   opts = opts || {}
   const excludeMinors = opts.excludeMinors !== false
   const minAge = opts.minAge != null ? opts.minAge : 18
+  const predicate = opts.predicate || buildFilterPredicate(opts.filter, opts)
+  const exclude = opts.manualExclude && opts.manualExclude.length ? new Set(opts.manualExclude) : null
   return blobs.filter(b => {
+    if (exclude && exclude.has(b.id)) return false
     if (excludeMinors) {
       if (b.is_child === true) return false
       const age = blobAge(b)
       if (age != null && age < minAge) return false
     }
-    if (opts.predicate && !opts.predicate(b)) return false
+    if (predicate && !predicate(b)) return false
     return true
   })
 }
@@ -114,7 +140,8 @@ function stratified(frame, n, vars, allocation, rng, design) {
   for (const k of keys) {
     const stratum = groups.get(k)
     let nh
-    if (allocation === 'equal') nh = Math.floor(n / keys.length)
+    if (allocation && typeof allocation === 'object') nh = allocation[k] != null ? allocation[k] : 0
+    else if (allocation === 'equal') nh = Math.floor(n / keys.length)
     else nh = Math.round(n * stratum.length / N)         // proportional
     nh = Math.min(nh, stratum.length)
     const drawn = shuffle(stratum, rng).slice(0, nh)
@@ -169,7 +196,12 @@ export function drawSample(blobs, design) {
   design = design || {}
   const seed = design.seed != null ? design.seed : 12345
   const rng = makeRng(seed)
-  const frame = eligibleFrame(blobs, design.eligibility)
+  const frameOpts = Object.assign({}, design.eligibility, {
+    filter: design.filter
+    , manualExclude: design.manualExclude
+    , accessors: design.accessors
+  })
+  const frame = eligibleFrame(blobs, frameOpts)
   let units
   switch (design.technique) {
     case SAMPLING.STRATIFIED:
@@ -185,6 +217,18 @@ export function drawSample(blobs, design) {
     default:
       units = srs(frame, design.n || 0, rng)
       break
+  }
+  // Manual override: force-include specific blobs not already drawn.
+  if (design.manualInclude && design.manualInclude.length) {
+    const present = new Set(units.map(u => u.blob.id))
+    const byId = {}
+    for (const b of blobs) byId[b.id] = b
+    for (const id of design.manualInclude) {
+      if (!present.has(id) && byId[id]) {
+        units.push({ blob: byId[id], weight: 1, stratum: 'manuell' })
+        present.add(id)
+      }
+    }
   }
   return {
     units: units

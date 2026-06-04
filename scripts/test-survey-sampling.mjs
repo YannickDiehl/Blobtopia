@@ -67,5 +67,28 @@ console.log('PRNG:')
 const r1 = makeRng(123), r2 = makeRng(123)
 ok(r1() === r2() && r1() === r2(), 'mulberry32 deterministic per seed')
 
+console.log('Filter (subpopulation):')
+{
+  const s = drawSample(POP, { technique: SAMPLING.SRS, n: 100, seed: 1, filter: { districts: [0] } })
+  ok(s.units.every(u => u.blob.district === 0), 'district filter restricts the sample to district 0')
+  ok(s.frameSize === POP.filter(b => b.district === 0 && b.age >= 18).length, 'frame size reflects the filter (' + s.frameSize + ')')
+}
+
+console.log('Manual include / exclude:')
+{
+  const s1 = drawSample(POP, { technique: SAMPLING.SRS, n: 176, seed: 1, manualExclude: ['b10'] })
+  ok(!s1.units.some(u => u.blob.id === 'b10'), 'manualExclude drops the blob')
+  const minor = POP.find(b => b.age < 18)
+  const s2 = drawSample(POP, { technique: SAMPLING.SRS, n: 5, seed: 1, manualInclude: [minor.id] })
+  ok(s2.units.some(u => u.blob.id === minor.id), 'manualInclude force-adds a blob (even an excluded minor)')
+}
+
+console.log('Manual stratum allocation:')
+{
+  const s = drawSample(POP, { technique: SAMPLING.STRATIFIED, strataVars: ['district'], allocation: { '0': 3, '1': 5 }, seed: 2 })
+  const d = realizedDistribution(s.units, 'district')
+  ok(d['0'] === 3 && d['1'] === 5, 'explicit per-stratum allocation honored (' + JSON.stringify(d) + ')')
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed')
 process.exit(fail === 0 ? 0 : 1)
