@@ -26,14 +26,6 @@
             span.action-btn.del(@click="removeItem(i)", title="Entfernen")
               b-icon(icon="close", size="is-small")
           textarea.survey-input.item-text(v-model="it.text", rows="3", placeholder="Frage UND Antwortskala selbst formulieren — z. B. „Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht und 10 = völlig.“", @input="onItemText(it)")
-          .detect-chip(v-if="it.text")
-            span.detect-label erkannt:
-            select.detect-construct(v-model="it.construct")
-              option(:value="null") — Konstrukt wählen
-              optgroup(v-for="g in constructGroups", :key="g.name", :label="g.name")
-                option(v-for="c in g.items", :key="c.key", :value="c.key") {{ c.label }}
-            span.detect-scale · Skala {{ it.scale.min }}–{{ it.scale.max }}{{ it.scale.format === 'binary' ? ' (Ja/Nein)' : (it.scale.format === 'likert' ? ' (Likert)' : '') }}
-            span.detect-warn(v-if="!it.construct") ⚠ Konstrukt nicht erkannt — bitte zuordnen
         button.survey-btn.add-btn(@click="addItem")
           b-icon(icon="plus", size="is-small")
           span Item hinzufügen
@@ -92,13 +84,13 @@
 
       //- ═══ FIELDWORK ═══
       .survey-section(v-else-if="step === 'field'")
-        p.hint Die gezogenen Blobs antworten synthetisch — kostenlos & reproduzierbar, inkl. modellierter Fragebogeneffekte. {{ boundCount }} von {{ localItems.length }} Items sind einem Konstrukt zugeordnet (nur diese werden beantwortet).
+        p.hint Die gezogenen Blobs antworten synthetisch — kostenlos und reproduzierbar, inkl. modellierter Fragebogeneffekte.
+        .info-item
+          span.info-label Items im Fragebogen
+          span.info-value {{ localItems.length }}
         .info-item
           span.info-label Geplante Stichprobe (n)
           span.info-value {{ design.n }}
-        .info-item
-          span.info-label Zugeordnete Items
-          span.info-value {{ boundCount }} / {{ localItems.length }}
         button.survey-btn.primary(:disabled="!localItems.length || isRunning", @click="onRun")
           b-icon(icon="flash", size="is-small")
           span Synthetische Befragung starten
@@ -124,7 +116,6 @@
 <script>
 import { mapState } from 'vuex'
 import draggablePanel from '@/mixins/draggable-panel'
-import { CONSTRUCTS } from '@/lib/survey-constructs'
 import { parseItem } from '@/lib/survey-parse'
 
 function clone(x) { return JSON.parse(JSON.stringify(x)) }
@@ -173,18 +164,6 @@ export default {
     , distMax() {
       if (!this.dist) return 1
       return Math.max(1, ...Object.keys(this.dist).map(k => this.dist[k]))
-    }
-    , constructGroups() {
-      const groups = []
-      const byName = {}
-      for (const c of CONSTRUCTS) {
-        if (!byName[c.group]) { byName[c.group] = { name: c.group, items: [] }; groups.push(byName[c.group]) }
-        byName[c.group].items.push(c)
-      }
-      return groups
-    }
-    , boundCount() {
-      return this.localItems.filter(it => it.construct && it.type !== 'open' && it.type !== 'choice').length
     }
     , ...mapState('survey', ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'])
   }
