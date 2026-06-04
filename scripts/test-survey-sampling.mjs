@@ -90,5 +90,12 @@ console.log('Manual stratum allocation:')
   ok(d['0'] === 3 && d['1'] === 5, 'explicit per-stratum allocation honored (' + JSON.stringify(d) + ')')
 }
 
+console.log('Manual technique (self-selected):')
+{
+  const s = drawSample(POP, { technique: SAMPLING.MANUAL, manualInclude: ['b3', 'b7', 'b9'] })
+  ok(s.realizedN === 3, 'manual = exactly the hand-picked blobs (' + s.realizedN + ')')
+  ok(s.units.every(u => ['b3', 'b7', 'b9'].indexOf(u.blob.id) >= 0), 'only the picked blobs are in the sample')
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed')
 process.exit(fail === 0 ? 0 : 1)

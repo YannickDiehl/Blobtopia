@@ -28,6 +28,9 @@ const DEFAULT_DESIGN = () => ({
   , clusterVar: 'district'
   , numClusters: 2
   , eligibility: { excludeMinors: true }
+  , filter: null            // { districts:[], education:[], ageMin, ageMax, parties:[], incomeMin, incomeMax }
+  , manualInclude: []       // hand-picked blob ids (the whole sample in 'manual' mode)
+  , manualExclude: []       // blob ids removed from the frame
 })
 
 // getCurrentGeneration is a function-returning getter — call it if needed.
@@ -82,6 +85,18 @@ export const survey = {
     , isRunning: false
     , error: null
   })
+  , getters: {
+    // The eligible, filtered candidate frame for the manual picker + counts.
+    frameBlobs(state, getters, rootState, rootGetters) {
+      let gen = rootGetters['simulation/getCurrentGeneration']
+      if (typeof gen === 'function') gen = gen()
+      const blobs = gen && gen.blobs ? gen.blobs : []
+      return eligibleFrame(blobs, Object.assign({}, state.design.eligibility, {
+        filter: state.design.filter
+        , manualExclude: state.design.manualExclude
+      }))
+    }
+  }
   , mutations: {
     OPEN_SURVEY(s) { s.isOpen = true }
     , CLOSE_SURVEY(s) { s.isOpen = false }

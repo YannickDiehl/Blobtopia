@@ -20,6 +20,7 @@ export const SAMPLING = Object.freeze({
   , STRATIFIED: 'stratified' // split into strata, draw within each
   , CLUSTER: 'cluster'    // sample whole clusters (e.g. districts)
   , QUOTA: 'quota'        // non-probability: fill target counts per cell
+  , MANUAL: 'manual'      // self-selected: the sample IS the hand-picked blobs
 })
 
 // Deterministic PRNG (mulberry32). Same seed -> same stream.
@@ -212,6 +213,10 @@ export function drawSample(blobs, design) {
       break
     case SAMPLING.QUOTA:
       units = quota(frame, design, rng)
+      break
+    case SAMPLING.MANUAL:
+      // Self-selected: start empty; the manualInclude pass below fills it.
+      units = []
       break
     case SAMPLING.SRS:
     default:
