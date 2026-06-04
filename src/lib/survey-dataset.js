@@ -22,9 +22,15 @@ export function datasetColumns(rows) {
   return cols
 }
 
-function csvCell(v, delim) {
+function csvCell(v, delim, decimal) {
   if (v == null) return ''
-  const s = String(v)
+  let s
+  if (typeof v === 'number') {
+    s = String(v)
+    if (decimal && decimal !== '.') s = s.split('.').join(decimal)
+  } else {
+    s = String(v)
+  }
   if (s.indexOf(delim) >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0 || s.indexOf('\r') >= 0) {
     return '"' + s.replace(/"/g, '""') + '"'
   }
@@ -39,12 +45,16 @@ function itemId(item, qi) {
  * Render the dataset as CSV.
  * @param {Array} rows   runSurvey rows
  * @param {Array} items  questionnaire items
- * @param {Object} [opts] { delimiter=',', includeStatus=true, bom=true }
- * @returns {string} CSV text (UTF-8 BOM by default, CRLF line endings)
+ * @param {Object} [opts] { delimiter=';', decimal=',', includeStatus=true, bom=true }
+ *   Defaults are German-Excel-native (semicolon-separated, comma decimals) so
+ *   cells split correctly on a German locale. For R use read.csv2(); for a
+ *   point/comma format pass { delimiter: ',', decimal: '.' }.
+ * @returns {string} CSV text (UTF-8 BOM, CRLF line endings)
  */
 export function toCSV(rows, items, opts) {
   opts = opts || {}
-  const delim = opts.delimiter || ','
+  const delim = opts.delimiter || ';'
+  const decimal = opts.decimal || ','
   const includeStatus = opts.includeStatus !== false
   const bom = opts.bom !== false ? '﻿' : ''
   const demoCols = datasetColumns(rows)
@@ -56,7 +66,7 @@ export function toCSV(rows, items, opts) {
     if (includeStatus) header.push(id + '_status')
   }
 
-  const lines = [header.map(h => csvCell(h, delim)).join(delim)]
+  const lines = [header.map(h => csvCell(h, delim, decimal)).join(delim)]
   for (const r of rows) {
     const row = [r.blobId, r.stratum, r.weight].concat(demoCols.map(c => r[c]))
     for (let qi = 0; qi < items.length; qi++) {
@@ -65,7 +75,7 @@ export function toCSV(rows, items, opts) {
       row.push(a.value == null ? '' : a.value)
       if (includeStatus) row.push(a.status || '')
     }
-    lines.push(row.map(c => csvCell(c, delim)).join(delim))
+    lines.push(row.map(c => csvCell(c, delim, decimal)).join(delim))
   }
   return bom + lines.join('\r\n')
 }
