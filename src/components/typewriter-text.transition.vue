@@ -12,7 +12,7 @@ transition(
 <script>
 import _map from 'lodash/map'
 import _sum from 'lodash/sum'
-import Copilot from 'copilot'
+import Copilot from '@/lib/copilot-stub'
 
 export default {
   name: 'TypewriterTextTransition'

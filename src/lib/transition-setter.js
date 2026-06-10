@@ -1,4 +1,4 @@
-import Copilot from 'copilot'
+import Copilot from '@/lib/copilot-stub'
 
 export default function TransitionSetter( opts ){
 

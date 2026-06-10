@@ -83,7 +83,7 @@
 </template>
 
 <script>
-import Copilot from 'copilot'
+import Copilot from '@/lib/copilot-stub'
 import { mapGetters } from 'vuex'
 import chroma from 'chroma-js'
 import sougy from '@/config/sougy-colors'

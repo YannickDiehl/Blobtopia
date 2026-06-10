@@ -7,7 +7,7 @@ import Filters from '@/plugins/filters'
 import Gestures from '@/plugins/gestures'
 import onResize from '@/plugins/on-resize'
 import Buefy from 'buefy'
-import Copilot from 'copilot'
+import Copilot from '@/lib/copilot-stub'
 import * as THREE from 'three'
 
 import '@mdi/font/css/materialdesignicons.css'

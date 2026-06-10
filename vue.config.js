@@ -99,9 +99,6 @@ module.exports = {
   , configureWebpack: {
     resolve: {
       symlinks: true
-      , alias: {
-        'copilot': path.resolve(__dirname, 'src/lib/copilot-stub.js')
-      }
     }
     , node: {
       __dirname: true

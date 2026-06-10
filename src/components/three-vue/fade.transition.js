@@ -1,4 +1,4 @@
-import Copilot from 'copilot'
+import Copilot from '@/lib/copilot-stub'
 import * as THREE from 'three'
 import THREEObjectMixin from '@/components/three-vue/v3-object.mixin'
 
