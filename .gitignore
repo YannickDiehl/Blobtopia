@@ -38,14 +38,11 @@ data/*.db-wal
 data/*.db.bak
 data/blobtopia_state.json
 
-# Generated timeline data (run `npm run export` to regenerate)
+# Generated timeline tick blocks (~2.3 GB; regenerate via `npm run export`
+# from data/blobtopia_timeline.db — see data/README.md). Everything else
+# under public/data/timeline/ (meta, blobs-static, buildings, stats, tweets,
+# newspapers, ...) is small and tracked so a fresh clone can run the app.
 public/data/timeline/ticks/
-public/data/timeline/globs/
-public/data/timeline/stats/
-public/data/timeline/tweets.json
-public/data/timeline/globs-static.json
-public/data/timeline/glob-index.json
-public/data/timeline/buildings.json
 
 # 3D models (binary, tracked via Vercel upload)
 public/models/
