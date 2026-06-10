@@ -1,6 +1,12 @@
 """Layer 4: LLM-Kalibrierung (optional, mit --with-llm Flag).
 
 Sendet Likert-Fragen an das LLM und prüft, ob die Antworten zu den DB-Werten passen.
+
+ACHTUNG — Prompt-Drift: Der hier gebaute System-Prompt ist eine bewusste
+MINIMAL-APPROXIMATION des kanonischen Builders src/lib/build-system-prompt.js
+(es fehlen u.a. Aktivitäts-/Emotionsblock und die Policy-/Trait-Labels).
+Die Kalibrierungswerte sind daher nur näherungsweise auf die Produktion
+übertragbar. Prompt-Änderungen IMMER zuerst in der JS-Version machen.
 """
 
 import json

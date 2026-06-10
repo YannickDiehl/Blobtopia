@@ -296,6 +296,34 @@ Die Simulation enthält **27 Ereignisse über 22 Jahre** (8.030 Tage). Jedes Ere
 
 Studierende interviewen Blobs über ein Chat-Interface. Das System nutzt Claude Haiku mit einem umfassenden System-Prompt, der alle 21 Trait-Indikatoren, Einstellungen, Emotionen und die aktuelle Tagesaktivität des Blobs enthält. Sicherheitsmechanismen verhindern Prompt-Injection und System-Prompt-Leaks.
 
+### Befragungsinstitut (Survey-Feature)
+
+Statt Blobs einzeln zu interviewen, können Studierende automatisierte
+Befragungen in Auftrag geben (Fenster über den Umfrage-Button in der
+Top-Bar oder Taste `b`):
+
+1. **Fragebogen** — Fragen und Antwortskalen werden komplett frei formuliert
+   (Codebook-Stil). Das System erkennt Skala, gemessenes Konstrukt und
+   Wording-Effekte heuristisch (`src/lib/survey-parse.js`); das erkannte
+   Konstrukt bleibt für Studierende unsichtbar (blinder Fragebogen).
+2. **Stichprobe** — kalibrierbares Ziehungsdesign mit Grundgesamtheits-Filtern
+   (Distrikt, Bildung, Partei, Alter, Einkommen) und fünf Verfahren:
+   Zufallsauswahl, geschichtet, Klumpen, Quote, manuell (Selektionsbias
+   erlebbar). Seeded und reproduzierbar, inkl. Designgewichten
+   (`src/lib/survey-sampling.js`).
+3. **Ergebnis** — die synthetische Antwort-Engine (`src/lib/survey-synthetic.js`)
+   beantwortet Items aus den gespeicherten Blob-Werten plus kalibriertem
+   Messfehler und **modellierten Fragebogeneffekten** (Akquieszenz —
+   bildungsabhängig —, Framing, soziale Erwünschtheit, nicht-zufällige
+   Item-Nonresponse). Export als CSV (Semikolon + Dezimalkomma, deutsches
+   Excel) mit Codebook.
+
+Da die wahren Populationswerte bekannt sind, lassen sich Stichprobenschätzer
+gegen die Wahrheit vergleichen (Sampling- vs. Mess- vs. Nonresponse-Fehler).
+Eine LLM-basierte Feld-Engine (`src/lib/survey-engine.js`) existiert
+vollständig, ist aber aus Kostengründen nicht in der UI exponiert.
+Tests: `npm test` (scripts/test-survey-*.mjs).
+
 ---
 
 ## 3D-Welt & Bewegungssystem
@@ -335,19 +363,52 @@ Freizeitverhalten wird durch latente Traits gesteuert:
 
 ## Setup
 
+Node ≥ 18 (siehe `.nvmrc`). Das für Webpack 4 nötige
+`NODE_OPTIONS=--openssl-legacy-provider` ist bereits in den npm-Scripts
+encodiert — kein manuelles Setzen nötig.
+
 ```bash
 # Dependencies installieren
-npm install
+npm ci
 
-# Lokaler Entwicklungsserver
+# Lokaler Entwicklungsserver (http://localhost:8080)
 npm run dev
+
+# Tests (Survey-Engine, Sampling, Tick-Decoder, ...)
+npm test
 
 # Produktion-Build
 npm run build
 
-# Timeline aus SQLite exportieren (nach Rust-Precompute)
+# Timeline aus SQLite exportieren (braucht data/blobtopia_timeline.db,
+# siehe data/README.md — die DB ist NICHT in git)
 npm run export
+
+# Rust-Simulation (offline-Werkzeug, nicht für den App-Betrieb nötig)
+cargo test --workspace
+cargo run -p blobtopia-precompute --release -- 118 data/blobtopia_timeline.db 500
+
+# Python-Pipeline (Tweets/Zeitungen/Validierung)
+pip install -r requirements.txt
 ```
+
+**Hinweis für frische Clones:** Die Tick-Daten
+(`public/data/timeline/ticks/`, ~2.3 GB) sind nicht in git — Details und
+Beschaffungswege in [data/README.md](data/README.md). Architekturüberblick:
+[ARCHITECTURE.md](ARCHITECTURE.md).
+
+### Repository-Aufbau
+
+| Pfad | Inhalt |
+|---|---|
+| `src/` | Vue-2-Frontend (3D-Welt, Inspector, Chat, Befragungsinstitut) |
+| `api/chat.js` | Vercel-Function: Anthropic-Proxy für Blob-Interviews |
+| `crates/simulation-core` | Rust-Agentenmodell (offline) |
+| `crates/precompute` | Simulationslauf → SQLite (offline) |
+| `crates/server` | **Legacy**, nicht in Produktion (s. README im Crate) |
+| `scripts/` | Export-Pipeline, Tests (`test-*.mjs`), Python-Generierung, `experiments/` |
+| `data/` | Quelldaten + Generierungsartefakte (s. `data/README.md`) |
+| `public/data/timeline/` | exportierte Timeline (Ticks gitignored) |
 
 ---
 
