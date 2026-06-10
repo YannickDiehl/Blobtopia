@@ -21,12 +21,14 @@
  *   timeline/blobs/{id}.json      — per-blob history
  */
 
-const Database = require('better-sqlite3')
+// Node's built-in SQLite (stable since Node 22.5) — replaces better-sqlite3,
+// whose native build broke `npm ci` on newer Node versions.
+const { DatabaseSync } = require('node:sqlite')
 const path = require('path')
 const fs = require('fs')
 
 // ── Config ──────────────────────────────────────────────────────────────
-const DB_PATH = process.argv[2] || path.resolve(__dirname, '../../Blobtopia/data/blobtopia_timeline.db')
+const DB_PATH = process.argv[2] || path.resolve(__dirname, '../data/blobtopia_timeline.db')
 const OUT_DIR = process.argv[3] || path.resolve(__dirname, '../public/data/timeline')
 const TICKS_PER_BLOCK = 100
 const SAMPLE_EVERY_N = 7
@@ -50,7 +52,7 @@ if (!fs.existsSync(DB_PATH)) {
   process.exit(1)
 }
 
-const db = new Database(DB_PATH, { readonly: true })
+const db = new DatabaseSync(DB_PATH, { readOnly: true })
 
 const tpy = (() => {
   const row = db.prepare("SELECT value FROM meta WHERE key = 'ticks_per_year'").get()

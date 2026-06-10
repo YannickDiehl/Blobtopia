@@ -363,7 +363,8 @@ Freizeitverhalten wird durch latente Traits gesteuert:
 
 ## Setup
 
-Node ≥ 18 (siehe `.nvmrc`). Das für Webpack 4 nötige
+Node ≥ 22.5 (siehe `.nvmrc`; der Timeline-Export nutzt das eingebaute
+`node:sqlite`). Das für Webpack 4 nötige
 `NODE_OPTIONS=--openssl-legacy-provider` ist bereits in den npm-Scripts
 encodiert — kein manuelles Setzen nötig.
 
