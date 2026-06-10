@@ -12,10 +12,10 @@ const lastKnownTraits = {}
 
 async function loadStaticData() {
   const [staticRes, indexRes, buildingsRes] = await Promise.all([
-    fetch(`${DATA_BASE}/blobs-static.json`),
-    fetch(`${DATA_BASE}/blob-index.json`),
-    fetch(`${DATA_BASE}/buildings.json`),
-  ])
+    fetch(`${DATA_BASE}/blobs-static.json`)
+    ,fetch(`${DATA_BASE}/blob-index.json`)
+    ,fetch(`${DATA_BASE}/buildings.json`)
+  ,])
   blobsStatic = await staticRes.json()
   blobIndex = await indexRes.json()
   const buildings = await buildingsRes.json()
@@ -46,54 +46,54 @@ function expandTickSnapshot(tickData) {
     if (!s) continue
 
     blobs.push({
-      id,
-      name: g.name || '',
-      district: g.district,
-      education_level: s[16] != null ? s[16] : g.education_level,
-      job: g.job || null,
-      income: s[6],
-      age: s[15] != null ? s[15] : ((g.age || 0) + (tickData.y || 0)),
-      home_building_id: g.home_building_id,
-      workplace_id: s[17] != null ? s[17] : g.workplace_id,
-      lunch_spot_id: s[18] != null ? s[18] : g.lunch_spot_id,
-      leisure_spot_id: s[19] != null ? s[19] : g.leisure_spot_id,
-      attitudes: {
-        political_satisfaction: s[0],
-        ideology: s[1],
-        institutional_trust: s[2],
-        policy_economy: s[9],
-        policy_environment: s[10],
-        policy_security: s[11],
-        policy_social: s[12],
-        policy_migration: s[13],
-        policy_democracy: s[14],
-      },
-      political_state: {
-        party_affiliation: s[3],
-        will_vote: s[4] === 1,
-        protest_readiness: s[5],
-        last_vote: null,
-      },
-      latent_traits: (() => { if (s[8] && Object.keys(s[8]).length > 0) { lastKnownTraits[id] = s[8]; return s[8] } return lastKnownTraits[id] || {} })(),
-      emotion: {
-        valence: 0, arousal: 0,
-        label: s[7] || 'gelassen',
-        icon: s[7] || 'calm',
-      },
-      pos: g.home_pos || g.pos || [156, 180],
-      home_pos: g.home_pos || g.pos || [156, 180],
+      id
+      ,name: g.name || ''
+      ,district: g.district
+      ,education_level: s[16] != null ? s[16] : g.education_level
+      ,job: g.job || null
+      ,income: s[6]
+      ,age: s[15] != null ? s[15] : ((g.age || 0) + (tickData.y || 0))
+      ,home_building_id: g.home_building_id
+      ,workplace_id: s[17] != null ? s[17] : g.workplace_id
+      ,lunch_spot_id: s[18] != null ? s[18] : g.lunch_spot_id
+      ,leisure_spot_id: s[19] != null ? s[19] : g.leisure_spot_id
+      ,attitudes: {
+        political_satisfaction: s[0]
+        ,ideology: s[1]
+        ,institutional_trust: s[2]
+        ,policy_economy: s[9]
+        ,policy_environment: s[10]
+        ,policy_security: s[11]
+        ,policy_social: s[12]
+        ,policy_migration: s[13]
+        ,policy_democracy: s[14],
+      }
+      ,political_state: {
+        party_affiliation: s[3]
+        ,will_vote: s[4] === 1
+        ,protest_readiness: s[5]
+        ,last_vote: null,
+      }
+      ,latent_traits: (() => { if (s[8] && Object.keys(s[8]).length > 0) { lastKnownTraits[id] = s[8]; return s[8] } return lastKnownTraits[id] || {} })()
+      ,emotion: {
+        valence: 0, arousal: 0
+        ,label: s[7] || 'gelassen'
+        ,icon: s[7] || 'calm',
+      }
+      ,pos: g.home_pos || g.pos || [156, 180]
+      ,home_pos: g.home_pos || g.pos || [156, 180],
     })
   }
 
   return {
-    tick: tickData.t,
-    year: tickData.y,
-    month: tickData.m,
-    day: tickData.d,
-    blobs,
-    daily_schedules: tickData.sc || {},
-    election_results: tickData.el || undefined,
-    events_processed: tickData.ev || undefined,
+    tick: tickData.t
+    ,year: tickData.y
+    ,month: tickData.m
+    ,day: tickData.d
+    ,blobs
+    ,daily_schedules: tickData.sc || {}
+    ,election_results: tickData.el || undefined
+    ,events_processed: tickData.ev || undefined,
   }
 }
 
@@ -239,7 +239,7 @@ export const simulation = {
   }
   , actions: {
     // ── Initialization (replaces connectToServer) ──────────────────────
-    async connectToServer({ commit, dispatch }) {
+    async connectToServer({ dispatch }) {
       console.log('[Blobtopia Static] Loading timeline from static JSON files...')
       await dispatch('initTimeline')
     }
@@ -324,9 +324,9 @@ export const simulation = {
 
           // Load tweets and newspapers
           await Promise.all([
-            dispatch('loadAllTweets'),
-            dispatch('loadAllNewspapers'),
-          ])
+            dispatch('loadAllTweets')
+            ,dispatch('loadAllNewspapers')
+          ,])
 
           // Load first tick
           await dispatch('fetchTick', 0)

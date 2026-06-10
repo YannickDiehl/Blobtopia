@@ -157,16 +157,16 @@ const ASSET_CATEGORIES = [
   {
     name: 'suburban', label: 'Wohnhäuser (Villen)', open: true, items: [
       ...['a','b','c','d','e','f','g','h','i','j'].map(l => ({
-        model: `suburban-building-type-${l}`, label: `Villa ${l.toUpperCase()}`,
-        icon: 'home', previewColor: '#c8dcc8', type: 'villa', scale: 37
+        model: `suburban-building-type-${l}`, label: `Villa ${l.toUpperCase()}`
+        ,icon: 'home', previewColor: '#c8dcc8', type: 'villa', scale: 37
       }))
       , ...['m','n','o'].map(l => ({
-        model: `suburban-building-type-${l}`, label: `Villa ${l.toUpperCase()}`,
-        icon: 'home', previewColor: '#c8dcc8', type: 'villa', scale: 37
+        model: `suburban-building-type-${l}`, label: `Villa ${l.toUpperCase()}`
+        ,icon: 'home', previewColor: '#c8dcc8', type: 'villa', scale: 37
       }))
       , ...['r','s','t','u'].map(l => ({
-        model: `suburban-building-type-${l}`, label: `Villa ${l.toUpperCase()}`,
-        icon: 'home', previewColor: '#c8dcc8', type: 'villa', scale: 37
+        model: `suburban-building-type-${l}`, label: `Villa ${l.toUpperCase()}`
+        ,icon: 'home', previewColor: '#c8dcc8', type: 'villa', scale: 37
       }))
       , { model: 'building-garage', label: 'Garage', icon: 'garage', previewColor: '#b0b0a0', type: 'villa', scale: 37 }
     ]
@@ -174,40 +174,40 @@ const ASSET_CATEGORIES = [
   , {
     name: 'rowhouse', label: 'Reihenhäuser', open: false, items: [
       ...['k','l','p','q'].map(l => ({
-        model: `suburban-building-type-${l}`, label: `Reihenhaus ${l.toUpperCase()}`,
-        icon: 'home-group', previewColor: '#e8d4a0', type: 'rowhouse', scale: 28
-      })),
-      ...['a','b','c','d'].map(l => ({
-        model: `building-small-${l}`, label: `Kleingebäude ${l.toUpperCase()}`,
-        icon: 'home-group', previewColor: '#d4c088', type: 'rowhouse', scale: 28
+        model: `suburban-building-type-${l}`, label: `Reihenhaus ${l.toUpperCase()}`
+        ,icon: 'home-group', previewColor: '#e8d4a0', type: 'rowhouse', scale: 28
+      }))
+      ,...['a','b','c','d'].map(l => ({
+        model: `building-small-${l}`, label: `Kleingebäude ${l.toUpperCase()}`
+        ,icon: 'home-group', previewColor: '#d4c088', type: 'rowhouse', scale: 28
       }))
     ]
   }
   , {
     name: 'apartment', label: 'Mehrfamilienhäuser', open: false, items: [
       ...['j','l','m'].map(l => ({
-        model: `commercial-building-${l}`, label: `Mehrfamilienhaus ${l.toUpperCase()}`,
-        icon: 'home-city', previewColor: '#b8c0d0', type: 'apartment', scale: 30
+        model: `commercial-building-${l}`, label: `Mehrfamilienhaus ${l.toUpperCase()}`
+        ,icon: 'home-city', previewColor: '#b8c0d0', type: 'apartment', scale: 30
       }))
     ]
   }
   , {
     name: 'commercial', label: 'Gewerbe / Büros', open: false, items: [
       ...['a','b','c','d','e','f','g','h','i','k','n'].map(l => ({
-        model: `commercial-building-${l}`, label: `Gewerbe ${l.toUpperCase()}`,
-        icon: 'office-building', previewColor: '#a0b0c0', type: 'office', scale: 30
+        model: `commercial-building-${l}`, label: `Gewerbe ${l.toUpperCase()}`
+        ,icon: 'office-building', previewColor: '#a0b0c0', type: 'office', scale: 30
       }))
     ]
   }
   , {
     name: 'skyscraper', label: 'Hochhäuser / Fabriken', open: false, items: [
       ...['a','b','c','d','e'].map(l => ({
-        model: `commercial-building-skyscraper-${l}`, label: `Hochhaus ${l.toUpperCase()}`,
-        icon: 'city', previewColor: '#888', type: 'factory', scale: 28
-      })),
-      ...['a','b'].map(l => ({
-        model: `commercial-low-detail-building-wide-${l}`, label: `Fabrik ${l.toUpperCase()}`,
-        icon: 'factory', previewColor: '#777', type: 'factory', scale: 28
+        model: `commercial-building-skyscraper-${l}`, label: `Hochhaus ${l.toUpperCase()}`
+        ,icon: 'city', previewColor: '#888', type: 'factory', scale: 28
+      }))
+      ,...['a','b'].map(l => ({
+        model: `commercial-low-detail-building-wide-${l}`, label: `Fabrik ${l.toUpperCase()}`
+        ,icon: 'factory', previewColor: '#777', type: 'factory', scale: 28
       }))
     ]
   }
@@ -242,16 +242,16 @@ const ASSET_CATEGORIES = [
   , {
     name: 'industrial', label: 'Industriegebäude', open: false, items: [
       ...['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t'].map(l => ({
-        model: `industrial-building-${l}`, label: `Industrie ${l.toUpperCase()}`,
-        icon: 'factory', previewColor: '#6a6a6a', type: 'factory', scale: 28
+        model: `industrial-building-${l}`, label: `Industrie ${l.toUpperCase()}`
+        ,icon: 'factory', previewColor: '#6a6a6a', type: 'factory', scale: 28
       }))
       , ...['a','b','c','d','e','f','g','h','i','j','k','l','m','n'].map(l => ({
-        model: `commercial-low-detail-building-${l}`, label: `Lagerhalle ${l.toUpperCase()}`,
-        icon: 'warehouse', previewColor: '#8a8a8a', type: 'factory', scale: 28
+        model: `commercial-low-detail-building-${l}`, label: `Lagerhalle ${l.toUpperCase()}`
+        ,icon: 'warehouse', previewColor: '#8a8a8a', type: 'factory', scale: 28
       }))
       , ...['a','b'].map(l => ({
-        model: `commercial-low-detail-building-wide-${l}`, label: `Fabrikhalle ${l.toUpperCase()}`,
-        icon: 'warehouse', previewColor: '#7a7a7a', type: 'factory', scale: 28
+        model: `commercial-low-detail-building-wide-${l}`, label: `Fabrikhalle ${l.toUpperCase()}`
+        ,icon: 'warehouse', previewColor: '#7a7a7a', type: 'factory', scale: 28
       }))
       , { model: 'industrial-chimney-basic', label: 'Schornstein (einfach)', icon: 'factory', previewColor: '#555', type: 'deco', scale: 16 }
       , { model: 'industrial-chimney-large', label: 'Schornstein (groß)', icon: 'factory', previewColor: '#555', type: 'deco', scale: 16 }
@@ -648,11 +648,11 @@ export default {
         model.userData = { placementId: p.id }
         // Distrikt-spezifische Farbpaletten für Gebäude
         const DISTRICT_PALETTES = {
-          0: { r: [0.85, 0.95], g: [0.98, 1.10], b: [0.88, 0.98] },  // Grüntal — grünlicher Ton
-          1: { r: [1.00, 1.12], g: [0.92, 1.02], b: [0.75, 0.85] },  // Sonnenberg — warmes Gold
-          2: { r: [0.82, 0.92], g: [0.90, 1.00], b: [1.00, 1.12] },  // Hafenviertel — bläulich
-          3: { r: [1.02, 1.14], g: [0.88, 0.98], b: [0.78, 0.88] },  // Mittelfeld — orange-warm
-          4: { r: [0.88, 0.96], g: [0.88, 0.96], b: [0.88, 0.96] },  // Industriezone — neutral-grau
+          0: { r: [0.85, 0.95], g: [0.98, 1.10], b: [0.88, 0.98] }  // Grüntal — grünlicher Ton
+          ,1: { r: [1.00, 1.12], g: [0.92, 1.02], b: [0.75, 0.85] }  // Sonnenberg — warmes Gold
+          ,2: { r: [0.82, 0.92], g: [0.90, 1.00], b: [1.00, 1.12] }  // Hafenviertel — bläulich
+          ,3: { r: [1.02, 1.14], g: [0.88, 0.98], b: [0.78, 0.88] }  // Mittelfeld — orange-warm
+          ,4: { r: [0.88, 0.96], g: [0.88, 0.96], b: [0.88, 0.96] },  // Industriezone — neutral-grau
         }
         const DEFAULT_PALETTE = { r: [0.92, 1.04], g: [0.90, 1.00], b: [0.85, 0.95] } // Zentrum — sandfarben
 
@@ -960,22 +960,22 @@ export default {
     // ── Functional Type + Capacity für Precompute ──────────
     , enrichPlacementsForExport() {
       const TYPE_TO_FUNCTIONAL = {
-        villa: 'villa', rowhouse: 'rowhouse', apartment: 'apartment',
-        office: 'office', factory: 'factory',
-        road: 'road', deco: 'decoration', water: 'water', building: 'residential'
+        villa: 'villa', rowhouse: 'rowhouse', apartment: 'apartment'
+        ,office: 'office', factory: 'factory'
+        ,road: 'road', deco: 'decoration', water: 'water', building: 'residential'
       }
       const LABEL_TO_FUNCTIONAL = {
-        'Rathaus': 'parliament', 'Rathausvorplatz': 'central_square',
-        'Kirche': 'central_square', 'Krankenhaus': 'office',
-        'Marktplatz': 'marketplace', 'Marktstand': 'marketplace',
-        'Universität': 'university', 'Bibliothek': 'library',
-        'Medienzentrum': 'media_center', 'Sportplatz': 'sports_facility',
-        'Park': 'park', 'Café': 'cafe', 'Restaurant': 'restaurant', 'Bar': 'bar',
-        'Geschäft': 'shop', 'Lager': 'warehouse'
+        'Rathaus': 'parliament', 'Rathausvorplatz': 'central_square'
+        ,'Kirche': 'central_square', 'Krankenhaus': 'office'
+        ,'Marktplatz': 'marketplace', 'Marktstand': 'marketplace'
+        ,'Universität': 'university', 'Bibliothek': 'library'
+        ,'Medienzentrum': 'media_center', 'Sportplatz': 'sports_facility'
+        ,'Park': 'park', 'Café': 'cafe', 'Restaurant': 'restaurant', 'Bar': 'bar'
+        ,'Geschäft': 'shop', 'Lager': 'warehouse'
       }
       const DEFAULT_CAPACITY = {
-        villa: 4, rowhouse: 3, apartment: 5, office: 5, factory: 10,
-        road: 0, deco: 0, water: 0, building: 0, civic: 0
+        villa: 4, rowhouse: 3, apartment: 5, office: 5, factory: 10
+        ,road: 0, deco: 0, water: 0, building: 0, civic: 0
       }
       for (const p of this.placements) {
         // functional_type: label-basiert oder type-basiert
@@ -1094,7 +1094,7 @@ export default {
       this.controls.enabled = false
     }
 
-    , onMouseUp(event) {
+    , onMouseUp() {
       // OrbitControls immer wieder aktivieren
       this.controls.enabled = true
       // Distrikt-Malen beenden

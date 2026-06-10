@@ -3,7 +3,6 @@
  * The original npm package was replaced by @github/copilot.
  * This provides the minimum API surface used by the evolution simulator.
  */
-import { Vector3 } from 'three'
 
 class FrameManager {
   constructor() {
@@ -52,38 +51,38 @@ function Copilot(config) {
 
 Copilot.Player = function({ manager, totalTime = 1 } = {}) {
   const player = {
-    time: 0,
-    totalTime: totalTime,
-    paused: true,
-    playbackRate: 1,
-    _listeners: {},
-    _raf: null,
+    time: 0
+    ,totalTime: totalTime
+    ,paused: true
+    ,playbackRate: 1
+    ,_listeners: {}
+    ,_raf: null
 
-    on(event, fn) {
+    ,on(event, fn) {
       if (!this._listeners[event]) this._listeners[event] = []
       this._listeners[event].push(fn)
-    },
+    }
 
-    emit(event) {
+    ,emit(event) {
       (this._listeners[event] || []).forEach(fn => fn())
-    },
+    }
 
-    togglePause(p) {
+    ,togglePause(p) {
       this.paused = p !== undefined ? p : !this.paused
       this.emit('togglePause')
       if (!this.paused) this._tick()
-    },
+    }
 
-    seek(time) {
+    ,seek(time) {
       this.time = Math.max(0, Math.min(time, this.totalTime))
       this.emit('update')
-    },
+    }
 
-    playTo(time) {
+    ,playTo(time) {
       this.seek(typeof time === 'string' ? parseFloat(time) : time)
-    },
+    }
 
-    _tick() {
+    ,_tick() {
       if (this.paused) return
       this.time += 16 * this.playbackRate
       if (this.time >= this.totalTime) {
@@ -96,9 +95,9 @@ Copilot.Player = function({ manager, totalTime = 1 } = {}) {
       if (!this.paused) {
         this._raf = requestAnimationFrame(() => this._tick())
       }
-    },
+    }
 
-    destroy() {
+    ,destroy() {
       this.paused = true
       if (this._raf) cancelAnimationFrame(this._raf)
       this._listeners = {}
@@ -116,8 +115,8 @@ Copilot.Interpolators = {
 }
 
 Copilot.Animation = {
-  getTimeFraction: (start, end, now) => Math.min(1, Math.max(0, (now - start) / (end - start))),
-  interpolateProperty: (fn, from, to, t) => fn(from, to, t)
+  getTimeFraction: (start, end, now) => Math.min(1, Math.max(0, (now - start) / (end - start)))
+  ,interpolateProperty: (fn, from, to, t) => fn(from, to, t)
 }
 
 Copilot.Easing = {

@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import _get from 'lodash/get'
 
 export default {
   name: 'Gestures'

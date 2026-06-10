@@ -110,20 +110,20 @@ export function computeWanderPosition (anchorX, anchorZ, time, phase, seed, spee
     // ── Walk phase: smoothstep interpolation from previous to current waypoint ──
     const t = smoothstep(cycleProgress / walkEnd)
     return {
-      x: wpPrev.x + (wpCurr.x - wpPrev.x) * t,
-      z: wpPrev.z + (wpCurr.z - wpPrev.z) * t,
-      walking: true,
-      dirX: wpCurr.x - wpPrev.x,
-      dirZ: wpCurr.z - wpPrev.z,
+      x: wpPrev.x + (wpCurr.x - wpPrev.x) * t
+      ,z: wpPrev.z + (wpCurr.z - wpPrev.z) * t
+      ,walking: true
+      ,dirX: wpCurr.x - wpPrev.x
+      ,dirZ: wpCurr.z - wpPrev.z,
     }
   } else {
     // ── Pause phase: stand still, slowly look around ──
     return {
-      x: wpCurr.x,
-      z: wpCurr.z,
-      walking: false,
-      dirX: Math.sin(time * 0.3 + phase),
-      dirZ: Math.cos(time * 0.3 + phase),
+      x: wpCurr.x
+      ,z: wpCurr.z
+      ,walking: false
+      ,dirX: Math.sin(time * 0.3 + phase)
+      ,dirZ: Math.cos(time * 0.3 + phase),
     }
   }
 }

@@ -41,7 +41,7 @@ class MinHeap {
 
   _sinkDown (i) {
     const n = this._data.length
-    while (true) {
+    for (;;) {
       let smallest = i
       const l = 2 * i + 1
       const r = 2 * i + 2
@@ -58,15 +58,15 @@ class MinHeap {
 
 // 8-directional neighbors (cardinal + diagonal)
 const DIRS = [
-  { dx: 1, dz: 0, cost: 1 },
-  { dx: -1, dz: 0, cost: 1 },
-  { dx: 0, dz: 1, cost: 1 },
-  { dx: 0, dz: -1, cost: 1 },
-  { dx: 1, dz: 1, cost: 1.414 },
-  { dx: -1, dz: 1, cost: 1.414 },
-  { dx: 1, dz: -1, cost: 1.414 },
-  { dx: -1, dz: -1, cost: 1.414 },
-]
+  { dx: 1, dz: 0, cost: 1 }
+  ,{ dx: -1, dz: 0, cost: 1 }
+  ,{ dx: 0, dz: 1, cost: 1 }
+  ,{ dx: 0, dz: -1, cost: 1 }
+  ,{ dx: 1, dz: 1, cost: 1.414 }
+  ,{ dx: -1, dz: 1, cost: 1.414 }
+  ,{ dx: 1, dz: -1, cost: 1.414 }
+  ,{ dx: -1, dz: -1, cost: 1.414 }
+,]
 
 /**
  * Find a path on the walkable grid using A*.

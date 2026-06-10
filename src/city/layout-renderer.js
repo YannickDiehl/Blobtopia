@@ -89,15 +89,15 @@ export async function createCityFromLayout () {
     const BASE_COLOR = [0.66, 0.78, 0.53]
     const CIVIC_COLOR = [0.83, 0.77, 0.66]
     const RIVER_POINTS_V = [
-      [-40, 380], [200, 352], [480, 400], [800, 368],
-      [1120, 328], [1440, 288], [1760, 260], [2040, 232],
-    ].map(p => new THREE.Vector3(p[0] * S, 0, p[1] * S))
+      [-40, 380], [200, 352], [480, 400], [800, 368]
+      ,[1120, 328], [1440, 288], [1760, 260], [2040, 232]
+    ,].map(p => new THREE.Vector3(p[0] * S, 0, p[1] * S))
     const riverCurve = new THREE.CatmullRomCurve3(RIVER_POINTS_V)
     const civicRadius = 520 * S
     const districtBlend = 140 * S
     const riverBlend = 88 * S
 
-    function getTerrainColor (x, z) {
+    const getTerrainColor = function (x, z) {
       let r = BASE_COLOR[0] * 0.15, g = BASE_COLOR[1] * 0.15, b = BASE_COLOR[2] * 0.15
       let tw = 0.15
       const cd = Math.sqrt((x - CX) ** 2 + (z - CZ) ** 2)
@@ -147,12 +147,12 @@ export async function createCityFromLayout () {
   // ── River (nur ohne Editor-Distrikte) ──
   if (!hasEditorDistricts) {
   const riverCurve = new THREE.CatmullRomCurve3([
-    [-40, 380], [200, 352], [480, 400], [800, 368],
-    [1120, 328], [1440, 288], [1760, 260], [2040, 232],
-  ].map(p => new THREE.Vector3(p[0] * S, 0, p[1] * S)))
+    [-40, 380], [200, 352], [480, 400], [800, 368]
+    ,[1120, 328], [1440, 288], [1760, 260], [2040, 232]
+  ,].map(p => new THREE.Vector3(p[0] * S, 0, p[1] * S)))
   const riverWidth = 64 * S
   const riverSamples = 60
-  function createRibbonMesh (curve, width, samples, mat, yOffset) {
+  const createRibbonMesh = function (curve, width, samples, mat, yOffset) {
     const pts = curve.getPoints(samples)
     const verts = [], indices = []
     for (let i = 0; i < pts.length; i++) {
@@ -451,11 +451,11 @@ export async function createCityFromLayout () {
         const dist = getDistrictAt(p.x, p.z)
         const bId = p.id || advanceBuildingId()
         tagBuildingMesh(waterPlane, {
-          id: bId, name: p.label || 'Wasser', label: p.label || 'Wasser',
-          description: 'Wasserfläche', x: p.x, z: p.z, type,
-          functional_type: p.functional_type || 'water', capacity: 0,
-          district: p.district != null ? p.district : (dist ? dist.id : -1),
-          districtName: dist ? dist.name : (DISTRICTS[p.district] || {}).name || 'Zentrum'
+          id: bId, name: p.label || 'Wasser', label: p.label || 'Wasser'
+          ,description: 'Wasserfläche', x: p.x, z: p.z, type
+          ,functional_type: p.functional_type || 'water', capacity: 0
+          ,district: p.district != null ? p.district : (dist ? dist.id : -1)
+          ,districtName: dist ? dist.name : (DISTRICTS[p.district] || {}).name || 'Zentrum'
         })
         kenneyGroup.add(waterPlane)
         buildingRegistry.push({ id: bId, x: p.x, z: p.z, type, district: p.district, functional_type: 'water' })

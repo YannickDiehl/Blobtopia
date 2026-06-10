@@ -21,9 +21,9 @@ export const CX = GRID_SIZE / 2
 export const CY = GRID_SIZE / 2 // civic center
 
 export const RIVER_POINTS = [
-  [-20, 190], [100, 176], [240, 200], [400, 184],
-  [560, 164], [720, 144], [880, 130], [1020, 116],
-]
+  [-20, 190], [100, 176], [240, 200], [400, 184]
+  ,[560, 164], [720, 144], [880, 130], [1020, 116]
+,]
 
 // ── Shared Materials ─────────────────────────────────────────
 export const streetMat = new THREE.MeshLambertMaterial({ color: 0x444444 })
@@ -50,40 +50,40 @@ export const EDITOR_SCALE_MAP = {
 // Per-model scales from editor (overrides EDITOR_SCALE_MAP when model-specific scale differs)
 export const MODEL_SCALE_MAP = {
   // Gehwege / Steinwege / Pfade
-  'pavement': 34, 'pavement-fountain': 34,
-  'nature-path_stone': 34, 'nature-path_stoneCorner': 43, 'nature-path_stoneEnd': 53,
-  'suburban-path-long': 82, 'suburban-path-short': 162,
-  'suburban-path-stones-long': 82, 'suburban-path-stones-short': 162, 'suburban-path-stones-messy': 90,
+  'pavement': 34, 'pavement-fountain': 34
+  ,'nature-path_stone': 34, 'nature-path_stoneCorner': 43, 'nature-path_stoneEnd': 53
+  ,'suburban-path-long': 82, 'suburban-path-short': 162
+  ,'suburban-path-stones-long': 82, 'suburban-path-stones-short': 162, 'suburban-path-stones-messy': 90
   // Natur mit abweichender Skalierung
-  'nature-tree_small': 14, 'nature-tree_tall': 18,
-  'nature-plant_bush': 12, 'nature-plant_bushLarge': 14,
-  'nature-flower_redA': 10, 'nature-flower_yellowA': 10, 'nature-flower_purpleA': 10,
-  'nature-grass_large': 12, 'nature-rock_smallA': 12, 'nature-rock_largeA': 14,
-  'nature-log_stack': 12, 'nature-sign': 12,
+  ,'nature-tree_small': 14, 'nature-tree_tall': 18
+  ,'nature-plant_bush': 12, 'nature-plant_bushLarge': 14
+  ,'nature-flower_redA': 10, 'nature-flower_yellowA': 10, 'nature-flower_purpleA': 10
+  ,'nature-grass_large': 12, 'nature-rock_smallA': 12, 'nature-rock_largeA': 14
+  ,'nature-log_stack': 12, 'nature-sign': 12
   // Fantasy
-  'fantasy-stall': 22, 'fantasy-stall-green': 22, 'fantasy-stall-red': 22,
-  'fantasy-cart': 14, 'fantasy-lantern': 14, 'fantasy-hedge': 14,
-  'fantasy-banner-green': 14, 'fantasy-banner-red': 14, 'fantasy-fence': 14,
-  'fantasy-wall-arch': 22,
+  ,'fantasy-stall': 22, 'fantasy-stall-green': 22, 'fantasy-stall-red': 22
+  ,'fantasy-cart': 14, 'fantasy-lantern': 14, 'fantasy-hedge': 14
+  ,'fantasy-banner-green': 14, 'fantasy-banner-red': 14, 'fantasy-fence': 14
+  ,'fantasy-wall-arch': 22
   // Industrie-Deko
-  'industrial-chimney-medium': 15, 'industrial-chimney-small': 14,
+  ,'industrial-chimney-medium': 15, 'industrial-chimney-small': 14
   // Suburban
-  'suburban-tree-small': 12,
+  ,'suburban-tree-small': 12,
 }
 
 export const CIVIC_SCALE = {
-  'civic-church': 75,
-  'civic-townhall': 24,
-  'civic-school': 2.52,
-  'civic-hospital': 0.288,
+  'civic-church': 75
+  ,'civic-townhall': 24
+  ,'civic-school': 2.52
+  ,'civic-hospital': 0.288,
 }
 
 export const ROAD_TILE_SCALE = CELL_SIZE // each tile becomes ~32 units wide/long (matches CELL_SIZE)
 
 export const KENNEY_ROAD_NAMES = [
-  'road-straight', 'road-straight-lightposts',
-  'road-intersection', 'road-corner', 'road-split',
-]
+  'road-straight', 'road-straight-lightposts'
+  ,'road-intersection', 'road-corner', 'road-split'
+,]
 
 // ── Label maps ───────────────────────────────────────────────
 export const TYPE_LABELS = {

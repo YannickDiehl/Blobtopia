@@ -68,9 +68,9 @@ function autoConnectRoads (placements, cellSize) {
   var keys = Object.keys(roadGrid)
   for (var k = 0; k < keys.length; k++) {
     var parts = keys[k].split(',')
-    var cx = parseInt(parts[0], 10)
-    var cz = parseInt(parts[1], 10)
-    var p = roadGrid[keys[k]]
+    cx = parseInt(parts[0], 10)
+    cz = parseInt(parts[1], 10)
+    p = roadGrid[keys[k]]
 
     // Bitmask: N=1(cz-1), E=2(cx+1), S=4(cz+1), W=8(cx-1)
     var mask = 0

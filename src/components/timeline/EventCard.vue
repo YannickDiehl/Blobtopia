@@ -31,7 +31,6 @@ transition(name="slide-up")
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import { DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 
 export default {

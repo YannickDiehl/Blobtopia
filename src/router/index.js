@@ -1,4 +1,3 @@
-import _get from 'lodash/get'
 import Vue from 'vue'
 import Router from 'vue-router'
 import About from '@/pages/about'

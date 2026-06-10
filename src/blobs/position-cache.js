@@ -49,36 +49,36 @@ const INDOOR_STATES = new Set(['SLEEPING', 'AT_WORK', 'AT_LUNCH', 'AT_SHOP', 'AT
  * States where the blob is in transit (walking between buildings).
  */
 const TRANSIT_STATES = new Set([
-  'GO_TO_WORK', 'GO_TO_HOME', 'GO_TO_LUNCH',
-  'GO_TO_SHOP', 'GO_TO_SOCIAL', 'GO_TO_LEISURE', 'GO_TO_STROLL', 'GO_TO_PROTEST'
+  'GO_TO_WORK', 'GO_TO_HOME', 'GO_TO_LUNCH'
+  ,'GO_TO_SHOP', 'GO_TO_SOCIAL', 'GO_TO_LEISURE', 'GO_TO_STROLL', 'GO_TO_PROTEST'
 ])
 
 /**
  * Map GO_TO_* → target location key in the locations object.
  */
 const TRANSIT_TARGET = {
-  'GO_TO_WORK': 'workplace',
-  'GO_TO_HOME': 'homeBuilding',
-  'GO_TO_LUNCH': 'lunchSpot',
-  'GO_TO_SHOP': 'shopSpot',
-  'GO_TO_SOCIAL': 'socialSpot',
-  'GO_TO_LEISURE': 'leisureSpot',
-  'GO_TO_STROLL': 'leisureSpot',   // stroll uses outdoor zone; fallback to leisure
-  'GO_TO_PROTEST': 'leisureSpot',  // fallback; schedule building_id preferred
+  'GO_TO_WORK': 'workplace'
+  ,'GO_TO_HOME': 'homeBuilding'
+  ,'GO_TO_LUNCH': 'lunchSpot'
+  ,'GO_TO_SHOP': 'shopSpot'
+  ,'GO_TO_SOCIAL': 'socialSpot'
+  ,'GO_TO_LEISURE': 'leisureSpot'
+  ,'GO_TO_STROLL': 'leisureSpot'   // stroll uses outdoor zone; fallback to leisure
+  ,'GO_TO_PROTEST': 'leisureSpot',  // fallback; schedule building_id preferred
 }
 
 /**
  * Map AT_* → location key for idle position.
  */
 const IDLE_LOCATION = {
-  'AT_WORK': 'workplace',
-  'AT_HOME': 'homeBuilding',
-  'AT_LUNCH': 'lunchSpot',
-  'AT_SHOP': 'shopSpot',
-  'AT_SOCIAL': 'socialSpot',
-  'AT_LEISURE': 'leisureSpot',
-  'AT_STROLL': 'leisureSpot',
-  'AT_PROTEST': 'leisureSpot',
+  'AT_WORK': 'workplace'
+  ,'AT_HOME': 'homeBuilding'
+  ,'AT_LUNCH': 'lunchSpot'
+  ,'AT_SHOP': 'shopSpot'
+  ,'AT_SOCIAL': 'socialSpot'
+  ,'AT_LEISURE': 'leisureSpot'
+  ,'AT_STROLL': 'leisureSpot'
+  ,'AT_PROTEST': 'leisureSpot',
 }
 
 /**
@@ -165,10 +165,10 @@ export function computeHourPositions (schedule, locations, registry) {
       }
     }
     positions[h] = {
-      x: fx,
-      z: fz,
-      state,
-      indoor
+      x: fx
+      ,z: fz
+      ,state
+      ,indoor
     }
   }
 
@@ -209,8 +209,8 @@ export function interpolateAlongPath (path, fraction) {
     if (targetDist <= segLens[i]) {
       const t = segLens[i] > 0 ? targetDist / segLens[i] : 0
       return {
-        x: path[i].x + (path[i + 1].x - path[i].x) * t,
-        z: path[i].z + (path[i + 1].z - path[i].z) * t
+        x: path[i].x + (path[i + 1].x - path[i].x) * t
+        ,z: path[i].z + (path[i + 1].z - path[i].z) * t
       }
     }
     targetDist -= segLens[i]

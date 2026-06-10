@@ -105,7 +105,7 @@ import v3Fog from '@/components/three-vue/v3-fog'
 import BlobCreature from '@/blobs'
 import BlobStatus from '@/components/3d-objects/blob-status'
 import { blobColors } from '@/config/blob-colors'
-import { createCity, createCityFromLayout } from '@/city'
+import { createCityFromLayout } from '@/city'
 import { GRID_SIZE } from '@/config/world'
 import Tour from '@/components/tour'
 const OrbitControls = require('three-orbit-controls')(THREE)
@@ -299,9 +299,7 @@ const methods = {
     //    daher den nächsten Blob per Ray-Distanz finden
     if (ray && this.$refs.v3Blobs && this.generation) {
       let closestIndex = -1
-      let closestDist = Infinity
       let closestScreenDist = Infinity
-      let camDist = 0
       const tmpPos = new THREE.Vector3()
       const tmpDiff = new THREE.Vector3()
       const rayDir = ray.direction.clone().normalize()
@@ -319,9 +317,7 @@ const methods = {
         let angularDist = dist / t
         if (angularDist < closestScreenDist) {
           closestScreenDist = angularDist
-          closestDist = dist
           closestIndex = index
-          camDist = t
         }
       })
 

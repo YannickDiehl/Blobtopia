@@ -7,102 +7,102 @@ import { randomWalkableNear } from '@/lib/pathfinder'
 // Zone choice is driven by latent construct values.
 export const OUTDOOR_ZONES = [
   {
-    id: 'steinweg_park',
-    name: 'Steinweg-Park',
-    x: 368, z: 528, // Center of stone path area in Grüntal
-    walkRadius: 200,
-    microWalk: { radius: 200, intervalMs: 30000 },  // wide, gentle wandering
-    district: 0, // Grüntal
+    id: 'steinweg_park'
+    ,name: 'Steinweg-Park'
+    ,x: 368, z: 528 // Center of stone path area in Grüntal
+    ,walkRadius: 200
+    ,microWalk: { radius: 200, intervalMs: 30000 }  // wide, gentle wandering
+    ,district: 0 // Grüntal
     // Postmaterialists prefer nature/parks
-    weights: (t) => {
+    ,weights: (t) => {
       const envOverEcon = t.environment_over_economy || 5
       const freedom = t.freedom_over_order || 5
       const econPriority = t.economic_security_priority || 5
       return (envOverEcon * 0.4) + (freedom * 0.3) + ((10 - econPriority) * 0.3)
     }
-  },
-  {
-    id: 'hafenpromenade',
-    name: 'Hafenpromenade',
-    x: 848, z: 752, // North edge of harbor basin — pavement row z=752, x=720-976
-    walkRadius: 150,
-    microWalk: { radius: 150, intervalMs: 30000 },
-    district: 2,
+  }
+  ,{
+    id: 'hafenpromenade'
+    ,name: 'Hafenpromenade'
+    ,x: 848, z: 752 // North edge of harbor basin — pavement row z=752, x=720-976
+    ,walkRadius: 150
+    ,microWalk: { radius: 150, intervalMs: 30000 }
+    ,district: 2
     // Social evening stroll along the harbor — high base weight
-    weights: (t) => {
+    ,weights: (t) => {
       const community = t.community_participation || 5
       const neighborTrust = t.neighbor_trust || 5
       const genTrust = t.generalized_trust || 5
       return 3 + (community * 0.35) + (neighborTrust * 0.2) + (genTrust * 0.2)
     }
-  },
-  {
-    id: 'hafenufer-west',
-    name: 'Westliches Hafenufer',
-    x: 720, z: 864, // West edge of harbor basin — pavement column x=720, z=752-976
-    walkRadius: 130,
-    microWalk: { radius: 130, intervalMs: 35000 },
-    district: 2,
+  }
+  ,{
+    id: 'hafenufer-west'
+    ,name: 'Westliches Hafenufer'
+    ,x: 720, z: 864 // West edge of harbor basin — pavement column x=720, z=752-976
+    ,walkRadius: 130
+    ,microWalk: { radius: 130, intervalMs: 35000 }
+    ,district: 2
     // Nature-loving, relaxed blobs walk along the waterfront
-    weights: (t) => {
+    ,weights: (t) => {
       const envOverEcon = t.environment_over_economy || 5
       const lowPowerless = 10 - (t.powerlessness || 5)
       const community = t.community_participation || 5
       return 2 + (envOverEcon * 0.3) + (lowPowerless * 0.2) + (community * 0.25)
     }
-  },
-  {
-    id: 'laternenstrasse',
-    name: 'Laternenstraße',
-    x: 500, z: 720, // Lantern-lit promenade street z=720, x=272-720
-    walkRadius: 230,
-    microWalk: { radius: 230, intervalMs: 30000 },
-    district: 2,
+  }
+  ,{
+    id: 'laternenstrasse'
+    ,name: 'Laternenstraße'
+    ,x: 500, z: 720 // Lantern-lit promenade street z=720, x=272-720
+    ,walkRadius: 230
+    ,microWalk: { radius: 230, intervalMs: 30000 }
+    ,district: 2
     // Evening flaneurs under the lanterns
-    weights: (t) => {
+    ,weights: (t) => {
       const community = t.community_participation || 5
       const genTrust = t.generalized_trust || 5
       return 1 + (community * 0.3) + (genTrust * 0.25)
     }
-  },
-  {
-    id: 'marktplatz',
-    name: 'Marktplatz',
-    x: 528, z: 560, // Central civic area near Rathaus
-    walkRadius: 120,
-    microWalk: { radius: 120, intervalMs: 40000 },
-    district: -1, // Any district (central)
+  }
+  ,{
+    id: 'marktplatz'
+    ,name: 'Marktplatz'
+    ,x: 528, z: 560 // Central civic area near Rathaus
+    ,walkRadius: 120
+    ,microWalk: { radius: 120, intervalMs: 40000 }
+    ,district: -1 // Any district (central)
     // Reduced weight — LEISURE server-schedule already sends many blobs here
-    weights: (t) => {
+    ,weights: (t) => {
       const econPriority = t.economic_security_priority || 5
       const community = t.community_participation || 5
       return (econPriority * 0.2) + (community * 0.25)
     }
-  },
-  {
-    id: 'flussufer',
-    name: 'Flussufer',
-    x: 340, z: 400, // Along river mid-section
-    walkRadius: 180,
-    microWalk: { radius: 180, intervalMs: 40000 },  // riverside stroll
-    district: -1, // Any district (runs through city)
+  }
+  ,{
+    id: 'flussufer'
+    ,name: 'Flussufer'
+    ,x: 340, z: 400 // Along river mid-section
+    ,walkRadius: 180
+    ,microWalk: { radius: 180, intervalMs: 40000 }  // riverside stroll
+    ,district: -1 // Any district (runs through city)
     // Satisfied, low-alienation blobs enjoy nature
-    weights: (t) => {
+    ,weights: (t) => {
       const lowPowerless = 10 - (t.powerlessness || 5)
       const lowComplexity = 10 - (t.political_complexity || 5)
       const envOverEcon = t.environment_over_economy || 5
       return (lowPowerless * 0.4) + (lowComplexity * 0.3) + (envOverEcon * 0.3)
     }
-  },
-  {
-    id: 'ringstrassen_allee',
-    name: 'Ringstraßen-Allee',
-    x: 688, z: 176, // Tree-lined ring road spine
-    walkRadius: 300,
-    microWalk: { radius: 300, intervalMs: 25000 },  // jogging, fast movement
-    district: -1, // Any district
+  }
+  ,{
+    id: 'ringstrassen_allee'
+    ,name: 'Ringstraßen-Allee'
+    ,x: 688, z: 176 // Tree-lined ring road spine
+    ,walkRadius: 300
+    ,microWalk: { radius: 300, intervalMs: 25000 }  // jogging, fast movement
+    ,district: -1 // Any district
     // Young, self-efficacious, non-conformist blobs
-    weights: (t, blob) => {
+    ,weights: (t, blob) => {
       const selfEff = t.self_efficacy || 5
       const youthFactor = (blob.age_group === 0) ? 8 : (blob.age_group === 1) ? 5 : 3
       const lowObedience = 10 - (t.obedience_value || 5)
@@ -411,9 +411,9 @@ export function assignLocations(blob, phase, registry, serverX, serverY, rng){
   const blobName = c.name || null
 
   return {
-    homeBuilding, workplace, lunchSpot, leisureSpot,
-    shopSpot, socialSpot,
-    leisureZone, lunchOutdoor,
-    schedule, wanderSpeed, wanderRadius, commuteMaxDist, blobName
+    homeBuilding, workplace, lunchSpot, leisureSpot
+    ,shopSpot, socialSpot
+    ,leisureZone, lunchOutdoor
+    ,schedule, wanderSpeed, wanderRadius, commuteMaxDist, blobName
   }
 }

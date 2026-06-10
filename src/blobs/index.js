@@ -6,7 +6,7 @@ import { WORLD_SCALE, TRANSIT_SPEED } from '@/config/world'
 
 import { createBlob, cachedVisionCircle, cachedEnergyCircle, blobMaterialProps } from './blob-mesh'
 import { visualPositions } from './visual-positions'
-import { assignLocations, findNearestBuilding, resolveBuildingPos, findCivicBuilding, chooseOutdoorZone } from './blob-locations'
+import { assignLocations, resolveBuildingPos, findCivicBuilding, chooseOutdoorZone } from './blob-locations'
 import { getScheduledState } from './blob-schedule'
 import { snapToWalkable } from './blob-movement'
 import { computeHourPositions, interpolateAlongPath, getCachedPath } from './position-cache'
@@ -24,14 +24,14 @@ function mulberry32 (seed) {
 
 // Micro-walk configuration per idle state (live mode only)
 const MICRO_WALK_CONFIG = {
-  'AT_WORK':    { radius: 60,  intervalMs: 90000 },  // "meeting" — to nearby building
-  'AT_HOME':    { radius: 120, intervalMs: 60000 },  // "errand" — to nearby shop
-  'AT_LUNCH':   { radius: 30,  intervalMs: 120000 }, // rarely — sitting and eating
-  'AT_SHOP':    { radius: 80,  intervalMs: 60000 },  // browsing around
-  'AT_SOCIAL':  { radius: 100, intervalMs: 50000 },  // socializing, moving around
-  'AT_LEISURE': { radius: 150, intervalMs: 45000 },  // strolling
-  'AT_STROLL':  { radius: 200, intervalMs: 30000 },  // walking outdoor zone route
-  'AT_PROTEST': { radius: 80,  intervalMs: 50000 },  // moving in crowd
+  'AT_WORK':    { radius: 60,  intervalMs: 90000 }  // "meeting" — to nearby building
+  ,'AT_HOME':    { radius: 120, intervalMs: 60000 }  // "errand" — to nearby shop
+  ,'AT_LUNCH':   { radius: 30,  intervalMs: 120000 } // rarely — sitting and eating
+  ,'AT_SHOP':    { radius: 80,  intervalMs: 60000 }  // browsing around
+  ,'AT_SOCIAL':  { radius: 100, intervalMs: 50000 }  // socializing, moving around
+  ,'AT_LEISURE': { radius: 150, intervalMs: 45000 }  // strolling
+  ,'AT_STROLL':  { radius: 200, intervalMs: 30000 }  // walking outdoor zone route
+  ,'AT_PROTEST': { radius: 80,  intervalMs: 50000 },  // moving in crowd
 }
 
 // Transit speed multipliers per activity
@@ -454,10 +454,10 @@ export default {
         if (!this._hourPositions) {
           this._hourPositions = computeHourPositions(
             this._schedule,
-            { homeBuilding: this._homeBuilding, workplace: this._workplace,
-              lunchSpot: this._lunchSpot, leisureSpot: this._leisureSpot,
-              shopSpot: this._shopSpot || this._leisureSpot,
-              socialSpot: this._socialSpot || this._leisureSpot },
+            { homeBuilding: this._homeBuilding, workplace: this._workplace
+              ,lunchSpot: this._lunchSpot, leisureSpot: this._leisureSpot
+              ,shopSpot: this._shopSpot || this._leisureSpot
+              ,socialSpot: this._socialSpot || this._leisureSpot },
             buildingRegistry
           )
         }
@@ -584,8 +584,8 @@ export default {
           // Idle: waypoint-based wandering around keyframe position
           const deterministicTime = tick * 24 + hour + frac
           const IDLE_RADIUS = {
-            'AT_LUNCH': 12, 'AT_SHOP': 15, 'AT_SOCIAL': 20,
-            'AT_LEISURE': 40, 'AT_STROLL': 60, 'AT_PROTEST': 20
+            'AT_LUNCH': 12, 'AT_SHOP': 15, 'AT_SOCIAL': 20
+            ,'AT_LEISURE': 40, 'AT_STROLL': 60, 'AT_PROTEST': 20
           }
           let radius = IDLE_RADIUS[kf.state] || 10
           if ((kf.state === 'AT_LEISURE' && this._leisureZone) || (kf.state === 'AT_STROLL' && this._strollZone)) {
