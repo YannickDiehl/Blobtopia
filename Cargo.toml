@@ -2,6 +2,12 @@
 members = [
   "crates/simulation-core",
   "crates/precompute",
+]
+# crates/server is LEGACY (pre-static-export WebSocket server, replaced by
+# the static timeline JSON + api/chat.js). Kept for reference, excluded from
+# the workspace so builds/tests/upgrades don't pay for ~3800 lines of dead
+# code. See crates/server/README.md.
+exclude = [
   "crates/server",
 ]
 resolver = "2"
