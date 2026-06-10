@@ -11,33 +11,33 @@ const PARTY_NAMES = { 0: 'Fortschritt', 1: 'Mitte', 2: 'Tradition', 3: 'Unabhaen
 const DISTRICT_NAMES = { 0: 'Gruental', 1: 'Sonnenberg', 2: 'Hafenviertel', 3: 'Mittelfeld', 4: 'Industriezone' }
 
 const EDU_STYLES = [
-  'direkt und unverbluemt, ohne akademische Umschweife, mit einfachen kurzen Saetzen',
-  'unkompliziert und bodenstaendig',
-  'sachlich und bestimmt',
-  'differenziert und reflektiert, mit gehobenem Wortschatz und komplexen Satzstrukturen wie eine akademisch gebildete Person',
-]
+  'direkt und unverbluemt, ohne akademische Umschweife, mit einfachen kurzen Saetzen'
+  ,'unkompliziert und bodenstaendig'
+  ,'sachlich und bestimmt'
+  ,'differenziert und reflektiert, mit gehobenem Wortschatz und komplexen Satzstrukturen wie eine akademisch gebildete Person'
+,]
 
 const ACTIVITY_MAP = {
-  SLEEPING:    { label: 'schlaefst gerade', instruction: 'Du wurdest geweckt und bist entsprechend genervt und einsilbig. Halte dich sehr kurz.' },
-  COMMUTING:   { label: 'bist unterwegs', instruction: 'Du bist gerade unterwegs und hast wenig Zeit. Antworte knapp.' },
-  WORKING:     { label: 'bist bei der Arbeit', instruction: 'Du bist gerade bei der Arbeit und hast wenig Zeit. Antworte kurz und sachlich.' },
-  LUNCH_BREAK: { label: 'machst Mittagspause', instruction: 'Du hast gerade Pause und bist entspannt und gespraechsbereit.' },
-  SHOPPING:    { label: 'bist beim Einkaufen', instruction: 'Du bist beim Einkaufen, aber hast einen Moment Zeit.' },
-  SOCIALIZING: { label: 'triffst Freunde oder Nachbarn', instruction: 'Du bist gerade gesellig unterwegs und offen fuer ein Gespraech.' },
-  LEISURE:     { label: 'hast Freizeit', instruction: 'Du hast gerade frei und bist entspannt und gespraechsbereit.' },
-  PROTESTING:  { label: 'bist auf einer Demonstration', instruction: 'Du bist gerade auf einer Demo und politisch aufgeladen. Du sprichst leidenschaftlich ueber Politik.' },
-  GOING_HOME:  { label: 'bist auf dem Heimweg', instruction: 'Du bist auf dem Heimweg, hast aber kurz Zeit fuer ein Gespraech.' },
+  SLEEPING:    { label: 'schlaefst gerade', instruction: 'Du wurdest geweckt und bist entsprechend genervt und einsilbig. Halte dich sehr kurz.' }
+  ,COMMUTING:   { label: 'bist unterwegs', instruction: 'Du bist gerade unterwegs und hast wenig Zeit. Antworte knapp.' }
+  ,WORKING:     { label: 'bist bei der Arbeit', instruction: 'Du bist gerade bei der Arbeit und hast wenig Zeit. Antworte kurz und sachlich.' }
+  ,LUNCH_BREAK: { label: 'machst Mittagspause', instruction: 'Du hast gerade Pause und bist entspannt und gespraechsbereit.' }
+  ,SHOPPING:    { label: 'bist beim Einkaufen', instruction: 'Du bist beim Einkaufen, aber hast einen Moment Zeit.' }
+  ,SOCIALIZING: { label: 'triffst Freunde oder Nachbarn', instruction: 'Du bist gerade gesellig unterwegs und offen fuer ein Gespraech.' }
+  ,LEISURE:     { label: 'hast Freizeit', instruction: 'Du hast gerade frei und bist entspannt und gespraechsbereit.' }
+  ,PROTESTING:  { label: 'bist auf einer Demonstration', instruction: 'Du bist gerade auf einer Demo und politisch aufgeladen. Du sprichst leidenschaftlich ueber Politik.' }
+  ,GOING_HOME:  { label: 'bist auf dem Heimweg', instruction: 'Du bist auf dem Heimweg, hast aber kurz Zeit fuer ein Gespraech.' },
 }
 
 const EMOTION_MAP = {
-  begeistert:    'Du bist gerade begeistert und voller Energie. Du sprichst enthusiastisch und positiv. Zeige deine Begeisterung durch Aktionen wie *strahlt*, *klatscht in die Haende*, *springt fast auf*.',
-  hoffnungsvoll: 'Du bist hoffnungsvoll gestimmt. Du siehst die Dinge optimistisch. Zeige es durch Aktionen wie *laechelt*, *nickt zuversichtlich*, *lehnt sich vor*.',
-  zufrieden:     'Du bist zufrieden und ausgeglichen. Du sprichst ruhig und gelassen. Gelegentlich *nickt* oder *laechelt leicht*.',
-  wuetend:       'Du bist gerade wuetend. Du sprichst scharf und emotional, bist leicht reizbar. Zeige es durch Aktionen wie *ballt die Faust*, *wird lauter*, *schuettelt den Kopf*.',
-  frustriert:    'Du bist frustriert. Du klagst und beschwerst dich, siehst vieles negativ. Zeige es durch Aktionen wie *seufzt*, *verdreht die Augen*, *winkt ab*.',
-  besorgt:       'Du machst dir Sorgen. Du sprichst nachdenklich und etwas aengstlich. Zeige es durch Aktionen wie *runzelt die Stirn*, *blickt unsicher*, *zieht die Schultern hoch*.',
-  angespannt:    'Du bist angespannt und nervoes. Du sprichst hastig und unruhig. Zeige es durch Aktionen wie *trommelt mit den Fingern*, *schaut sich um*, *rutscht unruhig hin und her*.',
-  gelassen:      'Du bist gelassen. Du sprichst ruhig und bedaechtig. Gelegentlich *lehnt sich zurueck* oder *nickt bedaechtig*.',
+  begeistert:    'Du bist gerade begeistert und voller Energie. Du sprichst enthusiastisch und positiv. Zeige deine Begeisterung durch Aktionen wie *strahlt*, *klatscht in die Haende*, *springt fast auf*.'
+  ,hoffnungsvoll: 'Du bist hoffnungsvoll gestimmt. Du siehst die Dinge optimistisch. Zeige es durch Aktionen wie *laechelt*, *nickt zuversichtlich*, *lehnt sich vor*.'
+  ,zufrieden:     'Du bist zufrieden und ausgeglichen. Du sprichst ruhig und gelassen. Gelegentlich *nickt* oder *laechelt leicht*.'
+  ,wuetend:       'Du bist gerade wuetend. Du sprichst scharf und emotional, bist leicht reizbar. Zeige es durch Aktionen wie *ballt die Faust*, *wird lauter*, *schuettelt den Kopf*.'
+  ,frustriert:    'Du bist frustriert. Du klagst und beschwerst dich, siehst vieles negativ. Zeige es durch Aktionen wie *seufzt*, *verdreht die Augen*, *winkt ab*.'
+  ,besorgt:       'Du machst dir Sorgen. Du sprichst nachdenklich und etwas aengstlich. Zeige es durch Aktionen wie *runzelt die Stirn*, *blickt unsicher*, *zieht die Schultern hoch*.'
+  ,angespannt:    'Du bist angespannt und nervoes. Du sprichst hastig und unruhig. Zeige es durch Aktionen wie *trommelt mit den Fingern*, *schaut sich um*, *rutscht unruhig hin und her*.'
+  ,gelassen:      'Du bist gelassen. Du sprichst ruhig und bedaechtig. Gelegentlich *lehnt sich zurueck* oder *nickt bedaechtig*.',
 }
 
 function lbl(value, thresholds) {
@@ -109,98 +109,98 @@ export function buildSystemPrompt(blob, sg, tick, tpy, changeSummary, activity, 
 
   // === Labels ===
   var satLabel = lbl(sat, [
-    [1, 'am absoluten Tiefpunkt \u2014 du bist verzweifelt, wuetend oder resigniert. Du siehst keinen Ausweg und das hoert man dir an'],
-    [2, 'sehr unzufrieden \u2014 du bist frustriert und gereizt, fast alles laeuft schlecht'],
-    [4, 'unzufrieden \u2014 es laeuft vieles schlecht'],
-    [6, 'gemischt \u2014 manches okay, manches nicht'],
-    [8, 'zufrieden \u2014 es laeuft insgesamt gut, auch wenn nicht alles perfekt ist'],
-    [11, 'sehr zufrieden \u2014 du bist rundum gluecklich mit deiner Situation'],
-  ])
+    [1, 'am absoluten Tiefpunkt \u2014 du bist verzweifelt, wuetend oder resigniert. Du siehst keinen Ausweg und das hoert man dir an']
+    ,[2, 'sehr unzufrieden \u2014 du bist frustriert und gereizt, fast alles laeuft schlecht']
+    ,[4, 'unzufrieden \u2014 es laeuft vieles schlecht']
+    ,[6, 'gemischt \u2014 manches okay, manches nicht']
+    ,[8, 'zufrieden \u2014 es laeuft insgesamt gut, auch wenn nicht alles perfekt ist']
+    ,[11, 'sehr zufrieden \u2014 du bist rundum gluecklich mit deiner Situation']
+  ,])
 
   var trustLabel = lbl(trust, [
-    [2, 'sehr misstrauisch \u2014 du traust weder Institutionen noch anderen Blobs'],
-    [4, 'eher misstrauisch \u2014 du zweifelst an den Strukturen und bist skeptisch'],
-    [6, 'ambivalent \u2014 mal vertraust du, mal nicht'],
-    [8, 'eher vertrauensvoll \u2014 du glaubst grundsaetzlich an die Strukturen'],
-    [11, 'sehr vertrauensvoll \u2014 du hast grosses Vertrauen in Institutionen und Mitmenschen'],
-  ])
+    [2, 'sehr misstrauisch \u2014 du traust weder Institutionen noch anderen Blobs']
+    ,[4, 'eher misstrauisch \u2014 du zweifelst an den Strukturen und bist skeptisch']
+    ,[6, 'ambivalent \u2014 mal vertraust du, mal nicht']
+    ,[8, 'eher vertrauensvoll \u2014 du glaubst grundsaetzlich an die Strukturen']
+    ,[11, 'sehr vertrauensvoll \u2014 du hast grosses Vertrauen in Institutionen und Mitmenschen']
+  ,])
 
   var incomeCtx = lbl(income, [
-    [1500, 'deutlich unter dem Durchschnitt \u2014 du musst jeden Euro umdrehen'],
-    [2500, 'unter dem Durchschnitt'],
-    [3500, 'im Durchschnitt'],
-    [5000, 'ueber dem Durchschnitt \u2014 du bist finanziell gut aufgestellt'],
-    [999999, 'deutlich ueber dem Durchschnitt \u2014 du gehoerst zu den Besserverdienern'],
-  ])
+    [1500, 'deutlich unter dem Durchschnitt \u2014 du musst jeden Euro umdrehen']
+    ,[2500, 'unter dem Durchschnitt']
+    ,[3500, 'im Durchschnitt']
+    ,[5000, 'ueber dem Durchschnitt \u2014 du bist finanziell gut aufgestellt']
+    ,[999999, 'deutlich ueber dem Durchschnitt \u2014 du gehoerst zu den Besserverdienern']
+  ,])
 
   var voteImpLabel = lbl(t('vote_importance'), [
-    [3, 'unwichtig \u2014 ob du waehlst oder nicht, ist dir egal'],
-    [5, 'eher unwichtig'], [7, 'ambivalent'],
-    [11, 'wichtig \u2014 Waehlen ist fuer dich Buergerpflicht'],
-  ])
+    [3, 'unwichtig \u2014 ob du waehlst oder nicht, ist dir egal']
+    ,[5, 'eher unwichtig'], [7, 'ambivalent']
+    ,[11, 'wichtig \u2014 Waehlen ist fuer dich Buergerpflicht']
+  ,])
 
   var powerLabel = lbl(t('powerlessness'), [
-    [3, 'gering \u2014 du glaubst, dass du etwas bewirken kannst'],
-    [5, 'eher gering'], [7, 'ambivalent'],
-    [11, 'stark \u2014 du fuehlst dich machtlos, als koenntest du nichts aendern'],
-  ])
+    [3, 'gering \u2014 du glaubst, dass du etwas bewirken kannst']
+    ,[5, 'eher gering'], [7, 'ambivalent']
+    ,[11, 'stark \u2014 du fuehlst dich machtlos, als koenntest du nichts aendern']
+  ,])
 
   var partyIndiffLabel = lbl(t('party_indifference'), [
-    [3, 'gering \u2014 deine Partei ist dir wichtig und du identifizierst dich mit ihr'],
-    [5, 'eher gering'], [7, 'ambivalent'],
-    [11, 'hoch \u2014 Parteien sind dir alle ziemlich egal'],
-  ])
+    [3, 'gering \u2014 deine Partei ist dir wichtig und du identifizierst dich mit ihr']
+    ,[5, 'eher gering'], [7, 'ambivalent']
+    ,[11, 'hoch \u2014 Parteien sind dir alle ziemlich egal']
+  ,])
 
   var antiElitLabel = lbl(t('anti_elitism'), [
-    [3, 'gering \u2014 du vertraust den politischen Eliten grundsaetzlich'],
-    [5, 'eher gering'], [7, 'ambivalent'],
-    [11, 'stark \u2014 du findest, dass Politiker den Kontakt zum Volk verloren haben'],
-  ])
+    [3, 'gering \u2014 du vertraust den politischen Eliten grundsaetzlich']
+    ,[5, 'eher gering'], [7, 'ambivalent']
+    ,[11, 'stark \u2014 du findest, dass Politiker den Kontakt zum Volk verloren haben']
+  ,])
 
   var peopleCentrLabel = lbl(t('people_centrism'), [
-    [3, 'gering \u2014 du vertraust repraesentativer Demokratie'],
-    [5, 'eher gering'], [7, 'ambivalent'],
-    [11, 'stark \u2014 du findest, das Volk sollte direkt entscheiden'],
-  ])
+    [3, 'gering \u2014 du vertraust repraesentativer Demokratie']
+    ,[5, 'eher gering'], [7, 'ambivalent']
+    ,[11, 'stark \u2014 du findest, das Volk sollte direkt entscheiden']
+  ,])
 
   var manicheanLabel = lbl(t('manichean_outlook'), [
-    [3, 'gering \u2014 du siehst Graustufen in der Politik'],
-    [5, 'eher gering'], [7, 'ambivalent'],
-    [11, 'stark \u2014 fuer dich geht es in der Politik um Gut gegen Boese'],
-  ])
+    [3, 'gering \u2014 du siehst Graustufen in der Politik']
+    ,[5, 'eher gering'], [7, 'ambivalent']
+    ,[11, 'stark \u2014 fuer dich geht es in der Politik um Gut gegen Boese']
+  ,])
 
   // Policy labels
   var policyThresholds = {
     economy: [
-      [2.5, 'klar fuer staatliche Regulation'], [4.5, 'eher fuer Regulation'],
-      [5.5, 'ambivalent'], [7.5, 'eher fuer freien Markt'],
-      [11, 'klar fuer Deregulierung'],
-    ],
-    environment: [
-      [2.5, 'klarer Umweltschutz-Vorrang'], [4.5, 'eher Umweltschutz'],
-      [5.5, 'ambivalent'], [7.5, 'eher Wirtschaftswachstum'],
-      [11, 'klarer Wachstums-Vorrang'],
-    ],
-    security: [
-      [2.5, 'klar fuer Freiheitsrechte'], [4.5, 'eher fuer Freiheit'],
-      [5.5, 'ambivalent'], [7.5, 'eher fuer Ordnung'],
-      [11, 'klar fuer Sicherheit und Ordnung'],
-    ],
-    social: [
-      [2.5, 'klar fuer Umverteilung'], [4.5, 'eher solidarisch'],
-      [5.5, 'ambivalent'], [7.5, 'eher Eigenverantwortung'],
-      [11, 'klar fuer Eigenverantwortung'],
-    ],
-    migration: [
-      [2.5, 'sehr offen'], [4.5, 'eher offen'],
-      [5.5, 'ambivalent'], [7.5, 'eher restriktiv'],
-      [11, 'klar restriktiv'],
-    ],
-    democracy: [
-      [2.5, 'klar fuer direkte Demokratie'], [4.5, 'eher basisdemokratisch'],
-      [5.5, 'ambivalent'], [7.5, 'eher repraesentativ'],
-      [11, 'klar fuer repraesentative Demokratie'],
-    ],
+      [2.5, 'klar fuer staatliche Regulation'], [4.5, 'eher fuer Regulation']
+      ,[5.5, 'ambivalent'], [7.5, 'eher fuer freien Markt']
+      ,[11, 'klar fuer Deregulierung']
+    ,]
+    ,environment: [
+      [2.5, 'klarer Umweltschutz-Vorrang'], [4.5, 'eher Umweltschutz']
+      ,[5.5, 'ambivalent'], [7.5, 'eher Wirtschaftswachstum']
+      ,[11, 'klarer Wachstums-Vorrang']
+    ,]
+    ,security: [
+      [2.5, 'klar fuer Freiheitsrechte'], [4.5, 'eher fuer Freiheit']
+      ,[5.5, 'ambivalent'], [7.5, 'eher fuer Ordnung']
+      ,[11, 'klar fuer Sicherheit und Ordnung']
+    ,]
+    ,social: [
+      [2.5, 'klar fuer Umverteilung'], [4.5, 'eher solidarisch']
+      ,[5.5, 'ambivalent'], [7.5, 'eher Eigenverantwortung']
+      ,[11, 'klar fuer Eigenverantwortung']
+    ,]
+    ,migration: [
+      [2.5, 'sehr offen'], [4.5, 'eher offen']
+      ,[5.5, 'ambivalent'], [7.5, 'eher restriktiv']
+      ,[11, 'klar restriktiv']
+    ,]
+    ,democracy: [
+      [2.5, 'klar fuer direkte Demokratie'], [4.5, 'eher basisdemokratisch']
+      ,[5.5, 'ambivalent'], [7.5, 'eher repraesentativ']
+      ,[11, 'klar fuer repraesentative Demokratie']
+    ,],
   }
 
   var polEcoLabel = lbl(polEco, policyThresholds.economy)

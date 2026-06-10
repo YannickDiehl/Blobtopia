@@ -27,22 +27,22 @@ const AGE_GROUP_LABELS = ['Jung', 'Mittel', 'Älter']
 
 // ── Job title mapping: building functional_type × education_level → Beruf ──
 const JOB_TITLES = {
-  factory:          ['Fabrikarbeiter/in', 'Facharbeiter/in', 'Meister/in', 'Ingenieur/in'],
-  warehouse:        ['Lagerarbeiter/in', 'Logistiker/in', 'Logistiker/in', 'Logistiker/in'],
-  shop:             ['Verkäufer/in', 'Verkäufer/in', 'Filialleiter/in', 'Filialleiter/in'],
-  office:           ['Büroassistent/in', 'Sachbearbeiter/in', 'Teamleiter/in', 'Manager/in'],
-  cafe:             ['Servicekraft', 'Koch/Köchin', 'Restaurantleiter/in', 'Restaurantleiter/in'],
-  restaurant:       ['Servicekraft', 'Koch/Köchin', 'Restaurantleiter/in', 'Restaurantleiter/in'],
-  bar:              ['Barkeeper/in', 'Barkeeper/in', 'Barkeeper/in', 'Barkeeper/in'],
-  university:       ['Campushelfer/in', 'Laborassistent/in', 'Tutor/in', 'Dozent/in'],
-  library:          ['Bibliothekshelfer/in', 'Bibliothekar/in', 'Bibliothekar/in', 'Wissenschaftler/in'],
-  parliament:       ['Bürohilfe', 'Verwaltungsangestellte/r', 'Referent/in', 'Abgeordnete/r'],
-  media_center:     ['Laufbursche/-mädchen', 'Medienassistent/in', 'Journalist/in', 'Redakteur/in'],
-  park:             ['Platzwart/in', 'Trainer/in', 'Trainer/in', 'Sportmanager/in'],
-  sports_facility:  ['Platzwart/in', 'Trainer/in', 'Trainer/in', 'Sportmanager/in'],
-  marketplace:      ['Markthelfer/in', 'Händler/in', 'Händler/in', 'Marktleiter/in'],
-  central_square:   ['Stadtarbeiter/in', 'Verwaltungsangestellte/r', 'Referent/in', 'Beamte/r'],
-  school:           ['Schulhelfer/in', 'Erzieher/in', 'Lehrer/in', 'Schulleiter/in'],
+  factory:          ['Fabrikarbeiter/in', 'Facharbeiter/in', 'Meister/in', 'Ingenieur/in']
+  ,warehouse:        ['Lagerarbeiter/in', 'Logistiker/in', 'Logistiker/in', 'Logistiker/in']
+  ,shop:             ['Verkäufer/in', 'Verkäufer/in', 'Filialleiter/in', 'Filialleiter/in']
+  ,office:           ['Büroassistent/in', 'Sachbearbeiter/in', 'Teamleiter/in', 'Manager/in']
+  ,cafe:             ['Servicekraft', 'Koch/Köchin', 'Restaurantleiter/in', 'Restaurantleiter/in']
+  ,restaurant:       ['Servicekraft', 'Koch/Köchin', 'Restaurantleiter/in', 'Restaurantleiter/in']
+  ,bar:              ['Barkeeper/in', 'Barkeeper/in', 'Barkeeper/in', 'Barkeeper/in']
+  ,university:       ['Campushelfer/in', 'Laborassistent/in', 'Tutor/in', 'Dozent/in']
+  ,library:          ['Bibliothekshelfer/in', 'Bibliothekar/in', 'Bibliothekar/in', 'Wissenschaftler/in']
+  ,parliament:       ['Bürohilfe', 'Verwaltungsangestellte/r', 'Referent/in', 'Abgeordnete/r']
+  ,media_center:     ['Laufbursche/-mädchen', 'Medienassistent/in', 'Journalist/in', 'Redakteur/in']
+  ,park:             ['Platzwart/in', 'Trainer/in', 'Trainer/in', 'Sportmanager/in']
+  ,sports_facility:  ['Platzwart/in', 'Trainer/in', 'Trainer/in', 'Sportmanager/in']
+  ,marketplace:      ['Markthelfer/in', 'Händler/in', 'Händler/in', 'Marktleiter/in']
+  ,central_square:   ['Stadtarbeiter/in', 'Verwaltungsangestellte/r', 'Referent/in', 'Beamte/r']
+  ,school:           ['Schulhelfer/in', 'Erzieher/in', 'Lehrer/in', 'Schulleiter/in'],
 }
 
 // Buildings lookup — initialized by initBuildingsMap()

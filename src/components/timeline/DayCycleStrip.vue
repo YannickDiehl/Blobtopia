@@ -23,19 +23,19 @@
 import { mapGetters } from 'vuex'
 
 const HOUR_COLORS = [
-  '#1a1a3e','#1a1a3e','#1a1a3e','#1a1a3e','#1e2a4a','#2d3a5c',  // 0-5
-  '#4a5568','#d4a544','#e8b84a','#d4a544','#c4a050','#b89840',    // 6-11
-  '#d4a544','#c4a050','#b89840','#a08030','#8b6020','#7a4820',    // 12-17
-  '#5c3060','#4a2050','#3a1840','#2a1838','#1a1a3e','#1a1a3e'     // 18-23
+  '#1a1a3e','#1a1a3e','#1a1a3e','#1a1a3e','#1e2a4a','#2d3a5c'  // 0-5
+  ,'#4a5568','#d4a544','#e8b84a','#d4a544','#c4a050','#b89840'    // 6-11
+  ,'#d4a544','#c4a050','#b89840','#a08030','#8b6020','#7a4820'    // 12-17
+  ,'#5c3060','#4a2050','#3a1840','#2a1838','#1a1a3e','#1a1a3e'     // 18-23
 ]
 
 const ACTIVITY_LABELS = {
-  0: 'Schlafen', 1: 'Schlafen', 2: 'Schlafen', 3: 'Schlafen',
-  4: 'Schlafen', 5: 'Schlafen', 6: 'Aufstehen',
-  7: 'Pendeln', 8: 'Arbeit', 9: 'Arbeit', 10: 'Arbeit', 11: 'Arbeit',
-  12: 'Mittagessen', 13: 'Arbeit', 14: 'Arbeit', 15: 'Arbeit', 16: 'Arbeit',
-  17: 'Feierabend', 18: 'Freizeit', 19: 'Freizeit', 20: 'Freizeit',
-  21: 'Abend', 22: 'Schlafen', 23: 'Schlafen'
+  0: 'Schlafen', 1: 'Schlafen', 2: 'Schlafen', 3: 'Schlafen'
+  ,4: 'Schlafen', 5: 'Schlafen', 6: 'Aufstehen'
+  ,7: 'Pendeln', 8: 'Arbeit', 9: 'Arbeit', 10: 'Arbeit', 11: 'Arbeit'
+  ,12: 'Mittagessen', 13: 'Arbeit', 14: 'Arbeit', 15: 'Arbeit', 16: 'Arbeit'
+  ,17: 'Feierabend', 18: 'Freizeit', 19: 'Freizeit', 20: 'Freizeit'
+  ,21: 'Abend', 22: 'Schlafen', 23: 'Schlafen'
 }
 
 export default {

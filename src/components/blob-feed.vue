@@ -103,9 +103,9 @@ export default {
     , downloadTweets() {
       const header = 'name,date,content'
       const csvRows = this.filteredTweets.map(t =>
-        [t.name,
-         '"' + this.tickToDate(t.tick) + '"',
-         '"' + (t._text || '').replace(/"/g, '""') + '"'].join(',')
+        [t.name
+         ,'"' + this.tickToDate(t.tick) + '"'
+         ,'"' + (t._text || '').replace(/"/g, '""') + '"'].join(',')
       )
       const csv = '\uFEFF' + [header, ...csvRows].join('\n')
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

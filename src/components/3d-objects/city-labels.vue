@@ -15,15 +15,15 @@ import v3Dom from '@/components/three-vue/v3-dom'
 import { CITY_LABELS, CATEGORY_COLORS } from '@/config/city-labels'
 
 export default {
-  name: 'CityLabels',
-  components: { v3Group, v3Dom },
-  props: {
+  name: 'CityLabels'
+  ,components: { v3Group, v3Dom }
+  ,props: {
     cameraDistance: { type: Number, default: 500 }
-  },
-  data: () => ({
+  }
+  ,data: () => ({
     labelHeight: 30
-  }),
-  computed: {
+  })
+  ,computed: {
     visibleLabels() {
       // Show zone labels from default view, building labels when zoomed in
       return CITY_LABELS.filter(lbl => {
@@ -31,8 +31,8 @@ export default {
         return this.cameraDistance < 600
       })
     }
-  },
-  methods: {
+  }
+  ,methods: {
     getCategoryColor(cat) {
       return CATEGORY_COLORS[cat] || '#999'
     }
