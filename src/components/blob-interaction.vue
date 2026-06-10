@@ -518,7 +518,9 @@ export default {
   position: absolute
   bottom: 1rem
   left: 1rem
-  z-index: 5
+  // Über der TimelineBar (6/7), unter der TopBar (10) — Touch-Gesten am
+  // Grip dürfen nicht von der Timeline abgefangen werden
+  z-index: 8
   pointer-events: auto
   &.has-timeline
     bottom: 10rem

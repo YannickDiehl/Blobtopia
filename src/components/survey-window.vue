@@ -411,7 +411,9 @@ export default {
   position: absolute
   bottom: 1rem
   left: 1rem
-  z-index: 6
+  // Über der TimelineBar (6/7), unter der TopBar (10) — sonst fängt die
+  // Timeline Touch-Gesten am Resize-Grip ab, wenn das Fenster tief hängt
+  z-index: 8
   pointer-events: auto
   // Card darf nie unter die TopBar (44px, z-index 10) ragen — sonst sind
   // die Tabs auf flachen Viewports (Beamer/Tablet quer) nicht klickbar

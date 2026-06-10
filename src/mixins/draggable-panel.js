@@ -95,7 +95,7 @@ export default {
     if (this._dp_header) {
       this._dp_header.style.touchAction = 'none' // don't scroll the page while dragging
       this._dp_onHeaderDown = (e) => this._dpDragStart(e)
-      this._dp_onHeaderDbl = () => this.resetPanelPosition()
+      this._dp_onHeaderDbl = () => { if (!this._dpDblSquelched()) this.resetPanelPosition() }
       this._dp_header.addEventListener('pointerdown', this._dp_onHeaderDown)
       this._dp_header.addEventListener('dblclick', this._dp_onHeaderDbl)
     }
@@ -121,7 +121,7 @@ export default {
       })
       this._dp_grip = grip
       this._dp_onGripDown = (e) => this._dpResizeStart(e)
-      this._dp_onGripDbl = () => this.toggleMaximize()
+      this._dp_onGripDbl = () => { if (!this._dpDblSquelched()) this.toggleMaximize() }
       grip.addEventListener('pointerdown', this._dp_onGripDown)
       grip.addEventListener('dblclick', this._dp_onGripDbl)
       this.$el.appendChild(grip)
@@ -146,7 +146,28 @@ export default {
   }
 
   , methods: {
-    _dpAddDocMove(moveFn, upFn) {
+    // Touch/pen double-tap detection in pointerdown: Chrome synthesizes
+    // dblclick from touch unreliably (esp. right after a drag/resize), so we
+    // detect it ourselves. Mouse keeps the native dblclick path.
+    _dpIsDoubleTap(e, key) {
+      if (e.pointerType === 'mouse') return false
+      const now = e.timeStamp || Date.now()
+      const last = this[key]
+      this[key] = { t: now, x: e.clientX, y: e.clientY }
+      const isDouble = !!(last && now - last.t < 400 &&
+        Math.abs(e.clientX - last.x) < 30 && Math.abs(e.clientY - last.y) < 30)
+      if (isDouble) {
+        this[key] = null
+        this._dp_squelchDblUntil = Date.now() + 700 // suppress a late native dblclick
+      }
+      return isDouble
+    }
+
+    , _dpDblSquelched() {
+      return Date.now() < (this._dp_squelchDblUntil || 0)
+    }
+
+    , _dpAddDocMove(moveFn, upFn) {
       this._dp_move = moveFn
       this._dp_up = upFn
       document.addEventListener('pointermove', this._dp_move)
@@ -175,6 +196,11 @@ export default {
     , _dpDragStart(e) {
       if (e.button != null && e.button !== 0) return
       if (isInteractive(e.target)) return
+      if (this._dpIsDoubleTap(e, '_dp_lastHeaderTap')) {
+        e.preventDefault()
+        this.resetPanelPosition()
+        return
+      }
       this._dpInitRect()
       this._dp_maximized = false
       this._dp_sx = e.clientX
@@ -196,6 +222,12 @@ export default {
       if (e.button != null && e.button !== 0) return
       const cfg = this.panelConfig
       if (!cfg || cfg.resizable === false) return
+      if (this._dpIsDoubleTap(e, '_dp_lastGripTap')) {
+        e.preventDefault()
+        e.stopPropagation()
+        this.toggleMaximize()
+        return
+      }
       this._dpInitRect()
       this._dp_maximized = false
       this._dp_sx = e.clientX
@@ -209,8 +241,12 @@ export default {
 
     , _dpResizeMove(e) {
       const cfg = this.panelConfig
-      this.panelW = clamp(this._dp_ow + (e.clientX - this._dp_sx), cfg.minWidth, Math.min(cfg.maxWidth, window.innerWidth))
-      this.panelH = clamp(this._dp_oh + (e.clientY - this._dp_sy), cfg.minHeight, Math.min(cfg.maxHeight, window.innerHeight - TOP_BAR_HEIGHT))
+      // Breite/Höhe so klemmen, dass die rechte/untere Kante (und damit der
+      // Grip) im Viewport bleibt — sonst ist er per Touch unerreichbar
+      const maxW = Math.min(cfg.maxWidth, window.innerWidth, window.innerWidth - (this.panelX || 0) - 4)
+      const maxH = Math.min(cfg.maxHeight, window.innerHeight - TOP_BAR_HEIGHT, window.innerHeight - (this.panelY || 0) - 4)
+      this.panelW = clamp(this._dp_ow + (e.clientX - this._dp_sx), cfg.minWidth, maxW)
+      this.panelH = clamp(this._dp_oh + (e.clientY - this._dp_sy), cfg.minHeight, maxH)
     }
 
     , _dpEnd() {
