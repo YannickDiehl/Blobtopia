@@ -13,7 +13,7 @@
       clearable
       @select="onSelectBlob"
     )
-      template(slot="empty") Kein Blob gefunden
+      template(v-slot:empty) Kein Blob gefunden
 
   //- Profile Section
   .profile-section(v-if="selectedBlob")

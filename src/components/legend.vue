@@ -2,15 +2,20 @@
 ul.legend
   li.clickable(v-for="(item, index) in data", @click="$emit('select', { item, index })")
     span.color(:style="{ 'background-color': item.color }")
-    span {{ item.name | startCase }}
+    span {{ startCase(item.name) }}
   slot
 </template>
 
 <script>
+import { startCase } from '@/lib/format'
+
 export default {
   name: 'Legend'
   , props: {
     data: Array
+  }
+  , methods: {
+    startCase
   }
 }
 </script>
