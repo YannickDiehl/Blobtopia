@@ -104,8 +104,8 @@ export default {
     , doughnutOptions: {
       responsive: true
       , maintainAspectRatio: true
-      , legend: { display: true, position: 'bottom', labels: { fontColor: '#fffbfc', fontSize: 10, boxWidth: 10 } }
-      , cutoutPercentage: 55
+      , plugins: { legend: { display: true, position: 'bottom', labels: { color: '#fffbfc', font: { size: 10 }, boxWidth: 10 } } }
+      , cutout: '55%'
     }
   })
   , computed: {

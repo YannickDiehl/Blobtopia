@@ -83,10 +83,10 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , legend: { labels: { fontColor: '#fffbfc' } }
+        , plugins: { legend: { labels: { color: '#fffbfc' } } }
         , scales: {
-          xAxes: [{ ticks: { fontColor: '#fffbfc' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
-          , yAxes: [{ ticks: { fontColor: '#fffbfc', beginAtZero: true, max: 60, callback: v => v + '%' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          x: { ticks: { color: '#fffbfc' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          , y: { beginAtZero: true, max: 60, ticks: { color: '#fffbfc', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }
@@ -107,10 +107,10 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , legend: { labels: { fontColor: '#fffbfc' } }
+        , plugins: { legend: { labels: { color: '#fffbfc' } } }
         , scales: {
-          xAxes: [{ ticks: { fontColor: '#fffbfc' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
-          , yAxes: [{ ticks: { fontColor: '#fffbfc', beginAtZero: true, max: 100, callback: v => v + '%' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          x: { ticks: { color: '#fffbfc' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          , y: { beginAtZero: true, max: 100, ticks: { color: '#fffbfc', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }

@@ -1,10 +1,16 @@
+<template lang="pug">
+Doughnut(:data="chartData", :options="options")
+</template>
+
 <script>
-import { Doughnut, mixins } from 'vue-chartjs'
-const { reactiveProp } = mixins
+import { Doughnut } from 'vue-chartjs'
+import '@/lib/chart-setup'
+
 export default {
-  extends: Doughnut
-  ,mixins: [reactiveProp]
-  ,props: { options: { type: Object, default: () => ({}) } }
-  ,mounted() { this.renderChart(this.chartData, this.options) }
+  components: { Doughnut }
+  ,props: {
+    chartData: { type: Object, required: true }
+    ,options: { type: Object, default: () => ({}) }
+  }
 }
 </script>

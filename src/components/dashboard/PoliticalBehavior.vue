@@ -94,18 +94,19 @@ export default {
         responsive: true
         , maintainAspectRatio: false
         , scales: {
-          xAxes: [{
-            gridLines: { color: 'rgba(255,255,255,0.06)' }
-            , ticks: { fontColor: '#999', maxTicksLimit: 12 }
-            , scaleLabel: { display: true, labelString: 'Tick', fontColor: '#999' }
-          }]
-          , yAxes: [{
-            gridLines: { color: 'rgba(255,255,255,0.06)' }
-            , ticks: { fontColor: '#999', min: 0, max: 1 }
-            , scaleLabel: { display: true, labelString: 'Protestbereitschaft', fontColor: '#999' }
-          }]
+          x: {
+            grid: { color: 'rgba(255,255,255,0.06)' }
+            , ticks: { color: '#999', maxTicksLimit: 12 }
+            , title: { display: true, text: 'Tick', color: '#999' }
+          }
+          , y: {
+            grid: { color: 'rgba(255,255,255,0.06)' }
+            , ticks: { color: '#999' }
+            , min: 0, max: 1
+            , title: { display: true, text: 'Protestbereitschaft', color: '#999' }
+          }
         }
-        , legend: { labels: { fontColor: '#ccc' } }
+        , plugins: { legend: { labels: { color: '#ccc' } } }
       }
     }
     , turnoutData() {
@@ -133,17 +134,18 @@ export default {
         responsive: true
         , maintainAspectRatio: false
         , scales: {
-          xAxes: [{
-            gridLines: { color: 'rgba(255,255,255,0.06)' }
-            , ticks: { fontColor: '#999' }
-          }]
-          , yAxes: [{
-            gridLines: { color: 'rgba(255,255,255,0.06)' }
-            , ticks: { fontColor: '#999', min: 0, max: 100 }
-            , scaleLabel: { display: true, labelString: '%', fontColor: '#999' }
-          }]
+          x: {
+            grid: { color: 'rgba(255,255,255,0.06)' }
+            , ticks: { color: '#999' }
+          }
+          , y: {
+            grid: { color: 'rgba(255,255,255,0.06)' }
+            , ticks: { color: '#999' }
+            , min: 0, max: 100
+            , title: { display: true, text: '%', color: '#999' }
+          }
         }
-        , legend: { labels: { fontColor: '#ccc' } }
+        , plugins: { legend: { labels: { color: '#ccc' } } }
       }
     }
     , partyStrengthData() {
@@ -165,17 +167,18 @@ export default {
         responsive: true
         , maintainAspectRatio: false
         , scales: {
-          xAxes: [{
-            gridLines: { color: 'rgba(255,255,255,0.06)' }
-            , ticks: { fontColor: '#999' }
-          }]
-          , yAxes: [{
-            gridLines: { color: 'rgba(255,255,255,0.06)' }
-            , ticks: { fontColor: '#999', beginAtZero: true }
-            , scaleLabel: { display: true, labelString: 'Stimmen', fontColor: '#999' }
-          }]
+          x: {
+            grid: { color: 'rgba(255,255,255,0.06)' }
+            , ticks: { color: '#999' }
+          }
+          , y: {
+            grid: { color: 'rgba(255,255,255,0.06)' }
+            , ticks: { color: '#999' }
+            , beginAtZero: true
+            , title: { display: true, text: 'Stimmen', color: '#999' }
+          }
         }
-        , legend: { labels: { fontColor: '#ccc' } }
+        , plugins: { legend: { labels: { color: '#ccc' } } }
       }
     }
   }

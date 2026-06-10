@@ -125,6 +125,11 @@ const initialState = {
   , demographics: null
   , dashboardCache: {
     eventsImpact: null
+    , attitudes: null
+    , elections: null
+    , blobList: null
+    , latentTraits: null
+    , blobHistories: {}
   }
 }
 
@@ -162,6 +167,12 @@ export const simulation = {
     , timelineEvents: state => state.timelineMeta ? state.timelineMeta.events : []
     , electionTicks: state => state.timelineMeta ? state.timelineMeta.election_ticks : []
     , dashboardCache: state => state.dashboardCache
+    , dashboardEventsImpact: state => state.dashboardCache.eventsImpact
+    , dashboardAttitudes: state => state.dashboardCache.attitudes
+    , dashboardElections: state => state.dashboardCache.elections
+    , dashboardBlobList: state => state.dashboardCache.blobList
+    , dashboardLatentTraits: state => state.dashboardCache.latentTraits
+    , dashboardBlobHistory: state => id => state.dashboardCache.blobHistories[id] || null
     // UI Mode getters
     , uiMode: state => state.uiMode
     , rightPanelOpen: state => state.rightPanelOpen
@@ -219,14 +230,46 @@ export const simulation = {
     }
 
     // ── Dashboard Data (from static JSON files) ────────────────────────
-    , async fetchDashboardEventsImpact({ commit, state }) {
-      if (state.dashboardCache.eventsImpact) return state.dashboardCache.eventsImpact
+    // Generic stats-file fetch with per-key cache (stats/*.json is written
+    // by scripts/export-timeline.js and tracked in git)
+    , async fetchStatsJson({ commit, state }, { key, file }) {
+      if (state.dashboardCache[key]) return state.dashboardCache[key]
       try {
-        const res = await fetch(`${DATA_BASE}/stats/events-impact.json`)
+        const res = await fetch(`${DATA_BASE}/stats/${file}`)
         const data = await res.json()
-        commit('setDashboardCache', { key: 'eventsImpact', data })
+        commit('setDashboardCache', { key, data })
         return data
-      } catch (e) { console.warn('[Dashboard] events/impact fetch failed:', e); return null }
+      } catch (e) { console.warn(`[Dashboard] ${file} fetch failed:`, e); return null }
+    }
+    , fetchDashboardEventsImpact({ dispatch }) {
+      return dispatch('fetchStatsJson', { key: 'eventsImpact', file: 'events-impact.json' })
+    }
+    , fetchDashboardAttitudes({ dispatch }) {
+      return dispatch('fetchStatsJson', { key: 'attitudes', file: 'attitudes.json' })
+    }
+    , fetchDashboardElections({ dispatch }) {
+      return dispatch('fetchStatsJson', { key: 'elections', file: 'elections.json' })
+    }
+    , fetchDashboardBlobList({ dispatch }) {
+      return dispatch('fetchStatsJson', { key: 'blobList', file: 'blob-list.json' })
+    }
+    , fetchDashboardLatentTraits({ dispatch }) {
+      return dispatch('fetchStatsJson', { key: 'latentTraits', file: 'latent-traits.json' })
+    }
+    // Per-blob history (public/data/timeline/blobs/<id>.json — only present
+    // on installs that keep the full per-blob export; fails soft otherwise)
+    , async fetchDashboardBlobHistory({ commit, state }, blobId) {
+      if (state.dashboardCache.blobHistories[blobId]) return state.dashboardCache.blobHistories[blobId]
+      try {
+        const res = await fetch(`${DATA_BASE}/blobs/${blobId}.json`)
+        if (!res.ok) return null
+        const data = await res.json()
+        commit('setDashboardCache', {
+          key: 'blobHistories'
+          , data: { ...state.dashboardCache.blobHistories, [blobId]: data }
+        })
+        return data
+      } catch (e) { console.warn('[Dashboard] blob history fetch failed:', e); return null }
     }
 
     // ── Demographics (no separate endpoint in static mode) ─────────────

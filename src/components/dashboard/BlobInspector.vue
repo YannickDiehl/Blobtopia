@@ -277,10 +277,12 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , legend: { labels: { fontColor: '#fffbfc' } }
+        , plugins: {
+          legend: { labels: { color: '#fffbfc' } }
+        }
         , scales: {
-          xAxes: [{ ticks: { fontColor: '#fffbfc', maxTicksLimit: 15 }, gridLines: { color: 'rgba(255,255,255,0.06)' }, scaleLabel: { display: true, labelString: 'Jahr', fontColor: '#fffbfc' } }]
-          , yAxes: [{ ticks: { fontColor: '#fffbfc', min, max }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          x: { ticks: { color: '#fffbfc', maxTicksLimit: 15 }, grid: { color: 'rgba(255,255,255,0.06)' }, title: { display: true, text: 'Jahr', color: '#fffbfc' } }
+          , y: { min, max, ticks: { color: '#fffbfc' }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }

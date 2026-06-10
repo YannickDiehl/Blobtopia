@@ -66,9 +66,11 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , tooltips: { mode: 'index', intersect: false }
+        , plugins: {
+          tooltip: { mode: 'index', intersect: false }
+          , legend: { labels: { color: '#fffbfc', font: { size: 11 } } }
+        }
         , hover: { mode: 'nearest', intersect: true }
-        , legend: { labels: { fontColor: '#fffbfc', fontSize: 11 } }
         , elements: { point: { radius: 0 }, line: { tension: 0.3, borderWidth: 2 } }
       }
     }
@@ -76,8 +78,8 @@ export default {
       return {
         ...this.baseOptions
         , scales: {
-          yAxes: [{ ticks: { min: 0, max: 10, fontColor: '#999' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
-          , xAxes: [{ ticks: { fontColor: '#999', maxTicksLimit: 20 }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          y: { min: 0, max: 10, ticks: { color: '#999' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          , x: { ticks: { color: '#999', maxTicksLimit: 20 }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }
@@ -85,8 +87,8 @@ export default {
       return {
         ...this.baseOptions
         , scales: {
-          yAxes: [{ ticks: { min: 1, max: 10, fontColor: '#999' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
-          , xAxes: [{ ticks: { fontColor: '#999', maxTicksLimit: 20 }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          y: { min: 1, max: 10, ticks: { color: '#999' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          , x: { ticks: { color: '#999', maxTicksLimit: 20 }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }
@@ -94,8 +96,8 @@ export default {
       return {
         ...this.baseOptions
         , scales: {
-          yAxes: [{ ticks: { min: 0, max: 10, fontColor: '#999' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
-          , xAxes: [{ ticks: { fontColor: '#999', maxTicksLimit: 20 }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          y: { min: 0, max: 10, ticks: { color: '#999' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          , x: { ticks: { color: '#999', maxTicksLimit: 20 }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }

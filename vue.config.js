@@ -3,6 +3,9 @@ require('dotenv').config()
 
 module.exports = {
   publicPath: '/'
+  // chart.js 4 / vue-chartjs 5 ship modern syntax that webpack 4's parser
+  // can't read — route them through babel. (Obsolete once we're on Vite.)
+  , transpileDependencies: ['vue-chartjs', 'chart.js', '@kurkle/color']
   , devServer: {
     contentBase: path.resolve(__dirname, 'public')
     , watchContentBase: false
