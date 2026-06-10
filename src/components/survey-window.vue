@@ -413,8 +413,14 @@ export default {
   left: 1rem
   z-index: 6
   pointer-events: auto
+  // Card darf nie unter die TopBar (44px, z-index 10) ragen — sonst sind
+  // die Tabs auf flachen Viewports (Beamer/Tablet quer) nicht klickbar
+  .survey-card
+    max-height: calc(100vh - 44px - 2rem)
   &.has-timeline
     bottom: 10rem
+    .survey-card
+      max-height: calc(100vh - 44px - 11rem)
 
 .survey-card
   background: rgba(0, 0, 0, 0.9)
