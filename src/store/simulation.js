@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import { snapshotToGeneration, snapshotToStatistics, initDistrictMetadata, initBuildingsMap } from '@/lib/blob-adapter'
+import { expandTickSnapshot } from '@/lib/timeline-decode'
 import { DATA_BASE } from '@/config/api'
 import { HOURS_PER_DAY, SECONDS_PER_DAY } from '@/config/world'
 import { getEraForTick } from '@/config/timeline-eras'
@@ -30,72 +31,8 @@ function getStaticMap() {
   return map
 }
 
-/**
- * Expand compact tick data into the full snapshot format that the frontend expects.
- * Compact format: { t, y, m, d, s: [[sat, ideo, trust, party, vote, protest, income, emo_label]], sc?, ev?, el? }
- * Full format:    { tick, year, month, day, blobs: [...], daily_schedules: {...}, ... }
- */
-function expandTickSnapshot(tickData) {
-  const staticMap = getStaticMap()
-  const blobs = []
-
-  for (let i = 0; i < blobIndex.length; i++) {
-    const id = blobIndex[i]
-    const g = staticMap[id] || {}
-    const s = tickData.s[i]
-    if (!s) continue
-
-    blobs.push({
-      id
-      ,name: g.name || ''
-      ,district: g.district
-      ,education_level: s[16] != null ? s[16] : g.education_level
-      ,job: g.job || null
-      ,income: s[6]
-      ,age: s[15] != null ? s[15] : ((g.age || 0) + (tickData.y || 0))
-      ,home_building_id: g.home_building_id
-      ,workplace_id: s[17] != null ? s[17] : g.workplace_id
-      ,lunch_spot_id: s[18] != null ? s[18] : g.lunch_spot_id
-      ,leisure_spot_id: s[19] != null ? s[19] : g.leisure_spot_id
-      ,attitudes: {
-        political_satisfaction: s[0]
-        ,ideology: s[1]
-        ,institutional_trust: s[2]
-        ,policy_economy: s[9]
-        ,policy_environment: s[10]
-        ,policy_security: s[11]
-        ,policy_social: s[12]
-        ,policy_migration: s[13]
-        ,policy_democracy: s[14],
-      }
-      ,political_state: {
-        party_affiliation: s[3]
-        ,will_vote: s[4] === 1
-        ,protest_readiness: s[5]
-        ,last_vote: null,
-      }
-      ,latent_traits: (() => { if (s[8] && Object.keys(s[8]).length > 0) { lastKnownTraits[id] = s[8]; return s[8] } return lastKnownTraits[id] || {} })()
-      ,emotion: {
-        valence: 0, arousal: 0
-        ,label: s[7] || 'gelassen'
-        ,icon: s[7] || 'calm',
-      }
-      ,pos: g.home_pos || g.pos || [156, 180]
-      ,home_pos: g.home_pos || g.pos || [156, 180],
-    })
-  }
-
-  return {
-    tick: tickData.t
-    ,year: tickData.y
-    ,month: tickData.m
-    ,day: tickData.d
-    ,blobs
-    ,daily_schedules: tickData.sc || {}
-    ,election_results: tickData.el || undefined
-    ,events_processed: tickData.ev || undefined,
-  }
-}
+// Tick decoding lives in src/lib/timeline-decode.js (framework-free, tested
+// via scripts/test-timeline-decode.mjs) — this is just the store-state glue.
 
 // ── Tick Block Cache ────────────────────────────────────────────────────
 const tickBlockCache = {}
@@ -347,7 +284,7 @@ export const simulation = {
         const compactTick = block[tick]
         if (compactTick) {
           // Expand compact format to full snapshot (merge with static glob data)
-          const snapshot = expandTickSnapshot(compactTick)
+          const snapshot = expandTickSnapshot(compactTick, { blobIndex, staticMap: getStaticMap(), lastKnownTraits })
           commit('handleSnapshot', snapshot)
           // Prefetch next block in background
           prefetchNextBlock(tick)
