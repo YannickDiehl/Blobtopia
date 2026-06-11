@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "node scripts/run-tests.mjs",
-    "e2e": "node scripts/e2e/smoke.mjs && node scripts/e2e/touch.mjs",
+    "e2e": "node scripts/e2e/smoke.mjs && node scripts/e2e/touch.mjs && node scripts/e2e/editor.mjs",
     "e2e:shots": "node scripts/e2e/screenshot.mjs"
   },
   "engines": {
