@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, main, vue3-migration]
   pull_request:
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run lint -- --no-fix
+      - run: npm run lint
       - run: npm test
       - run: npm run build
 

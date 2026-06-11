@@ -351,9 +351,11 @@ Freizeitverhalten wird durch latente Traits gesteuert:
 
 | Komponente | Technologie |
 |---|---|
-| **Frontend** | Vue 2, Vuex, Vue Router |
-| **3D-Rendering** | Three.js (r111) mit Kenney-Assets |
-| **UI** | Buefy / Bulma |
+| **Frontend** | Vue 3.5, Pinia, Vue Router 4 (Hash-Mode) |
+| **Build** | Vite 8 |
+| **3D-Rendering** | Three.js mit Kenney-Assets |
+| **UI** | Oruga + Bulma 1 (Buefy-Kompat-Schicht: `src/plugins/buefy-compat/`) |
+| **Charts** | Chart.js 4 + vue-chartjs 5 |
 | **Simulation** | Rust (simulation-core, precompute) |
 | **Chat** | Anthropic Claude Haiku (Serverless Function) |
 | **Deployment** | Vercel |
@@ -364,9 +366,7 @@ Freizeitverhalten wird durch latente Traits gesteuert:
 ## Setup
 
 Node ≥ 22.5 (siehe `.nvmrc`; der Timeline-Export nutzt das eingebaute
-`node:sqlite`). Das für Webpack 4 nötige
-`NODE_OPTIONS=--openssl-legacy-provider` ist bereits in den npm-Scripts
-encodiert — kein manuelles Setzen nötig.
+`node:sqlite`).
 
 ```bash
 # Dependencies installieren
@@ -402,7 +402,7 @@ Beschaffungswege in [data/README.md](data/README.md). Architekturüberblick:
 
 | Pfad | Inhalt |
 |---|---|
-| `src/` | Vue-2-Frontend (3D-Welt, Inspector, Chat, Befragungsinstitut) |
+| `src/` | Vue-3-Frontend (3D-Welt, Inspector, Chat, Befragungsinstitut, Dashboard) |
 | `api/chat.js` | Vercel-Function: Anthropic-Proxy für Blob-Interviews |
 | `crates/simulation-core` | Rust-Agentenmodell (offline) |
 | `crates/precompute` | Simulationslauf → SQLite (offline) |

@@ -56,18 +56,31 @@ Minimal-Approximation in `scripts/validation/layer4_llm_calibration.py`.
 ## Befehle
 
 ```bash
-npm run dev      # Dev-Server :8080 (OpenSSL-Legacy-Flag ist in den Scripts encodiert)
+npm run dev      # Vite-Dev-Server :8080 (inkl. /api/chat-Middleware aus vite.config.js)
 npm test         # alle scripts/test-*.mjs Suiten (survey + timeline-decode)
-npm run build    # Produktions-Build → dist/
+npm run e2e      # Browser-Smoke + iPad-Touch-Suite (braucht laufenden Dev-Server)
+npm run build    # Produktions-Build → dist/ (Vite)
 npm run export   # SQLite → public/data/timeline/ (braucht die DB, s.o.)
 cargo test --workspace   # Rust-Tests (simulation-core)
 node scripts/start-api-server.js  # Chat-API lokal ohne Vercel (.env: ANTHROPIC_API_KEY)
 ```
 
-## Bekannte Migrations-Lasten (Stand Audit 2026-06-10)
+## Stack-Migration (abgeschlossen 2026-06, Branch vue3-migration)
 
-Vue 2 + Buefy 0.8 + Webpack 4 + Chart.js 2 + Three r111 sind EOL und nur im
-Verbund migrierbar (Buefy hat keinen Vue-3-Pfad → UI-Kit-Entscheidung nötig,
-z. B. Oruga). Three.js ist unabhängig migrierbar (kein `THREE.Geometry` im
-Code; nur `three-orbit-controls` ersetzen). 51 Komponenten nutzen
-Pug-Templates. Details: Audit-Bericht / Git-History dieses Commits.
+Migriert von Vue 2.7/Webpack 4/Vuex/Buefy/Chart.js 2 auf **Vue 3.5 + Vite 8 +
+Pinia + vue-router 4 (Hash-Mode) + Oruga/Bulma 1 + Chart.js 4**. Wichtige
+Architektur-Punkte daraus:
+- `src/plugins/buefy-compat/` übersetzt die alten `b-*`-Tags in Oruga-Props —
+  der `b-icon`-Shim ist DAUERHAFT (120 Call-Sites), die übrigen Shims sind
+  bewusst beibehaltene dünne Wrapper (Inlining wäre reiner Churn).
+- Die three-vue-Schicht nutzt einen mitt-Bus (`renderer.events`) und eine
+  `v3parent`/`v3children`-Registry statt der in Vue 3 entfernten
+  Instanz-Events/`$children`.
+- Oruga 0.13: Komponenten via `createOruga(bulmaConfig, OrugaComponentPlugins)`
+  (Default-Export registriert nichts!); Bulma 1 kommt precompiled aus
+  `@oruga-ui/theme-bulma/style.css`, Markenfarben via
+  `src/styles/_bulma-bridge.scss`.
+
+Noch offen: Three.js r111 → aktuell (Geometry-Renames, Farb-Management,
+Licht-Kalibrierung — screenshot-gated). 51 Komponenten nutzen Pug (von Vite
+nativ unterstützt).
