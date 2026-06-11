@@ -135,9 +135,8 @@
 
 <script>
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import threeOrbitControls from 'three-orbit-controls'
-const OrbitControls = threeOrbitControls(THREE)
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { autoConnectRoads } from '../lib/road-auto-connect'
 import { GRID_SIZE, CELL_SIZE as CFG_CELL_SIZE } from '@/config/world'
 
@@ -395,8 +394,7 @@ export default {
       this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
       this.renderer.setPixelRatio(window.devicePixelRatio)
       this.renderer.setClearColor(0x2c3e50)
-      this.renderer.gammaOutput = true
-      this.renderer.gammaFactor = 2.2
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace
       this.renderer.toneMapping = THREE.LinearToneMapping
       this.renderer.toneMappingExposure = 0.85
       this.onResize()
@@ -420,9 +418,9 @@ export default {
       this.controls.minPolarAngle = 0.15 // nicht ganz flach
       this.controls.screenSpacePanning = false // Pan entlang der Bodenfläche
       this.controls.mouseButtons = {
-        ORBIT: THREE.MOUSE.RIGHT    // Rechtsklick + Ziehen = Kamera drehen
-        , ZOOM: THREE.MOUSE.MIDDLE  // Mausrad-Klick = Zoom
-        , PAN: THREE.MOUSE.LEFT     // Linksklick + Ziehen = Gleiten
+        LEFT: THREE.MOUSE.PAN       // Linksklick + Ziehen = Gleiten
+        , MIDDLE: THREE.MOUSE.DOLLY // Mausrad-Klick = Zoom
+        , RIGHT: THREE.MOUSE.ROTATE // Rechtsklick + Ziehen = Kamera drehen
       }
       this.controls.target.set(GRID / 2, 0, GRID / 2)
 
@@ -516,7 +514,7 @@ export default {
       }
 
       // Base ground plane
-      const groundGeo = new THREE.PlaneBufferGeometry(GRID, GRID)
+      const groundGeo = new THREE.PlaneGeometry(GRID, GRID)
       const groundMat = new THREE.MeshLambertMaterial({ color: 0x3a5a3a })
       const ground = new THREE.Mesh(groundGeo, groundMat)
       ground.rotation.x = -Math.PI / 2
@@ -530,7 +528,7 @@ export default {
         const dIdx = this.districtMap[key]
         const d = DISTRICTS[dIdx]
         if (!d) continue
-        const geo = new THREE.PlaneBufferGeometry(CELL_SIZE, CELL_SIZE)
+        const geo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
         const mat = new THREE.MeshLambertMaterial({
           color: new THREE.Color(d.groundColor[0], d.groundColor[1], d.groundColor[2])
           , transparent: true
@@ -609,7 +607,7 @@ export default {
         // Water tiles: nur flache blaue Fläche, kein 3D-Modell
         if (isWater) {
           const tileSize = p.model === 'water-tile-small' ? CELL_SIZE / 2 : CELL_SIZE
-          const waterGeo = new THREE.PlaneBufferGeometry(tileSize, tileSize)
+          const waterGeo = new THREE.PlaneGeometry(tileSize, tileSize)
           const waterMat = new THREE.MeshLambertMaterial({ color: 0x2563a8, transparent: true, opacity: 0.8 })
           const waterPlane = new THREE.Mesh(waterGeo, waterMat)
           waterPlane.rotation.x = -Math.PI / 2
@@ -632,7 +630,7 @@ export default {
         model.position.set(p.x, yPos, p.z)
         // Bridge tiles: add blue water surface underneath
         if (isBridge) {
-          const waterGeo = new THREE.PlaneBufferGeometry(CELL_SIZE, CELL_SIZE)
+          const waterGeo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
           const waterMat = new THREE.MeshLambertMaterial({ color: 0x3a7cbd, transparent: true, opacity: 0.75 })
           const waterPlane = new THREE.Mesh(waterGeo, waterMat)
           waterPlane.rotation.x = -Math.PI / 2
@@ -821,7 +819,7 @@ export default {
         // Wasser: flache blaue Fläche direkt hinzufügen
         if (placement.type === 'water') {
           const tileSize = placement.model === 'water-tile-small' ? CELL_SIZE / 2 : CELL_SIZE
-          const waterGeo = new THREE.PlaneBufferGeometry(tileSize, tileSize)
+          const waterGeo = new THREE.PlaneGeometry(tileSize, tileSize)
           const waterMat = new THREE.MeshLambertMaterial({ color: 0x2563a8, transparent: true, opacity: 0.8 })
           const waterPlane = new THREE.Mesh(waterGeo, waterMat)
           waterPlane.rotation.x = -Math.PI / 2
@@ -1155,7 +1153,7 @@ export default {
       // Wasser-Tiles: flache Fläche als Ghost
       if (info.type === 'water') {
         const tileSize = model === 'water-tile-small' ? CELL_SIZE / 2 : CELL_SIZE
-        const geo = new THREE.PlaneBufferGeometry(tileSize, tileSize)
+        const geo = new THREE.PlaneGeometry(tileSize, tileSize)
         const mat = new THREE.MeshLambertMaterial({ color: 0x2563a8, transparent: true, opacity: 0.4 })
         const plane = new THREE.Mesh(geo, mat)
         plane.rotation.x = -Math.PI / 2

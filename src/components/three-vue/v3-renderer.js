@@ -1,59 +1,20 @@
 import { h } from 'vue'
 import * as THREE from 'three'
 import mitt from 'mitt'
-/* eslint-disable no-unused-vars */
-import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-import { CopyShader } from 'three/examples/jsm/shaders/CopyShader'
-import { Pass } from 'three/examples/jsm/postprocessing/Pass'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
-import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass'
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
-/* eslint-enable no-unused-vars */
-/* eslint-disable comma-style */
-// BUG fix for memory leak....
-Pass.FullScreenQuad = ( function () {
+import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js'
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js'
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader.js'
+// (Der alte FullScreenQuad-Memory-Leak-Monkeypatch aus der r111-Ära ist
+// obsolet — modernes Pass.js hat ein korrektes dispose().)
 
-	var camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
-
-	var FullScreenQuad = function ( material ) {
-    var geometry = new THREE.PlaneBufferGeometry( 2, 2 );
-
-		this._mesh = new THREE.Mesh( geometry, material );
-
-	};
-
-	Object.defineProperty( FullScreenQuad.prototype, 'material', {
-
-		get: function () {
-
-			return this._mesh.material;
-
-		},
-
-		set: function ( value ) {
-
-			this._mesh.material = value;
-
-		}
-
-	} );
-
-	Object.assign( FullScreenQuad.prototype, {
-
-		render: function ( renderer ) {
-
-			renderer.render( this._mesh, camera );
-
-		}
-
-	} );
-
-	return FullScreenQuad;
-
-} )();
-/* eslint-enable comma-style */
+// Die ganze Szene (Kenney-Tints, Vertex-Farben, chroma-Hexwerte) wurde im
+// r111-Gamma-Workflow kalibriert. Das moderne sRGB-Farbmanagement (r152+)
+// würde alle Farben umrechnen und den Look verschieben — daher aus.
+THREE.ColorManagement.enabled = false
 
 export default {
   name: 'v3-renderer'
@@ -105,8 +66,8 @@ export default {
 		this.renderer.shadowMap.enabled = this.shadows
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
     this.renderer.setPixelRatio( window.devicePixelRatio )
-    this.renderer.gammaOutput = true
-    this.renderer.gammaFactor = 2.2
+    // gammaOutput/gammaFactor sind entfernt — sRGB-Output explizit setzen
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace
     this.renderer.toneMapping = THREE.LinearToneMapping
     this.renderer.toneMappingExposure = 0.85
 
@@ -123,6 +84,11 @@ export default {
 		effectFXAA.material.uniforms[ 'resolution' ].value.y = 1 / ( this.height * pixelRatio )
     composer.addPass( effectFXAA )
 
+    // sRGB-Ausgabe + Tone-Mapping: passiert seit r155 nicht mehr implizit,
+    // sondern explizit als letzter Pass (ersetzt das alte gammaOutput)
+    this.outputPass = new OutputPass()
+    composer.addPass( this.outputPass )
+
     this.$watch(() => this.width + ~this.height, () => {
       this.renderer.setSize( this.width, this.height )
       this.cssRenderer.setSize( this.width, this.height )
@@ -134,12 +100,8 @@ export default {
   }
   , beforeUnmount(){
     this.renderer.dispose()
-    this.effectFXAA.material.dispose()
-    this.effectFXAA.fsQuad._mesh.geometry.dispose()
-    this.composer.renderTarget1.dispose()
-    this.composer.renderTarget2.dispose()
-    this.composer.copyPass.material.dispose()
-    this.composer.copyPass.fsQuad._mesh.geometry.dispose()
+    this.effectFXAA.dispose()
+    this.composer.dispose()
     if ( this.outlinePass ){
       this.outlinePass.dispose()
     }
@@ -255,7 +217,8 @@ export default {
         outlinePass.visibleEdgeColor.set(this.outlineColor)
         outlinePass.hiddenEdgeColor.set(this.outlineColorBehind)
 
-        this.composer.addPass( outlinePass )
+        // vor dem OutputPass einfügen — die sRGB-Ausgabe muss zuletzt laufen
+        this.composer.insertPass( outlinePass, this.composer.passes.indexOf(this.outputPass) )
       }
     }
     , addOutline( v3object ){

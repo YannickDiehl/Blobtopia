@@ -87,7 +87,7 @@ import { markRaw } from 'vue'
 import Copilot from '@/lib/copilot-stub'
 import { mapState } from 'pinia'
 import { useSimulationStore } from '@/stores/simulation'
-import threeOrbitControls from 'three-orbit-controls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import chroma from 'chroma-js'
 import sougy from '@/config/sougy-colors'
 import * as THREE from 'three'
@@ -111,7 +111,6 @@ import { blobColors } from '@/config/blob-colors'
 import { createCityFromLayout } from '@/city'
 import { GRID_SIZE } from '@/config/world'
 import Tour from '@/components/tour'
-const OrbitControls = threeOrbitControls(THREE)
 
 const defaultBlobColor = chroma(sougy.blue).desaturate(0.5).num()
 
@@ -197,9 +196,9 @@ const methods = {
     controls.minPolarAngle = 0.15 // nicht ganz flach
     controls.screenSpacePanning = false // Pan entlang der Bodenfläche
     controls.mouseButtons = {
-      ORBIT: THREE.MOUSE.RIGHT    // Rechtsklick + Ziehen = Kamera drehen
-      , PAN: THREE.MOUSE.LEFT     // Linksklick + Ziehen = Kamera gleiten
-      , ZOOM: THREE.MOUSE.MIDDLE
+      LEFT: THREE.MOUSE.PAN       // Linksklick + Ziehen = Kamera gleiten
+      , MIDDLE: THREE.MOUSE.DOLLY // Mausrad-Klick = Zoom
+      , RIGHT: THREE.MOUSE.ROTATE // Rechtsklick + Ziehen = Kamera drehen
     }
     // Linksklick: Drag = Pan, kurzer Klick = Blob-Auswahl (Gestures tap)
     controls.target.set(0, 0, 0) // Stadtzentrum (verschoben um -gridSize/2)

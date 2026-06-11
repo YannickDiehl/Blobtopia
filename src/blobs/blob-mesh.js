@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import chroma from 'chroma-js'
-import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes'
+import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes.js'
 import traitColors from '@/config/trait-colors'
 import { blobColors } from '@/config/blob-colors'
 import districtsData from '../../data/districts.json'
@@ -21,7 +21,8 @@ function createBlobCreatureParts(){
   const size = 40
   const resolution = 160
   const isolation = 300
-  const effect = new MarchingCubes(resolution, new THREE.MeshBasicMaterial(), true, true)
+  // großzügiger maxPolyCount — der Puffer ist bei res 160 sonst zu klein
+  const effect = new MarchingCubes(resolution, new THREE.MeshBasicMaterial(), true, true, 200000)
   effect.scale.set(size, size, size)
   effect.isolation = isolation
 
@@ -31,7 +32,14 @@ function createBlobCreatureParts(){
   effect.addBall(0.52, 0.54, 0.5, strength/8, 10)
   effect.addBall(0.515, 0.58, 0.5, strength/4, 10)
 
-  let geo = effect.generateBufferGeometry()
+  // generateBufferGeometry() wurde aus MarchingCubes entfernt — update()
+  // füllt die vorallokierten Attribute, wir schneiden den genutzten Bereich aus
+  effect.update()
+  const used = effect.count * 3
+  let geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(effect.geometry.getAttribute('position').array.slice(0, used), 3))
+  geo.setAttribute('normal', new THREE.BufferAttribute(effect.geometry.getAttribute('normal').array.slice(0, used), 3))
+  effect.geometry.dispose()
   effect.material.dispose()
   let material = new THREE.MeshLambertMaterial({ color: blobColor })
   let blob = new THREE.Mesh( geo, material )

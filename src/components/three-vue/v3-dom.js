@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer' // eslint-disable-line no-unused-vars
+import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js' // eslint-disable-line no-unused-vars
 import THREEObjectMixin from '@/components/three-vue/v3-object.mixin'
 
 const dummyEl = document.createElement('div')
