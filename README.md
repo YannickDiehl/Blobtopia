@@ -345,12 +345,22 @@ Top-Bar oder Taste `b`):
    bildungsabhängig —, Framing, soziale Erwünschtheit, nicht-zufällige
    Item-Nonresponse). Export als CSV (Semikolon + Dezimalkomma, deutsches
    Excel) mit Codebook.
+4. **Wahrheit** (hinter dem Dozenten-Schloss, Passwort wie beim
+   Blob-Inspektor) — weil die Simulation die wahren Werte kennt, wird jeder
+   Schätzer **exakt** in die Total-Survey-Error-Komponenten zerlegt
+   (`src/lib/survey-truth.js`): Coverage (Rahmen-Einschränkung) + Ziehung/
+   Auswahl + Nonresponse + Messung ≡ Schätzer − Wahrheit. Die Wahrheit wird
+   beim Feldlauf eingefroren (die Timeline läuft weiter). Dazu: designehrliche
+   Standardfehler (bei Quote/manuell gibt es bewusst keinen), ein
+   **Replikations-Simulator** (Stichprobenverteilung über B synthetische
+   Wiederholungen — Bias überlebt, Rauschen mittelt sich heraus) und ein
+   **Dozenten-CSV** mit `<item>_wahr`-Spalten für Schätzer-vs-Wahrheit-Übungen
+   in R. Das Studierenden-CSV bleibt wahrheitsfrei.
 
-Da die wahren Populationswerte bekannt sind, lassen sich Stichprobenschätzer
-gegen die Wahrheit vergleichen (Sampling- vs. Mess- vs. Nonresponse-Fehler).
 Eine LLM-basierte Feld-Engine (`src/lib/survey-engine.js`) existiert
 vollständig, ist aber aus Kostengründen nicht in der UI exponiert.
-Tests: `npm test` (scripts/test-survey-*.mjs).
+Tests: `npm test` (scripts/test-survey-*.mjs) + `npm run e2e`
+(scripts/e2e/truth.mjs).
 
 ---
 

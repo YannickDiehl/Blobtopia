@@ -14,6 +14,9 @@
       span.step-tab(:class="{ active: step === 'editor' }", @click="step = 'editor'") Fragebogen
       span.step-tab(:class="{ active: step === 'sample' }", @click="step = 'sample'") Stichprobe
       span.step-tab(:class="{ active: step === 'results' }", @click="step = 'results'") Ergebnis
+      span.step-tab.truth-tab(:class="{ active: step === 'truth' }", @click="step = 'truth'")
+        b-icon(:icon="truthUnlocked ? 'lock-open-variant' : 'lock'", size="is-small")
+        span Wahrheit
 
     .survey-body
       //- ═══════════ FRAGEBOGEN ═══════════
@@ -159,6 +162,73 @@
           button.survey-btn.primary(@click="onExport")
             b-icon(icon="download", size="is-small")
             span Als CSV exportieren
+
+      //- ═══════════ WAHRHEIT (Gott-Perspektive, hinter dem Dozenten-Schloss) ═══════════
+      .survey-section(v-else-if="step === 'truth'")
+        template(v-if="!truthUnlocked")
+          .truth-lock
+            b-icon(icon="lock", size="is-small")
+            p.hint Die wahren Populationswerte sind für Studierende gesperrt — sie würden das Schätzen unter Unsicherheit vorwegnehmen.
+            input.survey-input(type="password", v-model="passwordAttempt", :placeholder="passwordError ? 'Falsch' : 'Passwort'", :class="{ 'has-error': passwordError }", @keydown.enter="tryUnlock")
+            button.survey-btn(@click="tryUnlock") Entsperren
+        template(v-else-if="!result")
+          .truth-lock
+            p.hint Noch keine Befragung durchgeführt — erst im Tab „Ergebnis“ erheben, dann lässt sich der Schätzer hier gegen die Wahrheit zerlegen.
+            span.reset-link(@click="relock") Wieder sperren
+        template(v-else-if="!truthRevealed")
+          .truth-lock
+            p.hint Die Simulation kennt die wahren Werte aller Blobs. Beim Aufdecken wird jeder Schätzer exakt in die vier Fehlerquellen zerlegt: Coverage, Ziehung, Nonresponse, Messung.
+            button.survey-btn.primary(@click="surveyStore.revealTruth()")
+              b-icon(icon="eye", size="is-small")
+              span Wahre Werte aufdecken
+            span.reset-link(@click="relock") Wieder sperren
+        template(v-else)
+          .truth-item(v-for="d in decomposition", :key="d.id")
+            .truth-head
+              span.item-num {{ d.id }}
+              span.truth-construct {{ d.constructLabel || 'ohne Konstrukt' }}
+            p.truth-text {{ d.text }}
+            p.mini-hint(v-if="!d.available") {{ d.reason }}
+            template(v-else)
+              .tse-chain
+                .tse-row(v-for="row in chainRows(d)", :key="row.label")
+                  span.tse-label {{ row.label }}
+                  span.tse-axis
+                    span.tse-dot(:class="row.cls", :style="{ left: axisPct(row.value, d) + '%' }")
+                  span.tse-val {{ fmt(row.value) }}
+              .tse-deltas
+                .tse-delta(v-for="c in componentRows(d)", :key="c.label")
+                  span.tse-delta-label {{ c.label }}
+                  span.tse-delta-val(:class="deltaClass(c.value)") {{ signed(c.value) }}
+                .tse-delta.total
+                  span.tse-delta-label Gesamt (Schätzer − Wahrheit)
+                  span.tse-delta-val(:class="deltaClass(d.total)") {{ signed(d.total) }}
+              .info-item(v-if="d.ci95")
+                span.info-label 95-%-KI des Schätzers
+                span.info-value {{ fmt(d.ci95[0]) }} bis {{ fmt(d.ci95[1]) }} · {{ ciCoversTruth(d) ? 'enthält die Wahrheit' : 'verfehlt die Wahrheit' }}
+              p.mini-hint(v-else-if="d.seNote") {{ d.seNote }}
+              .sim-hist(v-if="simResult && simResult.perItem[d.id] && simResult.perItem[d.id].estimates.length")
+                .hist-bars
+                  span.hist-bar(v-for="(h, i) in histBars(d)", :key="i", :style="{ height: h + '%' }")
+                  span.hist-truth(:style="{ left: histTruthPct(d) + '%' }", title="wahrer Populationswert")
+                .hist-meta
+                  span B = {{ simResult.replications }}
+                  span Mittel {{ fmt(simResult.perItem[d.id].mean) }}
+                  span simulierter SE {{ fmt(simResult.perItem[d.id].sd) }}
+          .results-divider
+          .sim-controls
+            label Stichprobenverteilung: komplette Befragung B-mal wiederholen (synthetisch, kostenlos)
+            .sim-row
+              input.survey-input.mini(type="number", min="50", max="2000", step="50", v-model.number="simB")
+              button.survey-btn(:disabled="isSimulating", @click="surveyStore.runSimulation(simB)")
+                b-icon(icon="chart-bar", size="is-small")
+                span {{ isSimulating ? 'Simuliere … ' + simProgress.done + '/' + simProgress.total : 'Simulieren' }}
+            p.mini-hint Zufallsdesigns streuen um die Wahrheit — Auswahl- und Fragebogen-Bias überleben auch 1000 Wiederholungen.
+          button.survey-btn(@click="surveyStore.exportInstructorCsv()")
+            b-icon(icon="download", size="is-small")
+            span Dozenten-CSV (mit wahren Werten)
+          .relock-row
+            span.reset-link(@click="relock") Wieder sperren
 </template>
 
 <script>
@@ -190,6 +260,12 @@ export default {
       , filtersOpen: true
       , search: ''
       , techniques: TECHNIQUES
+      // Wahrheit-Tab: same instructor lock as the blob inspector (one unlock
+      // opens both — the key is shared deliberately).
+      , truthUnlocked: localStorage.getItem('blobtopia_inspector_unlocked') === 'true'
+      , passwordAttempt: ''
+      , passwordError: false
+      , simB: 500
       , localItems: []
       , design: {
         technique: 'srs'
@@ -260,7 +336,8 @@ export default {
       return Math.max(1, ...Object.keys(this.dist).map(k => this.dist[k]))
     }
     , ...mapStores(useSurveyStore)
-    , ...mapState(useSurveyStore, ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'])
+    , ...mapState(useSurveyStore, ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'
+      , 'truthRevealed', 'simResult', 'isSimulating', 'simProgress', 'decomposition'])
   }
   , created() {
     const storedItems = this.surveyStore.items
@@ -403,6 +480,84 @@ export default {
     }
     , onExport() {
       this.surveyStore.exportCsv()
+    }
+    // ── Wahrheit-Tab ──
+    , tryUnlock() {
+      const correct = import.meta.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
+      if (this.passwordAttempt === correct) {
+        this.truthUnlocked = true
+        this.passwordError = false
+        this.passwordAttempt = ''
+        localStorage.setItem('blobtopia_inspector_unlocked', 'true')
+      } else {
+        this.passwordError = true
+        this.passwordAttempt = ''
+      }
+    }
+    , relock() {
+      this.truthUnlocked = false
+      localStorage.removeItem('blobtopia_inspector_unlocked')
+    }
+    // The telescoping chain of five means — dots on the item's own scale.
+    , chainRows(d) {
+      return [
+        { label: 'Population (wahr)', value: d.popMean, cls: 'truth' }
+        , { label: 'Rahmen (wahr)', value: d.frameMean, cls: 'truth' }
+        , { label: 'Stichprobe (wahr)', value: d.sampleTrueMean, cls: 'truth' }
+        , { label: 'Antwortende (wahr)', value: d.respTrueMean, cls: 'truth' }
+        , { label: 'Schätzer (beobachtet)', value: d.estimate, cls: 'est' }
+      ]
+    }
+    , componentRows(d) {
+      return [
+        { label: '① Coverage (Rahmen-Einschränkung)', value: d.coverage }
+        , { label: '② Ziehung / Auswahl', value: d.sampling }
+        , { label: '③ Nonresponse', value: d.nonresponse }
+        , { label: '④ Messung (Wording + Rauschen)', value: d.measurement }
+      ]
+    }
+    , axisPct(v, d) {
+      const s = d.scale || { min: 1, max: 10 }
+      if (v == null || s.max === s.min) return 50
+      return Math.max(0, Math.min(100, ((v - s.min) / (s.max - s.min)) * 100))
+    }
+    , fmt(v) {
+      return v == null ? '—' : v.toFixed(2)
+    }
+    , signed(v) {
+      return v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(2)
+    }
+    , deltaClass(v) {
+      if (v == null) return ''
+      return Math.abs(v) < 0.05 ? 'neutral' : (v > 0 ? 'pos' : 'neg')
+    }
+    , ciCoversTruth(d) {
+      return d.ci95 && d.popMean >= d.ci95[0] && d.popMean <= d.ci95[1]
+    }
+    // ── Simulator-Histogramm ──
+    , histRange(d) {
+      const v = this.simResult.perItem[d.id].estimates
+      let lo = Math.min(d.popMean, ...v)
+      let hi = Math.max(d.popMean, ...v)
+      if (hi - lo < 1e-9) { lo -= 0.5; hi += 0.5 }
+      const pad = (hi - lo) * 0.05
+      return [lo - pad, hi + pad]
+    }
+    , histBars(d) {
+      const v = this.simResult.perItem[d.id].estimates
+      const range = this.histRange(d)
+      const nb = 24
+      const counts = new Array(nb).fill(0)
+      for (const x of v) {
+        const i = Math.min(nb - 1, Math.floor(((x - range[0]) / (range[1] - range[0])) * nb))
+        counts[i]++
+      }
+      const max = Math.max(1, ...counts)
+      return counts.map(c => Math.round((100 * c) / max))
+    }
+    , histTruthPct(d) {
+      const range = this.histRange(d)
+      return Math.max(0, Math.min(100, ((d.popMean - range[0]) / (range[1] - range[0])) * 100))
     }
   }
 }
@@ -803,4 +958,170 @@ export default {
   border-radius: 4px
   color: #e74c3c
   font-size: 0.72rem
+
+// ── Wahrheit (Gott-Perspektive) ──
+.truth-tab
+  display: inline-flex
+  align-items: center
+  justify-content: center
+  gap: 0.2rem
+
+.truth-lock
+  display: flex
+  flex-direction: column
+  align-items: center
+  gap: 0.5rem
+  text-align: center
+  padding: 1rem 0.5rem
+  .survey-input, .survey-btn
+    max-width: 220px
+
+.survey-input.has-error
+  border-color: #e74c3c
+
+.truth-item
+  border: 1px solid rgba(255, 255, 255, 0.1)
+  border-radius: 6px
+  padding: 0.5rem
+  margin-bottom: 0.6rem
+
+.truth-head
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  .item-num
+    font-weight: 700
+    color: $grey
+
+.truth-construct
+  margin-left: auto
+  font-size: 0.68rem
+  color: $primary
+
+.truth-text
+  font-size: 0.72rem
+  color: $grey-light
+  margin: 0.25rem 0 0.5rem
+
+.tse-chain
+  margin-bottom: 0.4rem
+
+.tse-row
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  margin-bottom: 0.3rem
+  font-size: 0.7rem
+
+.tse-label
+  width: 132px
+  color: $grey-light
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+
+.tse-axis
+  flex: 1
+  position: relative
+  height: 10px
+  background: rgba(255, 255, 255, 0.07)
+  border-radius: 5px
+
+.tse-dot
+  position: absolute
+  top: 50%
+  width: 10px
+  height: 10px
+  border-radius: 50%
+  transform: translate(-50%, -50%)
+  &.truth
+    background: $primary
+  &.est
+    background: #e67e22
+
+.tse-val
+  width: 38px
+  text-align: right
+  color: $grey-lighter
+
+.tse-deltas
+  border-top: 1px dashed rgba(255, 255, 255, 0.12)
+  padding-top: 0.35rem
+  margin-bottom: 0.3rem
+
+.tse-delta
+  display: flex
+  justify-content: space-between
+  font-size: 0.7rem
+  padding: 0.1rem 0
+  .tse-delta-label
+    color: $grey
+  .tse-delta-val
+    font-weight: 600
+    &.pos
+      color: #e67e22
+    &.neg
+      color: #3498db
+    &.neutral
+      color: $grey-light
+  &.total
+    border-top: 1px solid rgba(255, 255, 255, 0.12)
+    margin-top: 0.2rem
+    padding-top: 0.25rem
+    .tse-delta-label
+      color: $grey-lighter
+
+.sim-hist
+  margin-top: 0.4rem
+
+.hist-bars
+  position: relative
+  display: flex
+  align-items: flex-end
+  gap: 1px
+  height: 56px
+  background: rgba(255, 255, 255, 0.04)
+  border-radius: 4px
+  padding: 2px
+  overflow: hidden
+
+.hist-bar
+  flex: 1
+  background: rgba(78, 204, 163, 0.55)
+  border-radius: 1px 1px 0 0
+  min-height: 1px
+
+.hist-truth
+  position: absolute
+  top: 0
+  bottom: 0
+  width: 2px
+  background: #e67e22
+
+.hist-meta
+  display: flex
+  gap: 0.8rem
+  font-size: 0.66rem
+  color: $grey
+  margin-top: 0.2rem
+
+.sim-controls
+  margin-bottom: 0.4rem
+  label
+    display: block
+    font-size: 0.7rem
+    color: $grey-light
+    margin-bottom: 0.3rem
+  .sim-row
+    display: flex
+    gap: 0.4rem
+    align-items: center
+    .survey-input.mini
+      width: 90px
+    .survey-btn
+      margin-top: 0
+
+.relock-row
+  margin-top: 0.5rem
+  text-align: center
 </style>

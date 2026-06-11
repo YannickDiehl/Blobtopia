@@ -15,6 +15,7 @@ import {
 import { toCSV } from '@/lib/survey-dataset'
 import { runSurvey, makeChatSender } from '@/lib/survey-engine'
 import { runSyntheticSurvey } from '@/lib/survey-synthetic'
+import { snapshotTruth, decompose, simulateSamplingDistribution } from '@/lib/survey-truth'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
 import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
 import { CHAT_API } from '@/config/api'
@@ -84,6 +85,11 @@ export const useSurveyStore = defineStore('survey', {
     , progress: { done: 0, total: 0 }
     , isRunning: false
     , error: null
+    // Wahrheit-Tab: god-view reveal + replication simulator
+    , truthRevealed: false
+    , simResult: null
+    , isSimulating: false
+    , simProgress: { done: 0, total: 0 }
   })
   , getters: {
     // The eligible, filtered candidate frame for the manual picker + counts.
@@ -92,6 +98,11 @@ export const useSurveyStore = defineStore('survey', {
         filter: state.design.filter
         , manualExclude: state.design.manualExclude
       }))
+    }
+    // Exact TSE decomposition per item (needs the truth snapshot in result.meta).
+    , decomposition(state) {
+      if (!state.result || !state.result.meta || !state.result.meta.truth) return null
+      return decompose(state.result, state.items)
     }
   }
   , actions: {
@@ -135,6 +146,8 @@ export const useSurveyStore = defineStore('survey', {
 
       this.isRunning = true
       this.result = null
+      this.truthRevealed = false
+      this.simResult = null
       this.progress = { done: 0, total: sample.units.length }
       try {
         let result
@@ -172,6 +185,11 @@ export const useSurveyStore = defineStore('survey', {
           })
           this.progress = { done: result.rows.length, total: result.rows.length }
         }
+        // Freeze the ground truth at fieldwork time — the timeline keeps
+        // playing, so a later recompute would compare against another tick.
+        result.meta.truth = snapshotTruth({ blobs, design, units: sample.units, items: this.items })
+        result.meta.technique = design.technique
+        result.meta.frameSize = sample.frameSize
         this.result = result
         this.SET_SAMPLE({ sample: sample, dist: realizedDistribution(sample.units, strataVar, design) })
       } catch (e) {
@@ -185,6 +203,38 @@ export const useSurveyStore = defineStore('survey', {
       if (!this.result) return
       const csv = toCSV(this.result.rows, this.items)
       downloadText(csv, 'blobtopia-befragung.csv', 'text/csv')
+    }
+
+    // ── Wahrheit-Tab (god view) ──
+    , revealTruth() { this.truthRevealed = true }
+
+    // Instructor-only export: the student dataset plus a `<item>_wahr` column.
+    , exportInstructorCsv() {
+      if (!this.result || !this.result.meta.truth) return
+      const csv = toCSV(this.result.rows, this.items, { truth: this.result.meta.truth })
+      downloadText(csv, 'blobtopia-befragung-dozentenversion.csv', 'text/csv')
+    }
+
+    // Empirical sampling distribution: rerun draw+fieldwork B times (synthetic,
+    // free) with varied seeds — bias survives replication, noise averages out.
+    , async runSimulation(replications) {
+      if (this.isSimulating || !this.result) return
+      const blobs = currentBlobs()
+      if (!blobs.length) { this.error = 'Keine Population geladen.'; return }
+      const design = buildDrawDesign(this.design, blobs)
+      const B = Math.max(50, Math.min(2000, Number(replications) || 500))
+      this.isSimulating = true
+      this.simProgress = { done: 0, total: B }
+      try {
+        this.simResult = await simulateSamplingDistribution(blobs, design, this.items, {
+          replications: B
+          , onProgress: (done, total) => { this.simProgress = { done, total } }
+        })
+      } catch (e) {
+        this.error = e && e.message ? e.message : String(e)
+      } finally {
+        this.isSimulating = false
+      }
     }
   }
 })

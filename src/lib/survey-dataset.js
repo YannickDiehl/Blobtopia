@@ -45,10 +45,12 @@ function itemId(item, qi) {
  * Render the dataset as CSV.
  * @param {Array} rows   runSurvey rows
  * @param {Array} items  questionnaire items
- * @param {Object} [opts] { delimiter=';', decimal=',', includeStatus=true, bom=true }
+ * @param {Object} [opts] { delimiter=';', decimal=',', includeStatus=true, bom=true, truth }
  *   Defaults are German-Excel-native (semicolon-separated, comma decimals) so
  *   cells split correctly on a German locale. For R use read.csv2(); for a
  *   point/comma format pass { delimiter: ',', decimal: '.' }.
+ *   `truth` (the snapshot from survey-truth.js) adds a `<item>_wahr` column per
+ *   item — the instructor-only export; the student CSV never passes it.
  * @returns {string} CSV text (UTF-8 BOM, CRLF line endings)
  */
 export function toCSV(rows, items, opts) {
@@ -56,6 +58,7 @@ export function toCSV(rows, items, opts) {
   const delim = opts.delimiter || ';'
   const decimal = opts.decimal || ','
   const includeStatus = opts.includeStatus !== false
+  const truth = opts.truth || null
   const bom = opts.bom !== false ? '﻿' : ''
   const demoCols = datasetColumns(rows)
 
@@ -64,6 +67,7 @@ export function toCSV(rows, items, opts) {
     const id = itemId(items[qi], qi)
     header.push(id)
     if (includeStatus) header.push(id + '_status')
+    if (truth) header.push(id + '_wahr')
   }
 
   const lines = [header.map(h => csvCell(h, delim, decimal)).join(delim)]
@@ -74,6 +78,10 @@ export function toCSV(rows, items, opts) {
       const a = (r.answers && r.answers[id]) || {}
       row.push(a.value == null ? '' : a.value)
       if (includeStatus) row.push(a.status || '')
+      if (truth) {
+        const t = truth.perUnit && truth.perUnit[r.blobId] ? truth.perUnit[r.blobId][id] : null
+        row.push(t == null ? '' : Math.round(t * 100) / 100)
+      }
     }
     lines.push(row.map(c => csvCell(c, delim, decimal)).join(delim))
   }
