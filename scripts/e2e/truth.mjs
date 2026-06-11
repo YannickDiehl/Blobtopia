@@ -17,6 +17,28 @@ await page.locator('.item-text').first().fill(
   'Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht zufrieden und 10 = völlig zufrieden.'
 )
 await page.waitForTimeout(300)
+report('answerable item shows the ok chip', (await page.locator('.detect-chip.ok').count()) === 1)
+
+// ── Nicht zuordenbares Item: Warnung sichtbar, Feldstart blockiert, Picker heilt ──
+await page.locator('button:has-text("Item hinzufügen")').click()
+await page.locator('.item-text').nth(1).fill('Was ist Ihr Lieblingsessen? Skala von 1 bis 10.')
+await page.waitForTimeout(300)
+report('unanswerable item shows the warning chip', (await page.locator('.detect-chip.warn').count()) === 1)
+await page.locator('.step-tab:has-text("Stichprobe")').first().click()
+await page.locator('button:has-text("Stichprobe ziehen")').click()
+await page.waitForTimeout(600)
+await page.locator('.step-tab:has-text("Ergebnis")').first().click()
+await page.locator('button:has-text("Befragung durchführen")').click()
+await page.waitForTimeout(500)
+report('fieldwork is blocked while an item is unanswerable'
+  , /Nicht beantwortbar/.test(await page.locator('.error-banner').innerText().catch(() => '')))
+await page.locator('.step-tab:has-text("Fragebogen")').first().click()
+await page.locator('.misst-select').nth(1).selectOption({ label: 'Allgemeines Vertrauen' })
+await page.waitForTimeout(300)
+report('manual binding fixes the warning', (await page.locator('.detect-chip.warn').count()) === 0)
+await page.locator('.item-card').nth(1).locator('.action-btn.del').click()
+await page.waitForTimeout(300)
+
 await page.locator('.step-tab:has-text("Stichprobe")').first().click()
 await page.locator('button:has-text("Stichprobe ziehen")').click()
 await page.waitForTimeout(600)

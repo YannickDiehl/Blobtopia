@@ -133,6 +133,18 @@ export const useSurveyStore = defineStore('survey', {
     , async runFieldwork() {
       this.error = null
       if (!this.items.length) { this.error = 'Bitte zuerst mindestens eine Frage anlegen.'; return }
+      // Wächter: ohne Konstrukt-Bindung kann die synthetische Engine nichts
+      // antworten — lieber hier klar blockieren als leere Spalten liefern.
+      if (this.design.mode !== 'llm') {
+        const unbound = this.items
+          .map((it, i) => ({ it, label: it.id || ('Frage ' + (i + 1)) }))
+          .filter(x => !x.it.construct)
+        if (unbound.length) {
+          this.error = 'Nicht beantwortbar: ' + unbound.map(x => x.label).join(', ')
+            + ' — im Fragebogen ein Merkmal („misst …") zuordnen, sonst können die Blobs nichts antworten.'
+          return
+        }
+      }
       const blobs = currentBlobs()
       if (!blobs.length) { this.error = 'Keine Population geladen.'; return }
 

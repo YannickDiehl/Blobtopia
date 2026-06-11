@@ -28,6 +28,15 @@
             span.action-btn.del(@click="removeItem(i)", title="Entfernen")
               b-icon(icon="close", size="is-small")
           textarea.survey-input.item-text(v-model="it.text", rows="3", placeholder="Frage UND Antwortskala selbst formulieren — z. B. „Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht und 10 = völlig.“", @input="onItemText(it)")
+          .item-meta(v-if="it.text && it.text.trim()")
+            span.detect-chip(:class="it.construct ? 'ok' : 'warn'")
+              b-icon(:icon="it.construct ? 'check-circle' : 'alert'", size="is-small")
+              span {{ it.construct ? ('beantwortbar · Skala ' + it.scale.min + '–' + it.scale.max) : 'nicht beantwortbar — Merkmal wählen' }}
+            label.misst-label misst:
+            select.survey-input.misst-select(:value="it.construct || ''", @change="onConstructChange(it, $event)")
+              option(value="") automatisch erkennen
+              optgroup(v-for="g in constructGroups", :key="g.group", :label="g.group")
+                option(v-for="c in g.items", :key="c.key", :value="c.key") {{ c.label }}
         button.survey-btn.add-btn(@click="addItem")
           b-icon(icon="plus", size="is-small")
           span Item hinzufügen
@@ -177,7 +186,8 @@
                 tr(v-for="(r, ri) in result.rows", :key="r.blobId")
                   td.idx {{ ri + 1 }}
                   td(v-for="c in tableColumns", :key="c.key") {{ c.cell(r) }}
-          p.mini-hint kA = keine Angabe (verweigert) · wn = weiß nicht
+          p.mini-hint kA = keine Angabe (verweigert) · wn = weiß nicht · — = nicht beantwortbar
+          .error-banner(v-if="unsupportedItems.length") Für {{ unsupportedItems.join(', ') }} kamen keine Antworten — das Merkmal ist in der Simulation nicht verfügbar. Im Fragebogen die „misst …“-Zuordnung prüfen.
           button.survey-btn.primary(@click="onExport")
             b-icon(icon="download", size="is-small")
             span Als CSV exportieren
@@ -256,6 +266,7 @@ import { useSurveyStore } from '@/stores/survey'
 import draggablePanel from '@/mixins/draggable-panel'
 import { parseItem } from '@/lib/survey-parse'
 import { datasetColumns } from '@/lib/survey-dataset'
+import { CONSTRUCTS } from '@/lib/survey-constructs'
 import { DEMOGRAPHICS, DEMOGRAPHICS_BY_KEY } from '@/lib/survey-demographics'
 import { DISTRICT_NAMES, PARTY_NAMES, EDUCATION_LABELS } from '@/lib/blob-adapter'
 
@@ -360,6 +371,25 @@ export default {
     , demographicsCatalog() {
       return DEMOGRAPHICS
     }
+    , constructGroups() {
+      const groups = []
+      const byName = {}
+      for (const c of CONSTRUCTS) {
+        if (!byName[c.group]) { byName[c.group] = { group: c.group, items: [] }; groups.push(byName[c.group]) }
+        byName[c.group].items.push(c)
+      }
+      return groups
+    }
+    // Items, auf die im Ergebnis ausschließlich 'unsupported' kam (Daten-Loch).
+    , unsupportedItems() {
+      if (!this.result || !this.result.rows.length) return []
+      return this.localItems
+        .filter(it => this.result.rows.every(r => {
+          const a = r.answers && r.answers[it.id]
+          return !a || a.status === 'unsupported'
+        }))
+        .map(it => it.id)
+    }
     // Columns of the visible data matrix: collected demographics, then items.
     , tableColumns() {
       if (!this.result || !this.result.rows.length) return []
@@ -414,6 +444,7 @@ export default {
         , text: ''
         , scale: { min: 1, max: 10, minLabel: '', maxLabel: '', format: 'numeric' }
         , construct: null
+        , constructManual: false
         , wording: {}
       }
     }
@@ -427,7 +458,18 @@ export default {
       const p = parseItem(it.text)
       it.scale = p.scale
       it.wording = p.wording
-      if (!it.construct) it.construct = p.construct
+      // Auto-Erkennung folgt dem Text, solange nicht manuell zugeordnet wurde.
+      if (!it.constructManual) it.construct = p.construct
+    }
+    , onConstructChange(it, e) {
+      const v = e.target.value
+      if (v) {
+        it.constructManual = true
+        it.construct = v
+      } else {
+        it.constructManual = false
+        it.construct = parseItem(it.text).construct
+      }
     }
     , canonicalDesign() {
       return {
@@ -771,6 +813,41 @@ export default {
 
 .item-text
   resize: vertical
+
+.item-meta
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  margin-top: 0.35rem
+  flex-wrap: wrap
+
+.detect-chip
+  display: inline-flex
+  align-items: center
+  gap: 0.25rem
+  padding: 0.1rem 0.45rem
+  border-radius: 999px
+  font-size: 0.66rem
+  white-space: nowrap
+  &.ok
+    border: 1px solid rgba(78, 204, 163, 0.5)
+    color: #4ecca3
+  &.warn
+    border: 1px solid rgba(230, 126, 34, 0.6)
+    color: #e67e22
+
+.misst-label
+  font-size: 0.66rem
+  text-transform: uppercase
+  letter-spacing: 0.3px
+  color: $grey
+  margin-left: auto
+
+.misst-select
+  width: auto
+  max-width: 200px
+  font-size: 0.7rem
+  padding: 0.15rem 0.3rem
 
 // ── Stichprobe blocks ──
 .panel-block

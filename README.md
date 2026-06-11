@@ -332,8 +332,11 @@ Top-Bar oder Taste `b`):
 
 1. **Fragebogen** — Fragen und Antwortskalen werden komplett frei formuliert
    (Codebook-Stil). Das System erkennt Skala, gemessenes Konstrukt und
-   Wording-Effekte heuristisch (`src/lib/survey-parse.js`); das erkannte
-   Konstrukt bleibt für Studierende unsichtbar (blinder Fragebogen).
+   Wording-Effekte heuristisch (`src/lib/survey-parse.js`). Jedes Item zeigt
+   sichtbar, ob es **beantwortbar** ist, und die „misst …"-Zuordnung zum
+   Merkmal ist korrigierbar — Operationalisierung wird damit explizit. Ohne
+   Zuordnung kann die Simulation keine Antwort erzeugen; der Feldstart wird
+   dann mit klarer Meldung blockiert (nie wieder stumme leere Spalten).
    **Hintergrundmerkmale** (Name, Distrikt, Alter, Bildung, Partei, Einkommen)
    landen nur im Datensatz, wenn sie explizit zur Erhebung ausgewählt werden
    (`src/lib/survey-demographics.js`) — wie im echten Fragebogen.
