@@ -86,11 +86,17 @@ ok('jedes von Layouts referenzierte Modell ist dem Katalog bekannt', () => {
   }
 })
 
-ok('jedes GLB-Modell des Katalogs existiert in public/models/kenney/', () => {
-  for (const name of allModelNames()) {
-    assert.ok(existsSync(`public/models/kenney/${name}.glb`), `fehlt: ${name}.glb`)
-  }
-})
+// Die GLBs sind bewusst NICHT in git (.gitignore: „tracked via Vercel
+// upload") — auf CI/frischen Clones fehlt das Verzeichnis, dann nur Skip.
+if (existsSync('public/models/kenney')) {
+  ok('jedes GLB-Modell des Katalogs existiert in public/models/kenney/', () => {
+    for (const name of allModelNames()) {
+      assert.ok(existsSync(`public/models/kenney/${name}.glb`), `fehlt: ${name}.glb`)
+    }
+  })
+} else {
+  console.log('  – GLB-Existenz übersprungen (public/models/kenney fehlt — CI/frischer Clone)')
+}
 
 ok('keine Modell-Duplikate zwischen Palette und EXTRA_MODELS', () => {
   for (const ex of EXTRA_MODELS) {
