@@ -13,3 +13,9 @@ public/data/timeline/ticks/
 public/data/timeline/blobs/
 public/data/timeline/globs/
 public/data/timeline/stats/
+
+# Offline-Tooling — würde Vercel-Runtime-Detection verwirren (Python/Rust)
+requirements.txt
+Cargo.toml
+Cargo.lock
+rust-toolchain.toml

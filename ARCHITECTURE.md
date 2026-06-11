@@ -95,6 +95,12 @@ npm run e2e      # Browser-Smoke + iPad-Touch + Editor-Suite (braucht laufenden 
 npm run build    # Produktions-Build → dist/ (Vite)
 npm run export   # SQLite → public/data/timeline/ (braucht die DB, s.o.)
 cargo test --workspace   # Rust-Tests (simulation-core)
+
+# Produktions-Deploy (Vercel deployt NICHT per Git — CLI-Upload von lokal,
+# weil ticks/ + GLB-Modelle bewusst nicht in git liegen). Prebuilt-Flow:
+mv requirements.txt /tmp/ && npx vercel build --prod ; mv /tmp/requirements.txt .
+#   (requirements.txt verwirrt die Vercel-Runtime-Detection → „spawn uv ENOENT")
+npx vercel deploy --prebuilt --prod   # Upload dedupliziert per Datei-Hash
 node scripts/start-api-server.js  # Chat-API lokal ohne Vercel (.env: ANTHROPIC_API_KEY)
 ```
 
