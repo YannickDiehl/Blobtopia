@@ -47,6 +47,8 @@ const PHRASES = {
   , media_trust: 'Vertrauen Sie der Berichterstattung der Medien?'
   , community_participation: 'Engagieren Sie sich ehrenamtlich in Ihrer Gemeinde?'
   , protest_readiness: 'Würden Sie an einer Demonstration teilnehmen?'
+  , age: 'Wie alt sind Sie?'
+  , income: 'Wie hoch ist Ihr monatliches Nettoeinkommen?'
 }
 
 console.log('jedes Registry-Konstrukt ist über eine Formulierung erreichbar:')

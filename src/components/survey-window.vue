@@ -31,7 +31,7 @@
           .item-meta(v-if="it.text && it.text.trim()")
             span.detect-chip(:class="it.construct ? 'ok' : 'warn'")
               b-icon(:icon="it.construct ? 'check-circle' : 'alert'", size="is-small")
-              span {{ it.construct ? ('beantwortbar · Skala ' + it.scale.min + '–' + it.scale.max) : 'nicht beantwortbar — Merkmal wählen' }}
+              span {{ it.construct ? ('beantwortbar · ' + scaleLabel(it)) : 'nicht beantwortbar — Merkmal wählen' }}
             label.misst-label misst:
             select.survey-input.misst-select(:value="it.construct || ''", @change="onConstructChange(it, $event)")
               option(value="") automatisch erkennen
@@ -616,10 +616,26 @@ export default {
         , { label: '④ Messung (Wording + Rauschen)', value: d.measurement }
       ]
     }
+    , scaleLabel(it) {
+      const s = it.scale || {}
+      if (s.format === 'open' || s.min == null || s.max == null) return 'offene Zahlenangabe'
+      return 'Skala ' + s.min + '–' + s.max
+    }
+    // Achsenbereich der 5-Punkte-Kette: Item-Skala, bei offenen Zahlenfragen
+    // (Alter, Einkommen) aus den fünf Mittelwerten selbst abgeleitet.
+    , axisRange(d) {
+      const s = d.scale || {}
+      if (s.min != null && s.max != null && s.max > s.min) return [s.min, s.max]
+      const vals = [d.popMean, d.frameMean, d.sampleTrueMean, d.respTrueMean, d.estimate].filter(v => v != null)
+      let lo = Math.min(...vals), hi = Math.max(...vals)
+      if (hi - lo < 1e-9) { lo -= 1; hi += 1 }
+      const pad = (hi - lo) * 0.1
+      return [lo - pad, hi + pad]
+    }
     , axisPct(v, d) {
-      const s = d.scale || { min: 1, max: 10 }
-      if (v == null || s.max === s.min) return 50
-      return Math.max(0, Math.min(100, ((v - s.min) / (s.max - s.min)) * 100))
+      const range = this.axisRange(d)
+      if (v == null || range[1] === range[0]) return 50
+      return Math.max(0, Math.min(100, ((v - range[0]) / (range[1] - range[0])) * 100))
     }
     , fmt(v) {
       return v == null ? '—' : v.toFixed(2)
@@ -1212,9 +1228,10 @@ export default {
     background: #e67e22
 
 .tse-val
-  width: 38px
+  min-width: 38px
   text-align: right
   color: $grey-lighter
+  white-space: nowrap
 
 .tse-deltas
   border-top: 1px dashed rgba(255, 255, 255, 0.12)

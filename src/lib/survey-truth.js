@@ -47,6 +47,14 @@ export function trueValueOnItemScale(blob, item) {
   const v = c ? c.get(blob) : null
   if (v == null || isNaN(v)) return null
   const s = item.scale || { min: 1, max: 10 }
+  // Demografische Selbstauskünfte (raw): die Wahrheit IST die echte Größe —
+  // nur in einen ggf. vorgegebenen Antwortbereich geklemmt, nie 0–10-gemappt.
+  if (c.raw) {
+    let t = v
+    if (s.min != null) t = Math.max(s.min, t)
+    if (s.max != null) t = Math.min(s.max, t)
+    return t
+  }
   if (s.format === 'binary') return v >= 5 ? 1 : 0
   return s.min + (clamp(v, 0, 10) / 10) * (s.max - s.min)
 }

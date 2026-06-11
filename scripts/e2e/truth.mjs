@@ -39,6 +39,14 @@ report('manual binding fixes the warning', (await page.locator('.detect-chip.war
 await page.locator('.item-card').nth(1).locator('.action-btn.del').click()
 await page.waitForTimeout(300)
 
+// ── Demografische Selbstauskunft: „Wie alt sind Sie?" ist erfragbar ──
+await page.locator('button:has-text("Item hinzufügen")').click()
+await page.locator('.item-text').nth(1).fill('Wie alt sind Sie?')
+await page.waitForTimeout(300)
+report('demographic question (age) is answerable as an open number'
+  , (await page.locator('.detect-chip.ok').count()) === 2
+    && /offene Zahlenangabe/.test(await page.locator('.item-card').nth(1).innerText()))
+
 await page.locator('.step-tab:has-text("Stichprobe")').first().click()
 await page.locator('button:has-text("Stichprobe ziehen")').click()
 await page.waitForTimeout(600)
@@ -81,9 +89,9 @@ const reveal = page.locator('button:has-text("Wahre Werte aufdecken")')
 report('unlock shows the reveal moment (truth still hidden)', await reveal.isVisible())
 await reveal.click()
 await page.waitForTimeout(600)
-report('decomposition card rendered', (await page.locator('.truth-item').count()) === 1)
-report('telescoping chain shows all five means', (await page.locator('.tse-row').count()) === 5)
-report('four error components + total listed', (await page.locator('.tse-delta').count()) === 5)
+report('decomposition cards rendered for both items', (await page.locator('.truth-item').count()) === 2)
+report('telescoping chains show all five means each', (await page.locator('.tse-row').count()) === 10)
+report('four error components + total listed per item', (await page.locator('.tse-delta').count()) === 10)
 report('construct was detected from wording'
   , /Zufriedenheit/.test(await page.locator('.truth-construct').innerText()))
 const ciOrNote = await page.locator('.truth-item').innerText()
@@ -94,7 +102,7 @@ await page.locator('.sim-row input').fill('100')
 await page.locator('.sim-row button:has-text("Simulieren")').click()
 await page.waitForSelector('.hist-bars', { timeout: 30000 })
 await page.waitForTimeout(400)
-report('simulator histogram rendered (24 bins)', (await page.locator('.hist-bar').count()) === 24)
+report('simulator histograms rendered (24 bins × 2 items)', (await page.locator('.hist-bar').count()) === 48)
 report('truth marker overlays the histogram', await page.locator('.hist-truth').isVisible())
 report('empirical SE reported', /simulierter SE/.test(await page.locator('.hist-meta').innerText()))
 

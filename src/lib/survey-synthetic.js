@@ -69,18 +69,36 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording) {
   if (!ck) return { status: 'unsupported', value: null, verbatim: '' }
   const stored = trait(blob, ck)
   if (stored == null) return { status: 'unsupported', value: null, verbatim: '' }
+  const construct = CONSTRUCTS_BY_KEY[ck]
 
   const rng = makeRng(hashSeed([blob.id, itemId, runSeed]))
 
   // Modeled item nonresponse: rises with party-indifference (don't-know) and
   // distrust (refusal) — so nonresponse is non-random, the teachable point.
+  // Sensitive Fragen (z. B. Einkommen) werden deutlich öfter verweigert.
   const partyIndiff = trait(blob, 'party_indifference')
   const instTrust = trait(blob, 'institutional_trust')
-  const pRefuse = 0.02 + 0.03 * ((instTrust == null ? 5 : (10 - instTrust)) / 10)
+  let pRefuse = 0.02 + 0.03 * ((instTrust == null ? 5 : (10 - instTrust)) / 10)
+  if (construct && construct.sensitive) pRefuse += 0.12
   const pDontKnow = 0.02 + 0.04 * ((partyIndiff == null ? 5 : partyIndiff) / 10)
   const roll = rng()
   if (roll < pRefuse) return { status: 'refused', value: null, verbatim: '' }
   if (roll < pRefuse + pDontKnow) return { status: 'dontknow', value: null, verbatim: '' }
+
+  // Demografische Selbstauskunft (raw): echte Größe statt 0–10-Rescaling.
+  // Modelliert: Underreporting (Einkommen), Berichts-Ungenauigkeit, Heaping
+  // (Rundung auf glatte Werte), Klemmung in einen ggf. vorgegebenen Bereich.
+  if (construct && construct.raw) {
+    let v = stored
+    if (construct.underreport) v *= (1 - construct.underreport)
+    if (construct.relNoise) v += gaussian(rng) * construct.relNoise * Math.abs(stored)
+    const heap = construct.heap || 1
+    v = Math.round(v / heap) * heap
+    const s = item.scale || {}
+    if (s.min != null) v = Math.max(s.min, v)
+    if (s.max != null) v = Math.min(s.max, v)
+    return { status: 'answered', value: v, verbatim: '' }
+  }
 
   // Modeled questionnaire effects from the wording (deterministic shifts).
   let shifted = stored

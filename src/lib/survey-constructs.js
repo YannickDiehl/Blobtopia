@@ -55,6 +55,14 @@ export const CONSTRUCTS = [
   , { key: 'community_participation', group: 'Sozialkapital', label: 'Gemeinschaftsbeteiligung', get: lt('community_participation') }
   // ── Verhalten ──
   , { key: 'protest_readiness', group: 'Verhalten', label: 'Protestbereitschaft', get: ps('protest_readiness') }
+  // ── Demografie: erfragbare Selbstauskünfte (raw = echte Größe, kein 0–10) ──
+  // Antwortverhalten modelliert klassische Survey-Befunde: Alter wird exakt
+  // berichtet, Einkommen unterberichtet (~8 %), auf 100er gerundet (Heaping)
+  // und als sensible Frage deutlich öfter verweigert. Die Registerwahrheit
+  // gibt es parallel über die „Hintergrundmerkmale" — Selbstauskunft vs.
+  // Register wird damit vergleichbar.
+  , { key: 'age', group: 'Demografie', label: 'Alter (Jahre)', raw: true, heap: 1, get: b => (b && b.age != null ? b.age : null) }
+  , { key: 'income', group: 'Demografie', label: 'Einkommen (€/Monat)', raw: true, heap: 100, underreport: 0.08, relNoise: 0.05, sensitive: true, get: b => (b && b.income != null ? b.income : null) }
 ]
 
 export const CONSTRUCTS_BY_KEY = CONSTRUCTS.reduce((m, c) => { m[c.key] = c; return m }, {})
@@ -64,8 +72,11 @@ export const CONSTRUCTS_BY_KEY = CONSTRUCTS.reduce((m, c) => { m[c.key] = c; ret
 // FIRST match wins — specific multi-word patterns before broad single words.
 // The picker in the Fragebogen-UI stays the safety net for misses.
 const SUGGEST_KEYWORDS = [
+  // ── Demografie (sehr spezifisch, daher ganz vorn) ──
+  { re: /wie alt|geburtsjahr|lebensjahr|\balter\b/i, key: 'age' }
+  , { re: /einkommen|verdienst|verdienen|gehalt|\blohn\b|netto|brutto/i, key: 'income' }
   // ── Vertrauen (spezifische Ziele vor dem generellen) ──
-  { re: /nachbar/i, key: 'neighbor_trust' }
+  , { re: /nachbar/i, key: 'neighbor_trust' }
   , { re: /medien|presse|nachrichten|journalist|berichterstattung/i, key: 'media_trust' }
   , { re: /vertrau\w*.*(institution|politiker|regierung|staat|parlament|beh(ö|oe)rd|justiz|gericht)|(institution|regierung|staat|parlament|beh(ö|oe)rd|justiz|gericht)\w*.*vertrau|institutionen/i, key: 'institutional_trust' }
   , { re: /(meisten|anderen|fremden|allen)\s+menschen.*(vertrau|trauen)|menschen\s+(kann|k(ö|oe)nnen).*vertrau|im allgemeinen.*vertrau|vorsichtig.*umgang.*menschen/i, key: 'generalized_trust' }

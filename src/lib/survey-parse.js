@@ -12,7 +12,7 @@
  * matters: two phrasings of the same construct yield different detected
  * features and therefore different (synthetic) answers.
  */
-import { suggestConstruct } from './survey-constructs.js'
+import { suggestConstruct, CONSTRUCTS_BY_KEY } from './survey-constructs.js'
 
 function endpointLabel(text, num) {
   const re = new RegExp(num + '\\s*(?:=|steht f(?:ü|ue)r|bedeutet)\\s*[„"„]?([^,;.")\\n]+)', 'i')
@@ -62,9 +62,23 @@ export function detectWording(text) {
 
 /** One-call parse used by the UI: scale + construct + wording from free text. */
 export function parseItem(text) {
-  return {
-    scale: parseScale(text)
-    , construct: suggestConstruct(text)
-    , wording: detectWording(text)
+  const construct = suggestConstruct(text)
+  const wording = detectWording(text)
+  const c = construct ? CONSTRUCTS_BY_KEY[construct] : null
+
+  // Demografische Selbstauskünfte (raw) sind offene Zahlenfragen — es sei
+  // denn, die Studierenden geben selbst einen Bereich vor („von 18 bis 99",
+  // auch >2-stellig, z. B. Einkommen „500 bis 5000").
+  if (c && c.raw) {
+    const m = (text || '').match(/(\d{1,6})\s*(?:bis|[-–—]|to)\s*(\d{1,6})/i)
+    if (m) {
+      let min = parseInt(m[1], 10)
+      let max = parseInt(m[2], 10)
+      if (max < min) { const tmp = min; min = max; max = tmp }
+      return { scale: { min, max, minLabel: '', maxLabel: '', format: 'numeric' }, construct, wording }
+    }
+    return { scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open' }, construct, wording }
   }
+
+  return { scale: parseScale(text), construct, wording }
 }
