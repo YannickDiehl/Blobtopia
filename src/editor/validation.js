@@ -8,11 +8,9 @@
  */
 import { CELL_SIZE, GRID_CELLS } from '@/config/world'
 import { FUNCTIONAL_MAP } from '@/city/catalog'
+import { generateWalkableGrid } from './io'
 
 const NON_FUNCTIONAL = new Set(['decoration', 'road', 'water'])
-
-/** Manhattan-Distanz (in Zellen) jedes Gebäudes zur nächsten Straße. */
-const MAX_ROAD_DISTANCE = 3
 
 export function computeValidation ({ placements, population = 500 }) {
   const errors = []
@@ -92,36 +90,47 @@ export function computeValidation ({ placements, population = 500 }) {
       warnings.push(`Straßennetz zerfällt in ${fragments} getrennte Teile — Blobs wechseln nicht zwischen ihnen.`)
     }
 
-    // Erreichbarkeit: BFS-Distanzkarte von allen Straßenzellen aus
-    const dist = new Int16Array(cells * cells).fill(-1)
-    let queue = []
-    for (let i = 0; i < roadGrid.length; i++) {
-      if (roadGrid[i]) { dist[i] = 0; queue.push(i) }
+    // Erreichbarkeit über das ECHTE Walkable-Grid: Blobs laufen auch über
+    // Gehweg-Zellen (D = Deko/Pfade + leere Zellen neben Straßen/Gebäuden).
+    // Flood-Fill von den Straßen über R∪D; ein Gebäude ist erreichbar, wenn
+    // sein Eingangs-Ring (8 Nachbarzellen) das geflutete Netz berührt.
+    // Kalibriert an der ausgelieferten Stadt: dort 0 Treffer.
+    const tileMap = generateWalkableGrid(placements).map
+    const flooded = new Uint8Array(cells * cells)
+    const stack = []
+    for (let i = 0; i < tileMap.length; i++) {
+      if (tileMap[i] === 'R') { flooded[i] = 1; stack.push(i) }
     }
-    let d = 0
-    while (queue.length && d < MAX_ROAD_DISTANCE) {
-      d++
-      const next = []
-      for (const idx of queue) {
-        const cx = idx % cells, cz = (idx / cells) | 0
-        for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-          const nx = cx + dx, nz = cz + dz
-          if (nx < 0 || nx >= cells || nz < 0 || nz >= cells) continue
-          const nIdx = nz * cells + nx
-          if (dist[nIdx] === -1) { dist[nIdx] = d; next.push(nIdx) }
+    while (stack.length) {
+      const idx = stack.pop()
+      const cx = idx % cells, cz = (idx / cells) | 0
+      for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+        const nx = cx + dx, nz = cz + dz
+        if (nx < 0 || nx >= cells || nz < 0 || nz >= cells) continue
+        const nIdx = nz * cells + nx
+        if (!flooded[nIdx] && (tileMap[nIdx] === 'R' || tileMap[nIdx] === 'D')) {
+          flooded[nIdx] = 1
+          stack.push(nIdx)
         }
       }
-      queue = next
     }
     const unreachable = []
     for (const p of functional) {
       const cx = Math.max(0, Math.min(cells - 1, Math.floor(p.x / CELL_SIZE)))
       const cz = Math.max(0, Math.min(cells - 1, Math.floor(p.z / CELL_SIZE)))
-      if (dist[cz * cells + cx] === -1) unreachable.push(p)
+      let reachable = false
+      for (let dx = -1; dx <= 1 && !reachable; dx++) {
+        for (let dz = -1; dz <= 1 && !reachable; dz++) {
+          if (dx === 0 && dz === 0) continue
+          const nx = cx + dx, nz = cz + dz
+          if (nx >= 0 && nx < cells && nz >= 0 && nz < cells && flooded[nz * cells + nx]) reachable = true
+        }
+      }
+      if (!reachable) unreachable.push(p)
     }
     if (unreachable.length > 0) {
       const sample = unreachable.slice(0, 3).map(p => p.label || p.model).join(', ')
-      warnings.push(`${unreachable.length} Gebäude weiter als ${MAX_ROAD_DISTANCE} Zellen von jeder Straße (${sample}${unreachable.length > 3 ? ', …' : ''}).`)
+      warnings.push(`${unreachable.length} Gebäude ohne Anbindung ans Straßen-/Gehwegnetz (${sample}${unreachable.length > 3 ? ', …' : ''}).`)
     }
   }
 

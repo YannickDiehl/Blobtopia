@@ -430,7 +430,9 @@ export class EditorScene {
     const w = this.container.offsetWidth
     const h = this.container.offsetHeight
     if (!w || !h) return
-    this.renderer.setSize(w, h)
+    // updateStyle=false: die CSS-Regel (100%/100%) behält die Kontrolle —
+    // Inline-Pixelmaße froren in Safari den ersten (falschen) Layout-Stand ein
+    this.renderer.setSize(w, h, false)
     this.camera.aspect = w / h
     this.camera.updateProjectionMatrix()
   }

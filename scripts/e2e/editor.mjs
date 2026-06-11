@@ -26,9 +26,19 @@ report('Editor lädt (Canvas + Palette)', await page.locator('.palette-item').co
 const initial = await stat('Gebäude')
 report('ausgelieferte Stadt geladen', initial > 800, `${initial} Gebäude`)
 
-// Validierung: ausgelieferte Stadt hat keine Fehler
+// Validierung: ausgelieferte Stadt ist komplett warnungsfrei
+// (Erreichbarkeits-Check ist an dieser Stadt kalibriert — Tripwire!)
 const panelText = await page.evaluate(() => document.querySelector('.side-panel').innerText)
-report('Prüfung ohne Fehler', !/Zu wenig Wohnraum|Keine Straßen/.test(panelText))
+report('Prüfung: „Simulationstauglich" ohne Warnungen', /Simulationstauglich/.test(panelText))
+
+// Canvas füllt den Viewport (Safari-Sizing-Bug-Tripwire)
+const sizes = await page.evaluate(() => {
+  const v = document.querySelector('.viewport')
+  const c = document.querySelector('.viewport canvas')
+  return { vw: v.clientWidth, vh: v.clientHeight, cw: c.clientWidth, ch: c.clientHeight }
+})
+report('Canvas füllt den Viewport', Math.abs(sizes.vw - sizes.cw) < 4 && Math.abs(sizes.vh - sizes.ch) < 4
+  , `canvas ${sizes.cw}x${sizes.ch} in viewport ${sizes.vw}x${sizes.vh}`)
 
 // Stempel-Modus: Villa wählen, zweimal platzieren ohne erneute Auswahl
 await page.locator('.palette-item:has-text("Villa A")').first().click()
@@ -89,6 +99,55 @@ if (inspectorVisible) {
 // Entwurf wird automatisch gespeichert
 const draftSaved = await page.evaluate(() => localStorage.getItem('blobtopia-editor-draft') != null)
 report('Entwurf-Autosave in localStorage', draftSaved)
+
+// Löschen-Werkzeug: Klick entfernt das Gebäude unter dem Cursor
+const beforeDel = await stat('Gebäude')
+await page.locator('.palette-item:has-text("Löschen")').click()
+await page.mouse.click(cx, cy)
+await page.waitForTimeout(400)
+report('Löschen-Werkzeug entfernt per Klick', await stat('Gebäude') === beforeDel - 1, `${beforeDel} → ${await stat('Gebäude')}`)
+
+// Distrikt-Radieren per Drag: districtMap im Draft schrumpft
+await page.locator('.palette-item:has-text("Distrikt malen")').click()
+await page.waitForTimeout(200)
+await page.locator('.district-option:has-text("Radieren")').click()
+const dmBefore = await page.evaluate(() => Object.keys((JSON.parse(localStorage.getItem('blobtopia-editor-draft') || '{}').districtMap) || {}).length)
+await page.mouse.move(cx - 120, cy - 80)
+await page.mouse.down()
+await page.mouse.move(cx + 120, cy - 80, { steps: 10 })
+await page.mouse.up()
+await page.waitForTimeout(1500) // Autosave-Debounce
+const dmAfter = await page.evaluate(() => Object.keys((JSON.parse(localStorage.getItem('blobtopia-editor-draft') || '{}').districtMap) || {}).length)
+report('Distrikt-Radieren per Drag verkleinert die districtMap', dmAfter < dmBefore, `${dmBefore} → ${dmAfter} Zellen`)
+
+// Export → Download-Datei
+await page.keyboard.press('Escape')
+const exportCount = await stat('Gebäude')
+const dlPromise = page.waitForEvent('download')
+await page.locator('button:has-text("Export")').click()
+const dl = await dlPromise
+report('Export lädt blobtopia-city.json herunter', dl.suggestedFilename() === 'blobtopia-city.json')
+const exportPath = '/tmp/blobtopia-e2e-export.json'
+await dl.saveAs(exportPath)
+
+// Alles löschen (mit Bestätigungs-Dialog)
+page.once('dialog', d => d.accept())
+await page.locator('button[title="Alles löschen"]').click()
+await page.waitForTimeout(1000)
+report('Alles löschen leert die Stadt', await stat('Gebäude') === 0)
+
+// Import stellt den Export wieder her (Roundtrip)
+const fcPromise = page.waitForEvent('filechooser')
+await page.locator('button:has-text("Import")').click()
+await (await fcPromise).setFiles(exportPath)
+await page.waitForTimeout(3000)
+report('Import stellt den Export wieder her', await stat('Gebäude') === exportCount, `${exportCount} Gebäude`)
+
+// Zurücksetzen auf die ausgelieferte Stadt
+page.once('dialog', d => d.accept())
+await page.locator('button[title="Auf ausgelieferte Stadt zurücksetzen"]').click()
+await page.waitForTimeout(3000)
+report('Zurücksetzen lädt die ausgelieferte Stadt', await stat('Gebäude') === initial, `${await stat('Gebäude')} Gebäude`)
 
 // ── Welt-Vorschau-Contract ──────────────────────────────────────
 await page.locator('button:has-text("In Welt ansehen")').click()

@@ -259,7 +259,10 @@ export default {
     canvas.addEventListener('contextmenu', this.onContextMenu)
     window.addEventListener('keydown', this.onKeyDown)
     window.addEventListener('keyup', this.onKeyUp)
-    window.addEventListener('resize', this.onResize)
+    // ResizeObserver statt window-resize: greift auch, wenn nur der
+    // Viewport-Container seine Größe ändert (Panel-Inhalte, Safari-Layout)
+    this._resizeObserver = new ResizeObserver(() => scene.resize())
+    this._resizeObserver.observe(this.$refs.viewport)
   }
   , beforeUnmount () {
     const canvas = this.$refs.canvas
@@ -272,7 +275,7 @@ export default {
     window.removeEventListener('pointerup', this.onPointerUp)
     window.removeEventListener('keydown', this.onKeyDown)
     window.removeEventListener('keyup', this.onKeyUp)
-    window.removeEventListener('resize', this.onResize)
+    if (this._resizeObserver) this._resizeObserver.disconnect()
     this._scene.dispose()
   }
   , methods: {
@@ -580,9 +583,6 @@ export default {
       if (!window.confirm('Alle Gebäude und Distrikte löschen?')) return
       this.editorStore.clearAll()
       await this._fullRebuild()
-    }
-    , onResize () {
-      this._scene.resize()
     }
   }
 }
