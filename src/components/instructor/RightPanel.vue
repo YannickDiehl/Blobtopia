@@ -116,6 +116,6 @@ export default {
 // Slide animation
 .slide-panel-enter-active, .slide-panel-leave-active
   transition: transform 0.3s ease
-.slide-panel-enter, .slide-panel-leave-to
+.slide-panel-enter, .slide-panel-enter-from, .slide-panel-leave-to
   transform: translateX(100%)
 </style>

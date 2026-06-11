@@ -1589,12 +1589,12 @@ export default {
   transition: max-height 0.2s ease, opacity 0.2s ease
   max-height: 500px
   overflow: hidden
-.collapse-enter, .collapse-leave-to
+.collapse-enter, .collapse-enter-from, .collapse-leave-to
   max-height: 0
   opacity: 0
 
 .fade-enter-active, .fade-leave-active
   transition: opacity 0.2s
-.fade-enter, .fade-leave-to
+.fade-enter, .fade-enter-from, .fade-leave-to
   opacity: 0
 </style>

@@ -179,7 +179,7 @@ export default {
 .expand-enter-active, .expand-leave-active
   transition: all 0.3s ease
   overflow: hidden
-.expand-enter, .expand-leave-to
+.expand-enter, .expand-enter-from, .expand-leave-to
   opacity: 0
   max-height: 0
 </style>

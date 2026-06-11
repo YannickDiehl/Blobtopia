@@ -430,7 +430,7 @@ const methods = {
       player.playTo(f.meta.time)
     }, { immediate: true })
 
-    this.$on('hook:beforeDestroy', () => {
+    this._teardown.push(() => {
       player.destroy()
       frames.off(true)
     })
@@ -477,6 +477,13 @@ export default {
   , computed
   , watch
   , methods
+  , created(){
+    this._teardown = []
+  }
+  , beforeDestroy(){
+    this._teardown.forEach( fn => fn() )
+    this._teardown = []
+  }
   , async mounted(){
     this.renderer = this.$refs.renderer
     this.scene = this.renderer.scene
@@ -487,10 +494,10 @@ export default {
     cityGroup.position.set(-this.gridSize * 0.5, 0, -this.gridSize * 0.5)
     this.scene.add(cityGroup)
     // Notify Gestures that the scene changed so building meshes are raycasted
-    this.renderer.$emit('scene:changed', { type: 'add', object: cityGroup })
-    this.$on('hook:beforeDestroy', () => {
+    this.renderer.events.emit('scene:changed', { type: 'add', object: cityGroup })
+    this._teardown.push(() => {
       this.scene.remove(cityGroup)
-      this.renderer.$emit('scene:changed', { type: 'remove', object: cityGroup })
+      this.renderer.events.emit('scene:changed', { type: 'remove', object: cityGroup })
     })
 
     this.$onResize(() => this.onResize())
@@ -508,7 +515,7 @@ export default {
       requestAnimationFrame( draw )
       this.draw( clock.getDelta() * 1000 )
     }
-    this.$on('hook:beforeDestroy', () => {
+    this._teardown.push(() => {
       stop = true
       // WASD-Listener aufräumen
       if (this._onKeyDown) {

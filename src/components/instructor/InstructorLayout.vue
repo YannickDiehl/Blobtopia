@@ -509,11 +509,11 @@ export default {
 
 .fade-enter-active, .fade-leave-active
   transition: opacity 0.2s ease
-.fade-enter, .fade-leave-to
+.fade-enter, .fade-enter-from, .fade-leave-to
   opacity: 0
 
 .slide-right-enter-active, .slide-right-leave-active
   transition: transform 0.3s ease
-.slide-right-enter, .slide-right-leave-to
+.slide-right-enter, .slide-right-enter-from, .slide-right-leave-to
   transform: translateX(100%)
 </style>

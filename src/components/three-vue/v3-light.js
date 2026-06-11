@@ -105,7 +105,7 @@ export default {
       this.beforeDraw(() => {
         shadowHelper.update()
       })
-      this.$on('hook:beforeDestroy', () => {
+      this._teardown.push(() => {
         this.$parent.v3object.remove( shadowHelper )
       })
     }

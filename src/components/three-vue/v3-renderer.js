@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import mitt from 'mitt'
 /* eslint-disable no-unused-vars */
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
@@ -86,6 +87,10 @@ export default {
     return { threeVue }
   }
   , created(){
+    // Framework-freier Event-Bus für beforeDraw/scene:changed —
+    // Komponenten-Instanz-$on/$emit gibt es in Vue 3 nicht mehr
+    this.events = mitt()
+    this._readyQueue = []
 
     this.afterReady(() => { this.isReady = true })
 
@@ -139,6 +144,11 @@ export default {
     }
   }
   , mounted(){
+    // afterReady-Queue flushen (ersetzt $once('hook:mounted'))
+    const queue = this._readyQueue
+    this._readyQueue = null
+    queue.forEach(fn => fn())
+
     // append renderers
     this.cssRenderer.domElement.style.position = 'absolute'
     this.cssRenderer.domElement.style.top = '0'
@@ -181,7 +191,7 @@ export default {
         throw new Error('No camera added to the renderer')
       }
 
-      this.$emit('beforeDraw')
+      this.events.emit('beforeDraw')
 
       this.initOutlinePass()
 
@@ -195,12 +205,12 @@ export default {
       return this.scene.getObjectByName( name )
     }
     , afterReady( fn ){
-      if ( this.isReady ){
+      if ( this.isReady || !this._readyQueue ){
         fn()
         return this
       }
 
-      this.$once('hook:mounted', fn)
+      this._readyQueue.push(fn)
     }
     , checkClear(){
       let idx = this.composer.passes.indexOf(this.renderPass)

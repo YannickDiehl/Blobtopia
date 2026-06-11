@@ -32,8 +32,10 @@ export default {
     return h('transition', data, this.$slots.default)
   }
   , methods: {
+    // this.v3children kommt aus dem Mixin-Register (ersetzt $children,
+    // das es in Vue 3 nicht mehr gibt); ch.v3parent ersetzt ch.$parent.
     beforeEnter() {
-      this.$children.forEach( ch => {
+      this.v3children.forEach( ch => {
         let material = ch.v3object.material
         material.transparent = true
         material.oldOpacity = material.opacity
@@ -44,7 +46,7 @@ export default {
       this.fade( true, done )
     }
     , beforeLeave(){
-      this.$children.forEach( ch => {
+      this.v3children.forEach( ch => {
         let material = ch.v3object.material
         material.oldOpacity = material.opacity
       })
@@ -53,10 +55,10 @@ export default {
       this.fade( false, done )
     }
     , afterLeave(){
-      this.$children.forEach( ch => {
+      this.v3children.forEach( ch => {
         let material = ch.v3object.material
         material.opacity = material.oldOpacity
-        ch.$parent.v3object.remove( ch.v3object )
+        ch.v3parent.v3object.remove( ch.v3object )
       })
     }
     , fade( fadeIn, done ){
@@ -65,10 +67,10 @@ export default {
       const startTime = Copilot.Util.now()
       const endTime = startTime + duration
       const fn = Copilot.Interpolators.Linear
-      const children = this.$children.concat()
+      const children = this.v3children.concat()
       children.forEach( ch => {
         // override
-        ch.$parent.v3object.add( ch.v3object )
+        ch.v3parent.v3object.add( ch.v3object )
       })
 
       const update = () => {
@@ -84,12 +86,12 @@ export default {
         })
 
         if ( now > endTime ){
-          threeVue.$off('beforeDraw', update)
+          threeVue.events.off('beforeDraw', update)
           done()
         }
       }
 
-      threeVue.$on('beforeDraw', update)
+      threeVue.events.on('beforeDraw', update)
     }
   }
 }

@@ -202,7 +202,7 @@ export default {
 
 .slide-up-enter-active, .slide-up-leave-active
   transition: all 0.3s ease
-.slide-up-enter, .slide-up-leave-to
+.slide-up-enter, .slide-up-enter-from, .slide-up-leave-to
   opacity: 0
   transform: translateY(12px)
 </style>
