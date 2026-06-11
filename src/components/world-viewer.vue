@@ -111,6 +111,7 @@ import BlobCreature from '@/blobs'
 import BlobStatus from '@/components/3d-objects/blob-status'
 import { blobColors } from '@/config/blob-colors'
 import { createCityFromLayout } from '@/city'
+import { openToast } from '@/lib/toast'
 import { GRID_SIZE } from '@/config/world'
 import Tour from '@/components/tour'
 
@@ -505,6 +506,12 @@ export default {
     // Use layout from JSON — procedural fallback disabled for compact city
     const cityGroup = await createCityFromLayout()
     if (!cityGroup) { console.error('[city] No city layout found!'); return }
+    if (cityGroup.userData.cityPreviewActive) {
+      openToast({
+        message: 'Editor-Vorschau aktiv — Blob-Verhalten basiert weiter auf der Standard-Stadt. Beenden im Stadt-Editor.'
+        , type: 'is-info', duration: 8000
+      })
+    }
     cityGroup.position.set(-this.gridSize * 0.5, 0, -this.gridSize * 0.5)
     this.scene.add(cityGroup)
     // Notify Gestures that the scene changed so building meshes are raycasted

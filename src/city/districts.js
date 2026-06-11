@@ -4,8 +4,6 @@
  * Core district data (names, bounds, colors) is loaded from data/districts.json
  * which serves as the single source of truth shared with generate-city.js and the Rust server.
  */
-import * as THREE from 'three'
-import { RIVER_POINTS } from './constants'
 import districtsData from '../../data/districts.json'
 
 // Rendering-specific palettes (not in the shared JSON — only used for 3D building tinting)
@@ -50,24 +48,6 @@ export const DISTRICT_PALETTES = {
   ,4: { r: [0.88, 0.96], g: [0.88, 0.96], b: [0.88, 0.96] },  // Industriezone — neutral-grau
 }
 export const DEFAULT_PALETTE = { r: [0.92, 1.00], g: [0.90, 1.00], b: [0.85, 0.95] }
-
-// ── Exclusion zones ──────────────────────────────────────────
-const riverCurveBlobal = new THREE.CatmullRomCurve3(
-  RIVER_POINTS.map(p => new THREE.Vector3(p[0], 0, p[1]))
-)
-
-export function isExcluded (x, y) {
-  for (const lm of LANDMARKS_DATA) {
-    const dx = x - lm.x, dy = y - lm.y
-    if (dx * dx + dy * dy < (lm.radius + 32) ** 2) return true
-  }
-  // River exclusion
-  for (let t = 0; t <= 1; t += 0.03) {
-    const rp = riverCurveBlobal.getPointAt(t)
-    if (Math.sqrt((x - rp.x) ** 2 + (y - rp.z) ** 2) < 56) return true
-  }
-  return false
-}
 
 // ── District map from editor (set by layout-renderer) ────────
 let _editorDistrictMap = null

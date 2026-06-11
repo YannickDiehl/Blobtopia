@@ -5,8 +5,9 @@ import * as THREE from 'three'
 import { autoConnectRoads } from '@/lib/road-auto-connect'
 import { CELL_SIZE, GRID_SIZE } from '@/config/world'
 import {
-  mulberry32, GRID, EDITOR_STORAGE_KEY, EDITOR_SCALE_MAP, CIVIC_SCALE, MODEL_SCALE_MAP,
+  mulberry32, GRID, CITY_LAYOUT_VERSION, PREVIEW_STORAGE_KEY, LEGACY_STORAGE_KEYS,
 } from './constants'
+import { scaleFor, TYPE_DEFAULT_SCALE } from './catalog'
 import { DISTRICTS, LANDMARKS_DATA, getDistrictAt, setEditorDistrictMap } from './districts'
 import {
   buildingRegistry, walkableGrid,
@@ -17,35 +18,43 @@ import {
 } from './kenney-loader'
 
 export async function createCityFromLayout () {
-  let layoutData
-  const CITY_CACHE_VERSION = 6  // Bump when city data changes (walkable grid fix)
+  let layoutData = null
+  let previewActive = false
+
+  // Alt-Schlüssel räumen: vor dem Contract-Fix teilten sich Editor-Drafts
+  // und Welt-Cache dieselben Keys — solche Stände sind nicht mehr gültig.
+  for (const key of LEGACY_STORAGE_KEYS) {
+    try { localStorage.removeItem(key) } catch (_e) { /* private mode */ }
+  }
+
+  // 1) Explizite Editor-Vorschau („In Welt ansehen") — nur mit aktueller
+  //    Layout-Version; alles andere wird verworfen.
   try {
-    // Try new key first, fall back to legacy key
-    const raw = localStorage.getItem(EDITOR_STORAGE_KEY) || localStorage.getItem('globtopia-city-layout')
+    const raw = localStorage.getItem(PREVIEW_STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      // Only use cached data if it has enough placements AND matching version
-      if (parsed && parsed.placements && parsed.placements.length > 100 && parsed.version >= CITY_CACHE_VERSION) {
+      if (parsed && parsed.version >= CITY_LAYOUT_VERSION
+        && parsed.placements && parsed.placements.length > 0) {
         layoutData = parsed
+        previewActive = true
+        console.log('[city] Editor-Vorschau aktiv (' + parsed.placements.length + ' Platzierungen)')
       } else {
-        console.warn('[city] Cache outdated (version ' + (parsed && parsed.version) + ' < ' + CITY_CACHE_VERSION + '), clearing')
-        localStorage.removeItem(EDITOR_STORAGE_KEY)
-        localStorage.removeItem('globtopia-city-layout')
+        console.warn('[city] Vorschau-Layout verworfen (Version ' + (parsed && parsed.version) + ' < ' + CITY_LAYOUT_VERSION + ')')
+        localStorage.removeItem(PREVIEW_STORAGE_KEY)
       }
     }
   } catch (_e) {
-    localStorage.removeItem(EDITOR_STORAGE_KEY)
-    localStorage.removeItem('globtopia-city-layout')
+    try { localStorage.removeItem(PREVIEW_STORAGE_KEY) } catch (_e2) { /* private mode */ }
   }
-  // Auto-load from public/ if localStorage is empty or invalid
-  if (!layoutData || !layoutData.placements || layoutData.placements.length === 0) {
+
+  // 2) Ausgeliefertes Layout (kein localStorage-Caching — CDN ist schnell,
+  //    und der alte Cache kollidierte mit Editor-Drafts)
+  if (!layoutData) {
     try {
       let resp = await fetch('/blobtopia-city.json').catch(() => null)
       if (!resp || !resp.ok) resp = await fetch('/globtopia-city.json').catch(() => null)
       if (resp && resp.ok) {
         layoutData = await resp.json()
-        // Cache in localStorage for next time
-        try { localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(layoutData)) } catch (_e) { /* quota */ }
         console.log('[city] Auto-loaded blobtopia-city.json (' + (layoutData.placements || []).length + ' placements)')
       }
     } catch (e) {
@@ -53,7 +62,7 @@ export async function createCityFromLayout () {
     }
   }
   if (!layoutData || !layoutData.placements || layoutData.placements.length === 0) {
-    return null // fall back to procedural
+    return null
   }
 
   const rng = mulberry32(42)
@@ -383,9 +392,10 @@ export async function createCityFromLayout () {
   for (const p of placements) {
     const type = p.type || 'building'
     if (type === 'water') continue // water handled in Phase 2
-    const fallback = createFallbackBuilding(type, rng)
-    // Phase 1: nur Typ-basierte Skalierung (CIVIC_SCALE erst in Phase 2 mit echten Modellen)
-    const scale = MODEL_SCALE_MAP[p.model] || EDITOR_SCALE_MAP[type] || 16
+    const fallback = createFallbackBuilding(type)
+    // Phase 1: civic bleibt auf dem Typ-Default — die Modell-Overrides (75 etc.)
+    // gelten für die echten GLBs, nicht für die transienten Fallback-Boxen
+    const scale = type === 'civic' ? TYPE_DEFAULT_SCALE.civic : scaleFor(p.model, type)
     fallback.scale.setScalar(scale * (p.scale || 1))
     fallback.position.set(p.x, -0.3, p.z)
     fallback.rotation.y = p.rotation || 0
@@ -419,8 +429,12 @@ export async function createCityFromLayout () {
   }
   group.add(buildingGroup)
 
-  // Kenney-Modelle nachladen und Fallbacks ersetzen
-  loadKenneyModels().then(() => {
+  // Kenney-Modelle nachladen und Fallbacks ersetzen — nur die Modelle,
+  // die das Layout tatsächlich referenziert (statt des kompletten Katalogs)
+  const usedModels = placements
+    .map(p => p.model)
+    .filter(m => m && !m.startsWith('water-tile'))
+  loadKenneyModels(usedModels).then(() => {
     console.log('[Blobtopia] Kenney-Modelle geladen, ersetze', placements.length, 'Gebäude')
 
     // Neuen Gebäude-Container erstellen
@@ -463,8 +477,8 @@ export async function createCityFromLayout () {
         continue
       }
 
-      // Per-model scale (civic → model-specific → type default)
-      const scale = CIVIC_SCALE[modelName] || MODEL_SCALE_MAP[modelName] || EDITOR_SCALE_MAP[type] || 16
+      // Effektive Skalierung aus dem Katalog (Modell-Override → Typ-Default)
+      const scale = scaleFor(modelName, type)
 
       var obj
       if (loadedModels[modelName]) {
@@ -479,7 +493,7 @@ export async function createCityFromLayout () {
         replacedCount++
       } else {
         console.warn('[Blobtopia] Kenney-Modell nicht gefunden:', modelName)
-        obj = createFallbackBuilding(type, rng)
+        obj = createFallbackBuilding(type)
         obj.scale.setScalar(scale * (p.scale || 1))
         fallbackCount++
       }
@@ -573,6 +587,9 @@ export async function createCityFromLayout () {
   }).catch(function (err) {
     console.warn('[Blobtopia] Kenney-Modelle konnten nicht geladen werden, behalte Fallbacks', err)
   })
+
+  // world-viewer zeigt bei aktiver Editor-Vorschau einen Hinweis-Toast
+  group.userData.cityPreviewActive = previewActive
 
   return group
 }
