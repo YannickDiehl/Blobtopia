@@ -33,7 +33,7 @@ export async function createCityFromLayout () {
         localStorage.removeItem('globtopia-city-layout')
       }
     }
-  } catch (e) {
+  } catch (_e) {
     localStorage.removeItem(EDITOR_STORAGE_KEY)
     localStorage.removeItem('globtopia-city-layout')
   }
@@ -45,7 +45,7 @@ export async function createCityFromLayout () {
       if (resp && resp.ok) {
         layoutData = await resp.json()
         // Cache in localStorage for next time
-        try { localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(layoutData)) } catch (e) { /* quota */ }
+        try { localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(layoutData)) } catch (_e) { /* quota */ }
         console.log('[city] Auto-loaded blobtopia-city.json (' + (layoutData.placements || []).length + ' placements)')
       }
     } catch (e) {
@@ -76,7 +76,7 @@ export async function createCityFromLayout () {
   if (hasEditorDistricts) {
     console.log('[layout-renderer] Using EDITOR-STYLE terrain (flat green + overlays)')
     // ── Editor-style terrain: flat base + simple district overlays ──
-    const groundGeo = new THREE.PlaneBufferGeometry(GRID_SIZE, GRID_SIZE)
+    const groundGeo = new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE)
     const groundMat = new THREE.MeshLambertMaterial({ color: 0x3a5a3a })
     const ground = new THREE.Mesh(groundGeo, groundMat)
     ground.rotation.x = -Math.PI / 2
@@ -128,7 +128,7 @@ export async function createCityFromLayout () {
     }
 
     const seg = 80
-    const terrainGeo = new THREE.PlaneBufferGeometry(GRID_SIZE, GRID_SIZE, seg, seg)
+    const terrainGeo = new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE, seg, seg)
     terrainGeo.rotateX(-Math.PI / 2)
     terrainGeo.translate(GRID_SIZE / 2, 0, GRID_SIZE / 2)
     const tPos = terrainGeo.getAttribute('position')
@@ -138,7 +138,7 @@ export async function createCityFromLayout () {
       tColors[i * 3] = cr; tColors[i * 3 + 1] = cg; tColors[i * 3 + 2] = cb
     }
     terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(tColors, 3))
-    const terrainMat = new THREE.MeshLambertMaterial({ vertexColors: THREE.VertexColors })
+    const terrainMat = new THREE.MeshLambertMaterial({ vertexColors: true })
     const terrain = new THREE.Mesh(terrainGeo, terrainMat)
     terrain.position.y = -0.3
     group.add(terrain)
@@ -187,13 +187,13 @@ export async function createCityFromLayout () {
   const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5a3a1a })
   function addTree (tx, tz) {
     const treeScale = 0.6 + rng() * 0.8
-    const trunkGeo = new THREE.CylinderBufferGeometry(0.3 * treeScale, 0.4 * treeScale, 3 * treeScale, 5)
+    const trunkGeo = new THREE.CylinderGeometry(0.3 * treeScale, 0.4 * treeScale, 3 * treeScale, 5)
     const trunk = new THREE.Mesh(trunkGeo, trunkMat)
     trunk.position.set(tx, 1.5 * treeScale, tz)
     group.add(trunk)
     const leafGeo = rng() > 0.5
-      ? new THREE.ConeBufferGeometry(1.8 * treeScale, 4 * treeScale, 5)
-      : new THREE.IcosahedronBufferGeometry(2 * treeScale, 1)
+      ? new THREE.ConeGeometry(1.8 * treeScale, 4 * treeScale, 5)
+      : new THREE.IcosahedronGeometry(2 * treeScale, 1)
     const leaf = new THREE.Mesh(leafGeo, treeMat)
     leaf.position.set(tx, 4 * treeScale, tz)
     group.add(leaf)
@@ -443,7 +443,7 @@ export async function createCityFromLayout () {
       // Water tiles: render as flat blue plane (same as editor), skip normal model path
       if (type === 'water') {
         const tileSize = modelName === 'water-tile-small' ? CELL_SIZE / 2 : CELL_SIZE
-        const waterGeo = new THREE.PlaneBufferGeometry(tileSize, tileSize)
+        const waterGeo = new THREE.PlaneGeometry(tileSize, tileSize)
         const waterMat = new THREE.MeshLambertMaterial({ color: 0x2563a8, transparent: true, opacity: 0.8 })
         const waterPlane = new THREE.Mesh(waterGeo, waterMat)
         waterPlane.rotation.x = -Math.PI / 2
@@ -501,7 +501,7 @@ export async function createCityFromLayout () {
       // Road tiles: add flat road-colored ground plane underneath to fill gaps
       // and apply polygonOffset to road meshes to prevent z-fighting
       if (isRoadTile) {
-        var roadGroundGeo = new THREE.PlaneBufferGeometry(CELL_SIZE, CELL_SIZE)
+        var roadGroundGeo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
         var roadGroundMat = new THREE.MeshLambertMaterial({ color: 0x444444, depthWrite: false })
         var roadGroundPlane = new THREE.Mesh(roadGroundGeo, roadGroundMat)
         roadGroundPlane.rotation.x = -Math.PI / 2
@@ -520,7 +520,7 @@ export async function createCityFromLayout () {
 
       // Bridge tiles over water: add blue water surface underneath
       if (isBridge) {
-        var waterGeo = new THREE.PlaneBufferGeometry(CELL_SIZE, CELL_SIZE)
+        var waterGeo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
         var waterSurfaceMat = new THREE.MeshLambertMaterial({
           color: 0x3a7cbd, transparent: true, opacity: 0.75
         })

@@ -32,7 +32,8 @@ transition(name="fade")
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES } from '@/lib/blob-adapter'
 import { ERAS } from '@/config/timeline-eras'
 
@@ -141,11 +142,12 @@ export default {
         || r.description.toLowerCase().includes(q)
       ).slice(0, 15)
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       getCurrentGeneration: 'getCurrentGeneration'
       , maxTick: 'maxTick'
       , timelineEvents: 'timelineEvents'
     })
+    , ...mapStores(useSimulationStore)
   }
   , watch: {
     visible(v) {
@@ -182,22 +184,22 @@ export default {
           this.$emit('fly-to-district', r.data.districtIndex)
           break
         case 'year':
-          this.$store.dispatch('simulation/stopPlayback')
-          this.$store.dispatch('simulation/seekTick', r.data.year * 365)
+          this.simulationStore.stopPlayback()
+          this.simulationStore.seekTick(r.data.year * 365)
           break
         case 'event':
-          this.$store.dispatch('simulation/stopPlayback')
-          this.$store.dispatch('simulation/seekTick', r.data.tick)
+          this.simulationStore.stopPlayback()
+          this.simulationStore.seekTick(r.data.tick)
           break
         case 'era':
-          this.$store.dispatch('simulation/stopPlayback')
-          this.$store.dispatch('simulation/seekTick', r.data.start)
+          this.simulationStore.stopPlayback()
+          this.simulationStore.seekTick(r.data.start)
           break
         case 'mode':
-          this.$store.commit('simulation/setUiMode', r.data.mode)
+          this.simulationStore.setUiMode(r.data.mode)
           break
         case 'overlay':
-          this.$store.commit('simulation/setDataOverlay', r.data.overlay)
+          this.simulationStore.setDataOverlay(r.data.overlay)
           break
       }
       this.close()
@@ -290,6 +292,6 @@ export default {
 
 .fade-enter-active, .fade-leave-active
   transition: opacity 0.15s ease
-.fade-enter, .fade-leave-to
+.fade-enter, .fade-enter-from, .fade-leave-to
   opacity: 0
 </style>

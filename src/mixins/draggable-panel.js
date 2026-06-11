@@ -131,7 +131,7 @@ export default {
     window.addEventListener('resize', this._dp_onWinResize)
   }
 
-  , beforeDestroy() {
+  , beforeUnmount() {
     if (this._dp_header) {
       this._dp_header.removeEventListener('pointerdown', this._dp_onHeaderDown)
       this._dp_header.removeEventListener('dblclick', this._dp_onHeaderDbl)

@@ -72,7 +72,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS } from '@/lib/blob-adapter'
 
 export default {
@@ -85,11 +86,12 @@ export default {
     this.refresh()
     this._refreshTimer = setInterval(() => this.refresh(), 5000)
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     clearInterval(this._refreshTimer)
   }
   , computed: {
-    ...mapGetters('simulation', {
+    ...mapStores(useSimulationStore)
+    , ...mapState(useSimulationStore, {
       statistics: 'statistics'
       , demographics: 'demographics'
     })
@@ -108,7 +110,7 @@ export default {
   , methods: {
     async refresh(){
       this.loading = true
-      await this.$store.dispatch('simulation/fetchDemographics')
+      await this.simulationStore.fetchDemographics()
       this.loading = false
     }
     , districtHex(d){

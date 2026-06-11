@@ -45,17 +45,19 @@
       )
         v3-dom(ref="tour", :position="tourPosition")
           Tour
-      v3-light(type="ambient", :intensity="0.5")
+      //- Intensitäten ×π: three hat den Legacy-Lighting-Modus entfernt
+      //- (physikalisch korrekte Lichter) — alte Werte: 0.5 / 0.35 / 0.15
+      v3-light(type="ambient", :intensity="1.571")
       v3-light(
         type="directional"
-        , :intensity="0.35"
+        , :intensity="1.1"
         , :color="0xfff8e8"
         , :position="[300, 500, 200]"
         , :cast-shadow="false"
       )
       v3-light(
         type="directional"
-        , :intensity="0.15"
+        , :intensity="0.471"
         , :color="0xe8f0ff"
         , :position="[-200, 300, -100]"
         , :cast-shadow="false"
@@ -66,7 +68,7 @@
 
       v3-group(v-if="showWorld", :position="[-gridSize * 0.5, 0, -gridSize * 0.5]")
         BlobCreature(
-          ref="v3Blobs"
+          :ref="collectBlobRef"
             , v-for="(g, index) in generation.blobs"
             , :key="index"
             , :creature="g"
@@ -83,8 +85,11 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import Copilot from '@/lib/copilot-stub'
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import chroma from 'chroma-js'
 import sougy from '@/config/sougy-colors'
 import * as THREE from 'three'
@@ -108,7 +113,6 @@ import { blobColors } from '@/config/blob-colors'
 import { createCityFromLayout } from '@/city'
 import { GRID_SIZE } from '@/config/world'
 import Tour from '@/components/tour'
-const OrbitControls = require('three-orbit-controls')(THREE)
 
 const defaultBlobColor = chroma(sougy.blue).desaturate(0.5).num()
 
@@ -151,7 +155,7 @@ const computed = {
   , showWorld(){
     return this.generation && !this.hideStage
   }
-  , ...mapGetters('simulation', {
+  , ...mapState(useSimulationStore, {
     'getCurrentGeneration': 'getCurrentGeneration'
     , 'statistics': 'statistics'
   })
@@ -173,6 +177,9 @@ const methods = {
   , getBlobColor(species){
     return blobColors[species] || defaultBlobColor
   }
+  , collectBlobRef(el){
+    if (el) this._blobRefs.push(el)
+  }
   , initCamera(){
     const renderer = this.$refs.renderer.renderer
     const camera = this.camera = this.$refs.camera.v3object
@@ -191,9 +198,9 @@ const methods = {
     controls.minPolarAngle = 0.15 // nicht ganz flach
     controls.screenSpacePanning = false // Pan entlang der Bodenfläche
     controls.mouseButtons = {
-      ORBIT: THREE.MOUSE.RIGHT    // Rechtsklick + Ziehen = Kamera drehen
-      , PAN: THREE.MOUSE.LEFT     // Linksklick + Ziehen = Kamera gleiten
-      , ZOOM: THREE.MOUSE.MIDDLE
+      LEFT: THREE.MOUSE.PAN       // Linksklick + Ziehen = Kamera gleiten
+      , MIDDLE: THREE.MOUSE.DOLLY // Mausrad-Klick = Zoom
+      , RIGHT: THREE.MOUSE.ROTATE // Rechtsklick + Ziehen = Kamera drehen
     }
     // Linksklick: Drag = Pan, kurzer Klick = Blob-Auswahl (Gestures tap)
     controls.target.set(0, 0, 0) // Stadtzentrum (verschoben um -gridSize/2)
@@ -250,7 +257,8 @@ const methods = {
     this.$refs.renderer.draw()
   }
   , followBlobCamera(){
-    let goal = this.$refs.cameraGoal && this.$refs.cameraGoal[0]
+    // Vue 3: Ref unter v-if im v-for ist eine Einzel-Instanz (kein Array mehr)
+    let goal = this.$refs.cameraGoal
     let focusGoal = this.$refs.cameraFocusGoal && this.$refs.cameraFocusGoal[0]
     if (!goal){ return }
     this.cameraGoal.setFromMatrixPosition(goal.v3object.matrixWorld)
@@ -285,7 +293,7 @@ const methods = {
     let blobHit = intersects.find(i => i.object.name === 'blob')
     if (blobHit) {
       let blob = blobHit.object
-      let index = _findIndex(this.$refs.v3Blobs, g => g.v3object === blob.parent.parent)
+      let index = _findIndex(this._blobRefs, g => g.v3object === blob.parent.parent)
       if (index >= 0 && this.generation && this.generation.blobs[index]) {
         this.$emit('tap-blob', { blob: this.generation.blobs[index], index })
         return
@@ -297,14 +305,14 @@ const methods = {
 
     // 3) Proximity-Suche: Blobs sind zu klein für exaktes Raycasting,
     //    daher den nächsten Blob per Ray-Distanz finden
-    if (ray && this.$refs.v3Blobs && this.generation) {
+    if (ray && this._blobRefs && this.generation) {
       let closestIndex = -1
       let closestScreenDist = Infinity
       const tmpPos = new THREE.Vector3()
       const tmpDiff = new THREE.Vector3()
       const rayDir = ray.direction.clone().normalize()
 
-      this.$refs.v3Blobs.forEach((blobComp, index) => {
+      this._blobRefs.forEach((blobComp, index) => {
         if (!blobComp.v3object || !blobComp.v3object.visible) return
         blobComp.v3object.getWorldPosition(tmpPos)
         // Distanz vom Ray zum Blob-Zentrum
@@ -339,7 +347,7 @@ const methods = {
     renderer.removeOutline()
     if (intersects.length){
       let blob = intersects[0].object
-      let index = _findIndex(this.$refs.v3Blobs, g => g.v3object === blob.parent.parent)
+      let index = _findIndex(this._blobRefs, g => g.v3object === blob.parent.parent)
       if (index < 0 || !this.generation || !this.generation.blobs[index]) return
       let id = this.generation.blobs[index].id
 
@@ -429,7 +437,7 @@ const methods = {
       player.playTo(f.meta.time)
     }, { immediate: true })
 
-    this.$on('hook:beforeDestroy', () => {
+    this._teardown.push(() => {
       player.destroy()
       frames.off(true)
     })
@@ -464,8 +472,9 @@ export default {
       , top: 280
       , bottom: -280
     }
-    , cameraGoal: new THREE.Vector3()
-    , cameraFocusGoal: new THREE.Vector3()
+    // markRaw: THREE-Objekte dürfen nicht in Vue-3-Proxies gewickelt werden
+    , cameraGoal: markRaw(new THREE.Vector3())
+    , cameraFocusGoal: markRaw(new THREE.Vector3())
     , interactiveObjects: ['blob', 'building']
     , highlightColor: chroma(sougy.red).num()
     , hideStage: false
@@ -476,6 +485,19 @@ export default {
   , computed
   , watch
   , methods
+  , created(){
+    this._teardown = []
+    this._blobRefs = []
+  }
+  , beforeUpdate(){
+    // Function-Ref-Register pro Render leeren (Vue 3 sammelt v-for-Refs
+    // nicht mehr automatisch zu Arrays)
+    this._blobRefs.length = 0
+  }
+  , beforeUnmount(){
+    this._teardown.forEach( fn => fn() )
+    this._teardown = []
+  }
   , async mounted(){
     this.renderer = this.$refs.renderer
     this.scene = this.renderer.scene
@@ -486,10 +508,10 @@ export default {
     cityGroup.position.set(-this.gridSize * 0.5, 0, -this.gridSize * 0.5)
     this.scene.add(cityGroup)
     // Notify Gestures that the scene changed so building meshes are raycasted
-    this.renderer.$emit('scene:changed', { type: 'add', object: cityGroup })
-    this.$on('hook:beforeDestroy', () => {
+    this.renderer.events.emit('scene:changed', { type: 'add', object: cityGroup })
+    this._teardown.push(() => {
       this.scene.remove(cityGroup)
-      this.renderer.$emit('scene:changed', { type: 'remove', object: cityGroup })
+      this.renderer.events.emit('scene:changed', { type: 'remove', object: cityGroup })
     })
 
     this.$onResize(() => this.onResize())
@@ -507,7 +529,7 @@ export default {
       requestAnimationFrame( draw )
       this.draw( clock.getDelta() * 1000 )
     }
-    this.$on('hook:beforeDestroy', () => {
+    this._teardown.push(() => {
       stop = true
       // WASD-Listener aufräumen
       if (this._onKeyDown) {

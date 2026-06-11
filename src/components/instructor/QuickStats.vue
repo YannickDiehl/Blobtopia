@@ -57,7 +57,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import LineChart from '@/components/charts/LineChart'
 import { DISTRICT_NAMES, DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 
@@ -112,17 +113,16 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , legend: { display: false }
+        , plugins: { legend: { display: false }, tooltip: { enabled: false } }
         , elements: { point: { radius: 0 }, line: { borderWidth: 1.5 } }
         , scales: {
-          xAxes: [{ display: false }]
-          , yAxes: [{ display: true, ticks: { fontColor: 'rgba(255,255,255,0.3)', fontSize: 9, min: 0, max: 10 }, gridLines: { color: 'rgba(255,255,255,0.05)' } }]
+          x: { display: false }
+          , y: { display: true, min: 0, max: 10, ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
         }
-        , tooltips: { enabled: false }
       }
     }
     , chartOptionsProtest(){
-      return { ...this.chartOptions, scales: { ...this.chartOptions.scales, yAxes: [{ display: true, ticks: { fontColor: 'rgba(255,255,255,0.3)', fontSize: 9, min: 0, max: 10 }, gridLines: { color: 'rgba(255,255,255,0.05)' } }] } }
+      return { ...this.chartOptions, scales: { ...this.chartOptions.scales, y: { display: true, min: 0, max: 10, ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
     }
     , satisfactionData(){
       if (!this.hasSummary) return { labels: [], datasets: [] }
@@ -148,17 +148,18 @@ export default {
         , datasets: [{ data: s.global.protest, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.08)', fill: true }]
       }
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       timelineSummary: 'timelineSummary'
       , statistics: 'statistics'
     })
+    , ...mapStores(useSimulationStore)
   }
   , mounted(){
     this.loadData()
   }
   , methods: {
     loadData(){
-      this.$store.dispatch('simulation/fetchTimelineSummary')
+      this.simulationStore.fetchTimelineSummary()
     }
   }
 }

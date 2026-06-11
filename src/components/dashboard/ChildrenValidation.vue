@@ -37,9 +37,9 @@
               th Zuhause
               th Status
           tbody
-            template(v-for="(row, i) in sortedChildren")
+            //- Vue 3: key gehört auf das template, nicht auf die Kinder
+            template(v-for="(row, i) in sortedChildren", :key="row.id")
               tr(
-                :key="row.id"
                 :class="{ 'violation-row': row.hasViolation }"
               )
                 td {{ i + 1 }}
@@ -55,7 +55,7 @@
                 td.status-cell
                   span.status-ok(v-if="!row.hasViolation") \u2713
                   span.status-bad(v-else) \u2717
-              tr.violation-detail(v-if="row.hasViolation" :key="row.id + '-v'")
+              tr.violation-detail(v-if="row.hasViolation")
                 td(colspan="9")
                   span.violation-text {{ violationDetails(row) }}
 
@@ -75,7 +75,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS, EDUCATION_LABELS } from '@/lib/blob-adapter'
 
 export default {
@@ -85,7 +86,7 @@ export default {
     , sortAsc: true
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardBlobList'])
+    ...mapState(useSimulationStore, ['dashboardBlobList'])
     , blobList() {
       return this.dashboardBlobList || null
     }
@@ -169,7 +170,7 @@ export default {
     }
   }
   , mounted() {
-    this.$store.dispatch('simulation/fetchDashboardBlobList')
+    useSimulationStore().fetchDashboardBlobList()
   }
 }
 </script>

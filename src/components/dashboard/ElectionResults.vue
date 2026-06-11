@@ -42,7 +42,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import BarChart from '@/components/charts/BarChart.vue'
 import LineChart from '@/components/charts/LineChart.vue'
 
@@ -56,7 +57,7 @@ export default {
     loading: true
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardElections'])
+    ...mapState(useSimulationStore, ['dashboardElections'])
     , elections() {
       const cached = this.dashboardElections
       return cached && cached.elections ? cached.elections : []
@@ -83,10 +84,10 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , legend: { labels: { fontColor: '#fffbfc' } }
+        , plugins: { legend: { labels: { color: '#fffbfc' } } }
         , scales: {
-          xAxes: [{ ticks: { fontColor: '#fffbfc' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
-          , yAxes: [{ ticks: { fontColor: '#fffbfc', beginAtZero: true, max: 60, callback: v => v + '%' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          x: { ticks: { color: '#fffbfc' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          , y: { beginAtZero: true, max: 60, ticks: { color: '#fffbfc', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }
@@ -107,10 +108,10 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , legend: { labels: { fontColor: '#fffbfc' } }
+        , plugins: { legend: { labels: { color: '#fffbfc' } } }
         , scales: {
-          xAxes: [{ ticks: { fontColor: '#fffbfc' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
-          , yAxes: [{ ticks: { fontColor: '#fffbfc', beginAtZero: true, max: 100, callback: v => v + '%' }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          x: { ticks: { color: '#fffbfc' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+          , y: { beginAtZero: true, max: 100, ticks: { color: '#fffbfc', callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }
@@ -127,7 +128,7 @@ export default {
     }
   }
   , async mounted() {
-    await this.$store.dispatch('simulation/fetchDashboardElections')
+    await useSimulationStore().fetchDashboardElections()
     this.loading = false
   }
 }

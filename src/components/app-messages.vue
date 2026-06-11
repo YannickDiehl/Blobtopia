@@ -5,7 +5,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useAlertsStore } from '@/stores/alerts'
 import InfoMessage from '@/components/alerts/info-message'
 import ErrorMessage from '@/components/alerts/error-message'
 
@@ -20,7 +21,7 @@ export default {
     , ErrorMessage
   }
   , computed: {
-    ...mapGetters([
+    ...mapState(useAlertsStore, [
       'errors'
       , 'infos'
     ])

@@ -112,7 +112,7 @@
       .selection-info(v-if="selectedPlacement")
         .sel-header
           span {{ selectedPlacement.label }}
-          b-icon.close-btn(icon="close", size="is-small", @click.native="selectedPlacement = null")
+          b-icon.close-btn(icon="close", size="is-small", @click="selectedPlacement = null")
         .sel-actions
           b-button.is-small.is-outlined(@click="rotatePlacement")
             b-icon(icon="rotate-right", size="is-small")
@@ -135,8 +135,8 @@
 
 <script>
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-const OrbitControls = require('three-orbit-controls')(THREE)
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { autoConnectRoads } from '../lib/road-auto-connect'
 import { GRID_SIZE, CELL_SIZE as CFG_CELL_SIZE } from '@/config/world'
 
@@ -377,7 +377,7 @@ export default {
     this.animate()
     window.addEventListener('resize', this.onResize)
   }
-  , beforeDestroy() {
+  , beforeUnmount() {
     this._stopped = true
     window.removeEventListener('resize', this.onResize)
     window.removeEventListener('keydown', this._onKeyDown)
@@ -394,8 +394,7 @@ export default {
       this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
       this.renderer.setPixelRatio(window.devicePixelRatio)
       this.renderer.setClearColor(0x2c3e50)
-      this.renderer.gammaOutput = true
-      this.renderer.gammaFactor = 2.2
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace
       this.renderer.toneMapping = THREE.LinearToneMapping
       this.renderer.toneMappingExposure = 0.85
       this.onResize()
@@ -419,9 +418,9 @@ export default {
       this.controls.minPolarAngle = 0.15 // nicht ganz flach
       this.controls.screenSpacePanning = false // Pan entlang der Bodenfläche
       this.controls.mouseButtons = {
-        ORBIT: THREE.MOUSE.RIGHT    // Rechtsklick + Ziehen = Kamera drehen
-        , ZOOM: THREE.MOUSE.MIDDLE  // Mausrad-Klick = Zoom
-        , PAN: THREE.MOUSE.LEFT     // Linksklick + Ziehen = Gleiten
+        LEFT: THREE.MOUSE.PAN       // Linksklick + Ziehen = Gleiten
+        , MIDDLE: THREE.MOUSE.DOLLY // Mausrad-Klick = Zoom
+        , RIGHT: THREE.MOUSE.ROTATE // Rechtsklick + Ziehen = Kamera drehen
       }
       this.controls.target.set(GRID / 2, 0, GRID / 2)
 
@@ -457,13 +456,13 @@ export default {
       window.addEventListener('keyup', this._onKeyUp)
 
       // Lights — gedämpft für natürlichere Farben
-      const ambient = new THREE.AmbientLight(0xffffff, 0.5)
+      const ambient = new THREE.AmbientLight(0xffffff, 1.571)
       this.scene.add(ambient)
-      const dir = new THREE.DirectionalLight(0xfff8e8, 0.35)
+      const dir = new THREE.DirectionalLight(0xfff8e8, 1.1)
       dir.position.set(300, 500, 200)
       this.scene.add(dir)
       // Zweites Fülllicht von der anderen Seite für weichere Schatten
-      const fill = new THREE.DirectionalLight(0xe8f0ff, 0.15)
+      const fill = new THREE.DirectionalLight(0xe8f0ff, 0.471)
       fill.position.set(-200, 300, -100)
       this.scene.add(fill)
 
@@ -515,7 +514,7 @@ export default {
       }
 
       // Base ground plane
-      const groundGeo = new THREE.PlaneBufferGeometry(GRID, GRID)
+      const groundGeo = new THREE.PlaneGeometry(GRID, GRID)
       const groundMat = new THREE.MeshLambertMaterial({ color: 0x3a5a3a })
       const ground = new THREE.Mesh(groundGeo, groundMat)
       ground.rotation.x = -Math.PI / 2
@@ -529,7 +528,7 @@ export default {
         const dIdx = this.districtMap[key]
         const d = DISTRICTS[dIdx]
         if (!d) continue
-        const geo = new THREE.PlaneBufferGeometry(CELL_SIZE, CELL_SIZE)
+        const geo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
         const mat = new THREE.MeshLambertMaterial({
           color: new THREE.Color(d.groundColor[0], d.groundColor[1], d.groundColor[2])
           , transparent: true
@@ -608,7 +607,7 @@ export default {
         // Water tiles: nur flache blaue Fläche, kein 3D-Modell
         if (isWater) {
           const tileSize = p.model === 'water-tile-small' ? CELL_SIZE / 2 : CELL_SIZE
-          const waterGeo = new THREE.PlaneBufferGeometry(tileSize, tileSize)
+          const waterGeo = new THREE.PlaneGeometry(tileSize, tileSize)
           const waterMat = new THREE.MeshLambertMaterial({ color: 0x2563a8, transparent: true, opacity: 0.8 })
           const waterPlane = new THREE.Mesh(waterGeo, waterMat)
           waterPlane.rotation.x = -Math.PI / 2
@@ -631,7 +630,7 @@ export default {
         model.position.set(p.x, yPos, p.z)
         // Bridge tiles: add blue water surface underneath
         if (isBridge) {
-          const waterGeo = new THREE.PlaneBufferGeometry(CELL_SIZE, CELL_SIZE)
+          const waterGeo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
           const waterMat = new THREE.MeshLambertMaterial({ color: 0x3a7cbd, transparent: true, opacity: 0.75 })
           const waterPlane = new THREE.Mesh(waterGeo, waterMat)
           waterPlane.rotation.x = -Math.PI / 2
@@ -765,11 +764,11 @@ export default {
         const key = `${snapped.cx},${snapped.cz}`
         if (this.selectedDistrict === -1) {
           if (this.districtMap[key] != null) {
-            this.$delete(this.districtMap, key)
+            delete this.districtMap[key]
             this.buildGround()
           }
         } else if (this.districtMap[key] !== this.selectedDistrict) {
-          this.$set(this.districtMap, key, this.selectedDistrict)
+          this.districtMap = { ...this.districtMap, [key]: this.selectedDistrict }
           this.buildGround()
         }
         return
@@ -820,7 +819,7 @@ export default {
         // Wasser: flache blaue Fläche direkt hinzufügen
         if (placement.type === 'water') {
           const tileSize = placement.model === 'water-tile-small' ? CELL_SIZE / 2 : CELL_SIZE
-          const waterGeo = new THREE.PlaneBufferGeometry(tileSize, tileSize)
+          const waterGeo = new THREE.PlaneGeometry(tileSize, tileSize)
           const waterMat = new THREE.MeshLambertMaterial({ color: 0x2563a8, transparent: true, opacity: 0.8 })
           const waterPlane = new THREE.Mesh(waterGeo, waterMat)
           waterPlane.rotation.x = -Math.PI / 2
@@ -861,9 +860,9 @@ export default {
         this.pushUndo()
         const key = `${snapped.cx},${snapped.cz}`
         if (this.selectedDistrict === -1) {
-          this.$delete(this.districtMap, key)
+          delete this.districtMap[key]
         } else {
-          this.$set(this.districtMap, key, this.selectedDistrict)
+          this.districtMap = { ...this.districtMap, [key]: this.selectedDistrict }
         }
         this.buildGround()
       } else if (this.tool === 'select') {
@@ -1060,9 +1059,9 @@ export default {
           const snapped = this.snapToGrid(pos.x, pos.z)
           const key = `${snapped.cx},${snapped.cz}`
           if (this.selectedDistrict === -1) {
-            this.$delete(this.districtMap, key)
+            delete this.districtMap[key]
           } else {
-            this.$set(this.districtMap, key, this.selectedDistrict)
+            this.districtMap = { ...this.districtMap, [key]: this.selectedDistrict }
           }
           this.buildGround()
         }
@@ -1154,7 +1153,7 @@ export default {
       // Wasser-Tiles: flache Fläche als Ghost
       if (info.type === 'water') {
         const tileSize = model === 'water-tile-small' ? CELL_SIZE / 2 : CELL_SIZE
-        const geo = new THREE.PlaneBufferGeometry(tileSize, tileSize)
+        const geo = new THREE.PlaneGeometry(tileSize, tileSize)
         const mat = new THREE.MeshLambertMaterial({ color: 0x2563a8, transparent: true, opacity: 0.4 })
         const plane = new THREE.Mesh(geo, mat)
         plane.rotation.x = -Math.PI / 2
@@ -1175,7 +1174,7 @@ export default {
     }
 
     , clearAll() {
-      if (!confirm('Alle Gebäude löschen?')) return
+      if (!window.confirm('Alle Gebäude löschen?')) return
       this.pushUndo()
       this.placements = []
       this.districtMap = {}
@@ -1222,7 +1221,7 @@ export default {
             const data = JSON.parse(ev.target.result)
             this.applyLayout(data)
             this.$buefy.toast.open({ message: 'Stadt geladen!', type: 'is-success' })
-          } catch (err) {
+          } catch (_err) {
             this.$buefy.toast.open({ message: 'Fehler beim Laden', type: 'is-danger' })
           }
         }
@@ -1240,7 +1239,7 @@ export default {
           this.applyLayout(data)
           return
         }
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
       // Auto-load from public/ if localStorage is empty
@@ -1250,7 +1249,7 @@ export default {
         if (resp && resp.ok) {
           const data = await resp.json()
           this.applyLayout(data)
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch (e) { /* quota */ }
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch (_e) { /* quota */ }
           console.log('[editor] Auto-loaded blobtopia-city.json (' + (data.placements || []).length + ' placements)')
         }
       } catch (e) {
@@ -1301,7 +1300,7 @@ export default {
       requestAnimationFrame(() => this.animate())
 
       // WASD / Pfeiltasten: Kamera über die Karte gleiten
-      var panSpeed = 8
+      let panSpeed
       // Schneller gleiten wenn weiter rausgezoomt
       var dist = this.camera.position.distanceTo(this.controls.target)
       panSpeed = Math.max(4, dist * 0.008)
@@ -1589,12 +1588,12 @@ export default {
   transition: max-height 0.2s ease, opacity 0.2s ease
   max-height: 500px
   overflow: hidden
-.collapse-enter, .collapse-leave-to
+.collapse-enter, .collapse-enter-from, .collapse-leave-to
   max-height: 0
   opacity: 0
 
 .fade-enter-active, .fade-leave-active
   transition: opacity 0.2s
-.fade-enter, .fade-leave-to
+.fade-enter, .fade-enter-from, .fade-leave-to
   opacity: 0
 </style>

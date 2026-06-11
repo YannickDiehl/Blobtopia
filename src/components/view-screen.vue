@@ -52,7 +52,7 @@
           b-icon(icon="rss", size="is-small")
 
       //- Follow creature toggle
-      b-icon.icon-btn(icon="cctv", :class="{ active: followBlob }", size="is-medium", @click.native.stop="followBlob = !followBlob")
+      b-icon.icon-btn(icon="cctv", :class="{ active: followBlob }", size="is-medium", @click.stop="followBlob = !followBlob")
 
   .screen
     b-loading.loading-cover(:is-full-page="false", :active="!showIntro && isLoading")
@@ -206,7 +206,9 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
+import { useChatStore } from '@/stores/chat'
 import WorldViewer from '@/components/world-viewer'
 import FloatingPanel from '@/components/floating-panel'
 import BlobFeed from '@/components/blob-feed'
@@ -247,7 +249,7 @@ export default {
   }
   , deactivated(){
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     this.stopHourTimer()
     document.removeEventListener('keydown', this._keyHandler)
   }
@@ -325,7 +327,8 @@ export default {
       // Show event if we're within ±3 ticks of it
       return this.timelineEvents.find(e => Math.abs(e.tick - (this.tick || 0)) <= 3)
     }
-    , ...mapGetters('simulation', {
+    , ...mapStores(useSimulationStore, useChatStore)
+    , ...mapState(useSimulationStore, {
       getCurrentGeneration: 'getCurrentGeneration'
       , generationIndex: 'currentGenerationIndex'
       , stats: 'statistics'
@@ -354,7 +357,7 @@ export default {
     , tick(){
       // In timeline mode, the playback timer manages the hour — don't reset it here
       if (!this.timelineMode) {
-        this.$store.commit('simulation/setHour', 0)
+        this.simulationStore.setHour(0)
       }
     }
     , isPaused(paused){
@@ -375,19 +378,19 @@ export default {
   , methods: {
     toggleServerPause(){
       if (this.isPaused) {
-        this.$store.dispatch('simulation/resumeServer')
+        this.simulationStore.resumeServer()
       } else {
-        this.$store.dispatch('simulation/pauseServer')
+        this.simulationStore.pauseServer()
       }
     }
     , fireEvent(type, params){
       const event = { type, ...params }
-      this.$store.dispatch('simulation/triggerEvent', event)
+      this.simulationStore.triggerEvent(event)
     }
     , onCloseInteraction(){
       this.selectedBlob = null
       this.followBlob = false
-      this.$store.dispatch('chat/closeChat')
+      this.chatStore.closeChat()
     }
     , onTapBlob({ blob }){
       this.followBlobId = blob.id
@@ -402,30 +405,30 @@ export default {
     // --- Timeline Playback Controls ---
     , togglePlayback(){
       if (this.isPaused) {
-        this.$store.dispatch('simulation/startPlayback')
+        this.simulationStore.startPlayback()
       } else {
-        this.$store.dispatch('simulation/stopPlayback')
+        this.simulationStore.stopPlayback()
       }
     }
     , setSpeed(speed){
-      this.$store.dispatch('simulation/setPlaybackSpeed', speed)
+      this.simulationStore.setPlaybackSpeed(speed)
     }
     , onHourScrub(value){
-      this.$store.commit('simulation/setHour', parseInt(value))
-      this.$store.commit('simulation/setSubHourFraction', 0)
+      this.simulationStore.setHour(parseInt(value))
+      this.simulationStore.setSubHourFraction(0)
     }
     , jumpToTick(tick){
-      this.$store.dispatch('simulation/stopPlayback')
-      this.$store.dispatch('simulation/seekTick', tick)
+      this.simulationStore.stopPlayback()
+      this.simulationStore.seekTick(tick)
     }
     // --- New timeline controls ---
     , stepBy(delta){
-      this.$store.dispatch('simulation/stopPlayback')
-      this.$store.dispatch('simulation/stepTick', delta)
+      this.simulationStore.stopPlayback()
+      this.simulationStore.stepTick(delta)
     }
     , jumpEvent(direction){
-      this.$store.dispatch('simulation/stopPlayback')
-      this.$store.dispatch('simulation/jumpToEvent', direction)
+      this.simulationStore.stopPlayback()
+      this.simulationStore.jumpToEvent(direction)
     }
     , jumpToYear(y){
       const tick = parseInt(y) * 365
@@ -437,11 +440,11 @@ export default {
     }
     , onScrubDrag(value){
       // Debounced: updates display immediately, fetches after pause
-      this.$store.dispatch('simulation/seekTickDebounced', parseInt(value))
+      this.simulationStore.seekTickDebounced(parseInt(value))
     }
     , onScrubRelease(value){
       // On mouse-up: fetch immediately
-      this.$store.dispatch('simulation/seekTick', parseInt(value))
+      this.simulationStore.seekTick(parseInt(value))
     }
     , onTimelineKey(e){
       // Don't intercept keys when user is typing in an input/textarea/select
@@ -467,9 +470,9 @@ export default {
       // 1 Tick = 1 Tag → 1 Stunde = tickInterval / 24
       const hourInterval = Math.round(this.tickIntervalMs / 24)
       this.hourTimer = setInterval(() => {
-        const currentHour = this.$store.state.simulation.hour
+        const currentHour = this.simulationStore.hour
         if (currentHour < 23) {
-          this.$store.commit('simulation/setHour', currentHour + 1)
+          this.simulationStore.setHour(currentHour + 1)
         }
       }, hourInterval)
     }
@@ -583,7 +586,7 @@ export default {
 
 .slide-right-enter-active, .slide-right-leave-active
   transition: transform 0.3s ease
-.slide-right-enter, .slide-right-leave-to
+.slide-right-enter, .slide-right-enter-from, .slide-right-leave-to
   transform: translateX(100%)
 
 // ═══════════════════════════════════════════════

@@ -1,3 +1,4 @@
+import { h } from 'vue'
 import {
   Color
   , Vector3
@@ -30,28 +31,48 @@ export default {
       , default: true
     }
   }
-  , inject: [ 'threeVue' ]
+  // v3parent ersetzt $parent-Traversal ($children/$parent-Semantik ändert
+  // sich in Vue 3, u.a. um <Transition> herum); jede Mixin-Komponente
+  // stellt sich selbst als Parent bereit und führt ein Kind-Register.
+  , inject: {
+    threeVue: 'threeVue'
+    , v3parent: { default: null }
+  }
+  , provide(){
+    return { v3parent: this }
+  }
   , created(){
     this.disposables = []
+    this._teardown = []   // Aufräum-Callbacks, laufen in beforeUnmount
+    this.v3children = []  // Mixin-Kinder (für fade.transition)
   }
   , mounted(){
     if ( !this.v3object ){
       throw new Error('Please set component v3object property')
     }
 
-    const parent = this.$parent.v3object
+    const p = this.v3parent
+    if ( p ){
+      p.v3children.push( this )
+      this._teardown.push(() => {
+        const idx = p.v3children.indexOf( this )
+        if ( idx > -1 ) p.v3children.splice( idx, 1 )
+      })
+    }
+
+    const parent = (p && p.v3object) || (this.$parent && this.$parent.v3object)
 
     if ( !parent ){ return }
 
     parent.add( this.v3object )
-    this.$on('hook:beforeDestroy', () => {
+    this._teardown.push(() => {
       parent.remove( this.v3object )
     })
 
-    this.threeVue.$emit('scene:changed', { type: 'add', component: this, object: this.v3object })
+    this.threeVue.events.emit('scene:changed', { type: 'add', component: this, object: this.v3object })
   }
-  , beforeDestroy(){
-    this.threeVue.$emit('scene:changed', { type: 'remove', component: this, object: this.v3object })
+  , beforeUnmount(){
+    this.threeVue.events.emit('scene:changed', { type: 'remove', component: this, object: this.v3object })
 
     // set this to false to prevent autoclean
     if ( this.autoClean !== false ){
@@ -61,8 +82,11 @@ export default {
     this.disposables.forEach( thing => {
       thing.dispose()
     })
+
+    this._teardown.forEach( fn => fn() )
+    this._teardown = []
   }
-  , render(h){
+  , render(){
     if ( !this.v3object ){
       this.createObject()
     }
@@ -79,7 +103,7 @@ export default {
     }
     return h(
       'div'
-      , this.visible ? this.$slots.default : []
+      , this.visible && this.$slots.default ? this.$slots.default() : []
     )
   }
   , methods: {
@@ -120,10 +144,10 @@ export default {
 
     // add frame listner
     , beforeDraw( fn ){
-      this.threeVue.$on( 'beforeDraw', fn )
+      this.threeVue.events.on( 'beforeDraw', fn )
 
-      this.$on('hook:beforeDestroy', () => {
-        this.threeVue.$off( 'beforeDraw', fn )
+      this._teardown.push(() => {
+        this.threeVue.events.off( 'beforeDraw', fn )
       })
     }
 

@@ -87,7 +87,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS_HEX, PARTY_NAMES, EDUCATION_LABELS, AGE_GROUP_LABELS } from '@/lib/blob-adapter'
 import DoughnutChart from '@/components/charts/DoughnutChart'
 
@@ -104,12 +105,12 @@ export default {
     , doughnutOptions: {
       responsive: true
       , maintainAspectRatio: true
-      , legend: { display: true, position: 'bottom', labels: { fontColor: '#fffbfc', fontSize: 10, boxWidth: 10 } }
-      , cutoutPercentage: 55
+      , plugins: { legend: { display: true, position: 'bottom', labels: { color: '#fffbfc', font: { size: 10 }, boxWidth: 10 } } }
+      , cutout: '55%'
     }
   })
   , computed: {
-    ...mapGetters('simulation', ['statistics'])
+    ...mapState(useSimulationStore, ['statistics'])
     , stats() {
       return this.statistics && this.statistics.districtStats
     }
@@ -145,7 +146,7 @@ export default {
   }
   , async mounted() {
     this.loading = true
-    const data = await this.$store.dispatch('simulation/fetchDashboardBlobList')
+    const data = await useSimulationStore().fetchDashboardBlobList()
     this.blobList = data
     this.loading = false
   }

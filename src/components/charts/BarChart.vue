@@ -1,10 +1,16 @@
+<template lang="pug">
+Bar(:data="chartData", :options="options")
+</template>
+
 <script>
-import { Bar, mixins } from 'vue-chartjs'
-const { reactiveProp } = mixins
+import { Bar } from 'vue-chartjs'
+import '@/lib/chart-setup'
+
 export default {
-  extends: Bar
-  ,mixins: [reactiveProp]
-  ,props: { options: { type: Object, default: () => ({}) } }
-  ,mounted() { this.renderChart(this.chartData, this.options) }
+  components: { Bar }
+  ,props: {
+    chartData: { type: Object, required: true }
+    ,options: { type: Object, default: () => ({}) }
+  }
 }
 </script>

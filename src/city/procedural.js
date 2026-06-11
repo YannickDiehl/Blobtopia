@@ -63,7 +63,7 @@ function getTerrainColor (x, y) {
 // ── Terrain ──────────────────────────────────────────────────
 function createTerrain () {
   const seg = 100
-  const geo = new THREE.PlaneBufferGeometry(GRID, GRID, seg, seg)
+  const geo = new THREE.PlaneGeometry(GRID, GRID, seg, seg)
   geo.rotateX(-Math.PI / 2)
   geo.translate(GRID / 2, 0, GRID / 2)
 
@@ -74,7 +74,7 @@ function createTerrain () {
     colors[i * 3] = cr; colors[i * 3 + 1] = cg; colors[i * 3 + 2] = cb
   }
   geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3))
-  const mat = new THREE.MeshLambertMaterial({ vertexColors: THREE.VertexColors })
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true })
   const mesh = new THREE.Mesh(geo, mat)
   mesh.position.y = -0.3
   mesh.receiveShadow = true
@@ -516,7 +516,7 @@ function createMarketplace () {
 
   // Ground
   const ground = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(45, 45),
+    new THREE.PlaneGeometry(45, 45),
     new THREE.MeshLambertMaterial({ color: 0xccc0a8 })
   )
   ground.rotation.x = -Math.PI / 2
@@ -534,7 +534,7 @@ function createMarketplace () {
     stall.add(counter)
 
     const canopy = new THREE.Mesh(
-      new THREE.PlaneBufferGeometry(6, 4.5),
+      new THREE.PlaneGeometry(6, 4.5),
       new THREE.MeshLambertMaterial({ color: stallColors[i], side: THREE.DoubleSide })
     )
     canopy.position.set(0, 4.5, 0)
@@ -592,7 +592,7 @@ function createMediaCenter () {
   body.userData = { buildingInfo: LANDMARKS_DATA[2] }
   group.add(body)
 
-  const facade = new THREE.Mesh(new THREE.PlaneBufferGeometry(12, 11), glass)
+  const facade = new THREE.Mesh(new THREE.PlaneGeometry(12, 11), glass)
   facade.position.set(0, 8, 6.05)
   group.add(facade)
 
@@ -631,7 +631,7 @@ function createCentralSquare () {
   const benchMat = new THREE.MeshLambertMaterial({ color: 0x5D4037 })
 
   const ground = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(38, 38),
+    new THREE.PlaneGeometry(38, 38),
     new THREE.MeshLambertMaterial({ color: 0xc8c0b0 })
   )
   ground.rotation.x = -Math.PI / 2
@@ -750,7 +750,7 @@ function createLibrary () {
   }
 
   const door = new THREE.Mesh(
-    new THREE.PlaneBufferGeometry(3.5, 6),
+    new THREE.PlaneGeometry(3.5, 6),
     new THREE.MeshLambertMaterial({ color: 0x3a2010 })
   )
   door.position.set(0, 3, 7.05)

@@ -373,7 +373,7 @@ export function assignLocations(blob, phase, registry, serverX, serverY, rng){
 
   // ── Leisure spot: outdoor zones driven by latent constructs ──
   let leisureSpot
-  let leisureZone = null
+  let leisureZone
   leisureZone = chooseOutdoorZone(c, rng)
   const rwn = randomWalkableNear(leisureZone.x, leisureZone.z, leisureZone.walkRadius, walkableGrid, rng)
   leisureSpot = rwn || snapToPath(leisureZone.x, leisureZone.z)

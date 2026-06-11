@@ -1,0 +1,45 @@
+// Bridge: mappt die App-Markenwerte (aus _variables.scss) auf die
+// CSS-Variablen von Bulma 1 (geladen via @oruga-ui/theme-bulma/dist/theme.css).
+// Bulma 1 hat das !default-Sass-Override-Modell aufgegeben — Anpassung
+// läuft über Runtime-Variablen; data-theme="dark" steht in index.html.
+
+:root,
+[data-theme="dark"] {
+  // $primary: darken($seafoam #1cc1aa, 12) ≈ hsl(171, 75%, 31%)
+  --bulma-primary-h: 171deg;
+  --bulma-primary-s: 75%;
+  --bulma-primary-l: 31%;
+  --bulma-link-h: 171deg;
+  --bulma-link-s: 75%;
+  --bulma-link-l: 31%;
+  // $info: darken(#1f698e, 4) ≈ hsl(200, 64%, 30%)
+  --bulma-info-h: 200deg;
+  --bulma-info-s: 64%;
+  --bulma-info-l: 30%;
+  // $success: $darkGreen #246B26 ≈ hsl(122, 50%, 28%)
+  --bulma-success-h: 122deg;
+  --bulma-success-s: 50%;
+  --bulma-success-l: 28%;
+  // $warning: $yellow #FDDE3B ≈ hsl(50, 98%, 61%)
+  --bulma-warning-h: 50deg;
+  --bulma-warning-s: 98%;
+  --bulma-warning-l: 61%;
+  // $danger: $red #d20f18 ≈ hsl(357, 87%, 44%)
+  --bulma-danger-h: 357deg;
+  --bulma-danger-s: 87%;
+  --bulma-danger-l: 44%;
+
+  // Dunkles Schema: $black-ter = hsl(0, 0%, 9%), Text $ivory
+  --bulma-scheme-main-l: 9%;
+  --bulma-scheme-main-bis-l: 7%;
+  --bulma-scheme-main-ter-l: 14%;
+  --bulma-body-color: #fffdfc;
+
+  --bulma-family-primary: 'Source Sans Pro', BlinkMacSystemFont, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+  --bulma-family-monospace: latin-modern-mono, monospace;
+}
+
+// $body-size war 18px (Bulma 0.7 setzte das als html font-size)
+html {
+  font-size: 18px;
+}

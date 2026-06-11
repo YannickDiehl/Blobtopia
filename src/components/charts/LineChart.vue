@@ -1,10 +1,17 @@
+<template lang="pug">
+//- "Line" ist in Vue 2 ein reserviertes SVG-Element — lokal umbenannt
+chart-line(:data="chartData", :options="options")
+</template>
+
 <script>
-import { Line, mixins } from 'vue-chartjs'
-const { reactiveProp } = mixins
+import { Line } from 'vue-chartjs'
+import '@/lib/chart-setup'
+
 export default {
-  extends: Line
-  ,mixins: [reactiveProp]
-  ,props: { options: { type: Object, default: () => ({}) } }
-  ,mounted() { this.renderChart(this.chartData, this.options) }
+  components: { 'chart-line': Line }
+  ,props: {
+    chartData: { type: Object, required: true }
+    ,options: { type: Object, default: () => ({}) }
+  }
 }
 </script>

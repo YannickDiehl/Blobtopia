@@ -13,6 +13,11 @@ export default {
   , created(){
     this.raycaster = new THREE.Raycaster()
     this.pos = new THREE.Vector2()
+    this._teardown = []
+  }
+  , beforeUnmount(){
+    this._teardown.forEach( fn => fn() )
+    this._teardown = []
   }
   , mounted(){
 
@@ -37,9 +42,10 @@ export default {
       this.monitored = this.threeVue.scene.children.reduce( collectNamedChildren, [] )
     }
 
-    this.threeVue.$on('scene:changed', updateMonitored)
-    this.$on('beforeDestroy', () => {
-      this.threeVue.$off('scene:changed', updateMonitored)
+    this.threeVue.events.on('scene:changed', updateMonitored)
+    // (war vorher ein nie feuernder $on('beforeUnmount')-Tippfehler)
+    this._teardown.push(() => {
+      this.threeVue.events.off('scene:changed', updateMonitored)
     })
 
     updateMonitored()
@@ -64,7 +70,7 @@ export default {
       }
 
       el.addEventListener(name, fn, flag !== undefined ? flag : { passive: true })
-      this.$on('hook:beforeDestroy', () => {
+      this._teardown.push(() => {
         el.removeEventListener(name, fn)
       })
     }

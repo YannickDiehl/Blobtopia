@@ -6,8 +6,8 @@
       span Interview: {{ blobName }}
     .chat-actions
       b-tooltip(label="Transkript exportieren", position="is-left")
-        b-icon.action-btn(icon="download", size="is-small", @click.native="showExport = true")
-      b-icon.action-btn(icon="close", size="is-small", @click.native="onClose")
+        b-icon.action-btn(icon="download", size="is-small", @click="showExport = true")
+      b-icon.action-btn(icon="close", size="is-small", @click="onClose")
 
   .chat-messages(ref="messagesContainer")
     .message(v-for="(msg, i) in messages", :key="i", :class="msg.role")
@@ -69,7 +69,8 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useChatStore } from '@/stores/chat'
 import BlobChatExport from './blob-chat-export'
 
 export default {
@@ -80,8 +81,8 @@ export default {
     , showExport: false
   })
   , computed: {
-    ...mapState('chat', ['isLoading', 'error', 'activeBlobId'])
-    , ...mapGetters('chat', ['activeMessages', 'activeSession'])
+    ...mapStores(useChatStore)
+    , ...mapState(useChatStore, ['isLoading', 'error', 'activeBlobId', 'activeMessages', 'activeSession'])
     , messages() {
       return this.activeMessages
     }
@@ -115,7 +116,7 @@ export default {
     send() {
       const text = this.inputText.trim()
       if (!text || this.isLoading) return
-      this.$store.dispatch('chat/sendMessage', text)
+      this.chatStore.sendMessage(text)
       this.inputText = ''
       // Reset textarea height
       if (this.$refs.chatInput) {
@@ -135,11 +136,11 @@ export default {
       }
     }
     , endInterview() {
-      this.$store.dispatch('chat/endInterview')
+      this.chatStore.endInterview()
       this.showExport = true
     }
     , onClose() {
-      this.$store.dispatch('chat/closeChat')
+      this.chatStore.closeChat()
     }
   }
 }

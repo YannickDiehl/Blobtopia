@@ -220,7 +220,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 
 export default {
   name: 'OverviewPanel'
@@ -228,7 +229,7 @@ export default {
     tooltip: { visible: false, x: 0, y: 0, description: '', tick: 0 }
   })
   , computed: {
-    ...mapGetters('simulation', [
+    ...mapState(useSimulationStore, [
       'timelineMeta'
       , 'timelineEvents'
       , 'electionTicks'

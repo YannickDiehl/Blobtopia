@@ -66,7 +66,7 @@ export default async function handler(req, res) {
   }
 
   // Parse request
-  const { blob_id, tick, messages, system_prompt } = req.body || {}
+  const { blob_id, tick: _tick, messages, system_prompt } = req.body || {}
 
   if (!blob_id) {
     return res.status(400).json({ error: 'blob_id required' })

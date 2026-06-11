@@ -5,7 +5,7 @@
       .district-badge(:style="{ backgroundColor: districtHex }")
       .header-text
         .blob-name(v-if="blob.name") {{ blob.name }}
-      b-icon.close-btn(icon="close", size="is-small", @click.native="$emit('close')")
+      b-icon.close-btn(icon="close", size="is-small", @click="$emit('close')")
 
     .inspector-section
       h4 Demografie
@@ -439,7 +439,7 @@ export default {
   transition: max-height 0.3s ease, opacity 0.3s ease
   max-height: 600px
   overflow: hidden
-.collapse-enter, .collapse-leave-to
+.collapse-enter, .collapse-enter-from, .collapse-leave-to
   max-height: 0
   opacity: 0
 </style>

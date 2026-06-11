@@ -45,7 +45,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import FloatingPanel from '@/components/floating-panel'
 
 export default {
@@ -56,29 +57,30 @@ export default {
       const labels = { 1: '1×', 3: '3×', 7: '7×', 10: '10×' }
       return labels[this.playbackSpeed] || this.playbackSpeed + '×'
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       isPaused: 'isPaused'
       , playbackSpeed: 'playbackSpeed'
     })
+    , ...mapStores(useSimulationStore)
   }
   , methods: {
     togglePlayback(){
       if (this.isPaused) {
-        this.$store.dispatch('simulation/startPlayback')
+        this.simulationStore.startPlayback()
       } else {
-        this.$store.dispatch('simulation/stopPlayback')
+        this.simulationStore.stopPlayback()
       }
     }
     , setSpeed(speed){
-      this.$store.dispatch('simulation/setPlaybackSpeed', speed)
+      this.simulationStore.setPlaybackSpeed(speed)
     }
     , stepBy(delta){
-      this.$store.dispatch('simulation/stopPlayback')
-      this.$store.dispatch('simulation/stepTick', delta)
+      this.simulationStore.stopPlayback()
+      this.simulationStore.stepTick(delta)
     }
     , jumpEvent(direction){
-      this.$store.dispatch('simulation/stopPlayback')
-      this.$store.dispatch('simulation/jumpToEvent', direction)
+      this.simulationStore.stopPlayback()
+      this.simulationStore.jumpToEvent(direction)
     }
   }
 }

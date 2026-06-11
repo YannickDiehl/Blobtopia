@@ -2,18 +2,19 @@
 .blob-inspector
   h3.heading Blob-Inspektor
 
-  //- Search Section
+  //- Search Section (eigene Trefferliste statt Buefy-Autocomplete)
   .search-section
-    b-autocomplete(
+    b-input(
       v-model="searchQuery"
-      :data="filteredBlobs"
-      :custom-formatter="formatBlob"
       placeholder="Name oder ID eingeben..."
       icon="magnify"
       clearable
-      @select="onSelectBlob"
+      @focus="searchFocused = true"
     )
-      template(slot="empty") Kein Blob gefunden
+    .search-results(v-if="searchFocused && searchQuery")
+      .search-result(v-for="blob in filteredBlobs", :key="blob.id", @click="pickBlob(blob)")
+        | {{ formatBlob(blob) }}
+      .search-empty(v-if="!filteredBlobs.length") Kein Blob gefunden
 
   //- Profile Section
   .profile-section(v-if="selectedBlob")
@@ -106,7 +107,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS } from '@/lib/blob-adapter'
 import LineChart from '@/components/charts/LineChart.vue'
 
@@ -144,13 +146,14 @@ export default {
   , components: { LineChart }
   , data: () => ({
     searchQuery: ''
+    , searchFocused: false
     , selectedBlobId: null
     , historyLoading: false
     , loadedHistory: null
     , localBlobList: []
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardBlobList', 'dashboardBlobHistory'])
+    ...mapState(useSimulationStore, ['dashboardBlobList', 'dashboardBlobHistory'])
     , loading() {
       return !this.dashboardBlobList
     }
@@ -260,6 +263,11 @@ export default {
       const name = g.name || g.id.substring(0, 8)
       return `${name} | ${this.districtName(g.district)} | ${g.age} J.`
     }
+    , pickBlob(blob) {
+      this.searchFocused = false
+      this.searchQuery = this.formatBlob(blob)
+      this.onSelectBlob(blob)
+    }
     , async onSelectBlob(blob) {
       if (!blob) {
         this.selectedBlobId = null
@@ -269,7 +277,7 @@ export default {
       this.selectedBlobId = blob.id
       this.loadedHistory = null
       this.historyLoading = true
-      const data = await this.$store.dispatch('simulation/fetchDashboardBlobHistory', blob.id)
+      const data = await useSimulationStore().fetchDashboardBlobHistory(blob.id)
       this.loadedHistory = data
       this.historyLoading = false
     }
@@ -277,10 +285,12 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , legend: { labels: { fontColor: '#fffbfc' } }
+        , plugins: {
+          legend: { labels: { color: '#fffbfc' } }
+        }
         , scales: {
-          xAxes: [{ ticks: { fontColor: '#fffbfc', maxTicksLimit: 15 }, gridLines: { color: 'rgba(255,255,255,0.06)' }, scaleLabel: { display: true, labelString: 'Jahr', fontColor: '#fffbfc' } }]
-          , yAxes: [{ ticks: { fontColor: '#fffbfc', min, max }, gridLines: { color: 'rgba(255,255,255,0.06)' } }]
+          x: { ticks: { color: '#fffbfc', maxTicksLimit: 15 }, grid: { color: 'rgba(255,255,255,0.06)' }, title: { display: true, text: 'Jahr', color: '#fffbfc' } }
+          , y: { min, max, ticks: { color: '#fffbfc' }, grid: { color: 'rgba(255,255,255,0.06)' } }
         }
       }
     }
@@ -310,7 +320,7 @@ export default {
     }
   }
   , async mounted() {
-    const data = await this.$store.dispatch('simulation/fetchDashboardBlobList')
+    const data = await useSimulationStore().fetchDashboardBlobList()
     if (data && (data.globs || data.blobs)) {
       this.localBlobList = data.globs || data.blobs
     }
@@ -324,6 +334,31 @@ export default {
 
 .search-section
   margin-bottom: 1rem
+  position: relative
+
+.search-results
+  position: absolute
+  top: 100%
+  left: 0
+  right: 0
+  z-index: 20
+  background: rgba(20, 20, 20, 0.98)
+  border: 1px solid rgba(255, 255, 255, 0.15)
+  border-radius: 4px
+  max-height: 300px
+  overflow-y: auto
+
+.search-result
+  padding: 0.4rem 0.8rem
+  cursor: pointer
+  font-size: 0.85rem
+  &:hover
+    background: rgba(28, 193, 170, 0.15)
+
+.search-empty
+  padding: 0.4rem 0.8rem
+  color: #888
+  font-size: 0.85rem
 
 .loading-state
   padding: 2rem 0

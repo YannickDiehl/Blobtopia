@@ -216,7 +216,7 @@ export default {
     document.addEventListener('click', handler)
     this._clickHandler = handler
   }
-  , beforeDestroy() {
+  , beforeUnmount() {
     if (this._clickHandler) {
       document.removeEventListener('click', this._clickHandler)
     }
@@ -400,7 +400,7 @@ export default {
 // ── Animations ──
 .fade-enter-active, .fade-leave-active
   transition: opacity 0.15s
-.fade-enter, .fade-leave-to
+.fade-enter, .fade-enter-from, .fade-leave-to
   opacity: 0
 
 // ── Print ──

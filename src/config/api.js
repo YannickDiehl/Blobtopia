@@ -2,10 +2,10 @@
 export const STATIC_MODE = true
 
 // Base path for static data files (relative to public/)
-export const DATA_BASE = process.env.VUE_APP_DATA_BASE || '/data/timeline'
+export const DATA_BASE = import.meta.env.VUE_APP_DATA_BASE || '/data/timeline'
 
 // Chat API endpoint (serverless function)
-export const CHAT_API = process.env.VUE_APP_CHAT_API || '/api/chat'
+export const CHAT_API = import.meta.env.VUE_APP_CHAT_API || '/api/chat'
 
 // Legacy — not used in static mode but kept for compatibility
-export const API_BASE = process.env.VUE_APP_API_BASE || ''
+export const API_BASE = import.meta.env.VUE_APP_API_BASE || ''

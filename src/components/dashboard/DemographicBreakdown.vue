@@ -25,22 +25,23 @@
     .chart-section
       h4.subheading Altersverteilung
       .view-toggle
-        b-radio-button(v-model="ageView" native-value="district" size="is-small" type="is-primary") Pro Distrikt
-        b-radio-button(v-model="ageView" native-value="total" size="is-small" type="is-primary") Gesamt
+        //- Oruga hat keine Button-Radios — Toggle über zwei Buttons
+        b-button(size="is-small", :type="ageView === 'district' ? 'is-primary' : ''", @click="ageView = 'district'") Pro Distrikt
+        b-button(size="is-small", :type="ageView === 'total' ? 'is-primary' : ''", @click="ageView = 'total'") Gesamt
       .chart-wrap(style="height:300px")
-        bar-chart(:chart-data="ageChartData" :options="stackedBarOptions" :styles="chartStyles")
+        bar-chart(:chart-data="ageChartData" :options="stackedBarOptions")
 
     //- Education Distribution
     .chart-section
       h4.subheading Bildungsverteilung (pro Distrikt)
       .chart-wrap(style="height:300px")
-        bar-chart(:chart-data="educationChartData" :options="stackedBarOptions" :styles="chartStyles")
+        bar-chart(:chart-data="educationChartData" :options="stackedBarOptions")
 
     //- Income Distribution
     .chart-section
       h4.subheading Einkommensverteilung (pro Distrikt)
       .chart-wrap(style="height:300px")
-        bar-chart(:chart-data="incomeChartData" :options="stackedBarOptions" :styles="chartStyles")
+        bar-chart(:chart-data="incomeChartData" :options="stackedBarOptions")
 
     //- Household type distribution
     .chart-section
@@ -61,7 +62,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS, NUM_DISTRICTS } from '@/lib/blob-adapter'
 import BarChart from '@/components/charts/BarChart.vue'
 
@@ -72,16 +74,13 @@ export default {
     ageView: 'district'
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardBlobList'])
+    ...mapState(useSimulationStore, ['dashboardBlobList'])
     , blobList() {
       return this.dashboardBlobList || null
     }
     , blobs() {
       if (!this.blobList) return []
       return this.blobList.globs || this.blobList.blobs || this.blobList
-    }
-    , chartStyles() {
-      return { height: '100%', position: 'relative' }
     }
     , meanAge() {
       if (!this.blobs.length) return '-'
@@ -168,19 +167,22 @@ export default {
         responsive: true
         , maintainAspectRatio: false
         , scales: {
-          xAxes: [{
+          x: {
             stacked: true
-            , gridLines: { color: 'rgba(255,255,255,0.06)' }
-            , ticks: { fontColor: '#999' }
-          }]
-          , yAxes: [{
+            , grid: { color: 'rgba(255,255,255,0.06)' }
+            , ticks: { color: '#999' }
+          }
+          , y: {
             stacked: true
-            , gridLines: { color: 'rgba(255,255,255,0.06)' }
-            , ticks: { fontColor: '#999', beginAtZero: true }
-          }]
+            , beginAtZero: true
+            , grid: { color: 'rgba(255,255,255,0.06)' }
+            , ticks: { color: '#999' }
+          }
         }
-        , legend: {
-          labels: { fontColor: '#ccc' }
+        , plugins: {
+          legend: {
+            labels: { color: '#ccc' }
+          }
         }
       }
     }
@@ -214,7 +216,7 @@ export default {
     }
   }
   , mounted() {
-    this.$store.dispatch('simulation/fetchDashboardBlobList')
+    useSimulationStore().fetchDashboardBlobList()
   }
 }
 </script>

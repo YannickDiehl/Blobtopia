@@ -6,7 +6,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { ERAS, getEraForTick } from '@/config/timeline-eras'
 
 export default {
@@ -24,11 +25,12 @@ export default {
     , dpr: 1
   })
   , computed: {
-    ...mapGetters('simulation', {
+    ...mapState(useSimulationStore, {
       tick: 'tick'
       , maxTick: 'maxTick'
       , timelineEvents: 'timelineEvents'
     })
+    , ...mapStores(useSimulationStore)
   }
   , watch: {
     tick() { this.draw() }
@@ -41,7 +43,7 @@ export default {
     this.resizeObserver.observe(this.$refs.container)
     this.$nextTick(() => this.onResize())
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     if (this.resizeObserver) this.resizeObserver.disconnect()
   }
   , methods: {
@@ -147,15 +149,15 @@ export default {
     , onClick(e) {
       if (this.isDragging) return
       const tick = this.tickFromX(e.clientX)
-      this.$store.dispatch('simulation/stopPlayback')
-      this.$store.dispatch('simulation/seekTick', tick)
+      this.simulationStore.stopPlayback()
+      this.simulationStore.seekTick(tick)
     }
 
     , onMouseDown(e) {
       this.isDragging = true
       const tick = this.tickFromX(e.clientX)
-      this.$store.dispatch('simulation/stopPlayback')
-      this.$store.dispatch('simulation/seekTickDebounced', tick)
+      this.simulationStore.stopPlayback()
+      this.simulationStore.seekTickDebounced(tick)
     }
 
     , onMouseMove(e) {
@@ -173,7 +175,7 @@ export default {
       this.tooltipVisible = true
 
       if (this.isDragging) {
-        this.$store.dispatch('simulation/seekTickDebounced', tick)
+        this.simulationStore.seekTickDebounced(tick)
       }
     }
 
@@ -181,7 +183,7 @@ export default {
       if (this.isDragging) {
         this.isDragging = false
         const tick = this.tickFromX(e.clientX)
-        this.$store.dispatch('simulation/seekTick', tick)
+        this.simulationStore.seekTick(tick)
       }
     }
 

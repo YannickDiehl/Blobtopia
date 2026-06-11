@@ -2,7 +2,7 @@
  * kenney-loader.js — Kenney model loading, cloning, tinting, and road tile placement
  */
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { KENNEY_ROAD_NAMES, ROAD_TILE_SCALE } from './constants'
 import { DISTRICT_PALETTES, DEFAULT_PALETTE } from './districts'
 
@@ -185,7 +185,7 @@ export function createFallbackBuilding (type) {
   // Water fallback: flat blue plane
   if (type === 'water') {
     const waterMat = new THREE.MeshLambertMaterial({ color: 0x3a7cbd, transparent: true, opacity: 0.75 })
-    const plane = new THREE.Mesh(new THREE.PlaneBufferGeometry(1, 1), waterMat)
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), waterMat)
     plane.rotation.x = -Math.PI / 2
     plane.position.y = 0.5
     group.add(plane)

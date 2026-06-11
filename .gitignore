@@ -65,3 +65,7 @@ public/data/timeline/blobs/
 
 # Backup files (any *.bak* under data/)
 data/*.bak*
+
+# e2e screenshot output (visual reference, local only)
+e2e-baseline/
+e2e-shots/

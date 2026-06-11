@@ -23,7 +23,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 import LineChart from '@/components/charts/LineChart'
 
@@ -44,7 +45,7 @@ export default {
     ]
   })
   , computed: {
-    ...mapGetters('simulation', ['timelineEvents'])
+    ...mapState(useSimulationStore, ['timelineEvents'])
     , currentConstruct() {
       return this.constructs[this.selectedIndex]
     }
@@ -61,7 +62,7 @@ export default {
   }
   , async mounted() {
     this.loading = true
-    const data = await this.$store.dispatch('simulation/fetchDashboardLatentTraits')
+    const data = await useSimulationStore().fetchDashboardLatentTraits()
     if (data && data.districts) {
       this.districts = data.districts
     }
@@ -95,23 +96,23 @@ export default {
       return {
         responsive: true
         , maintainAspectRatio: false
-        , tooltips: { mode: 'index', intersect: false }
+        , plugins: {
+          tooltip: { mode: 'index', intersect: false }
+          , legend: { labels: { color: '#fffbfc', font: { size: 11 } } }
+        }
         , hover: { mode: 'nearest', intersect: true }
-        , legend: { labels: { fontColor: '#fffbfc', fontSize: 11 } }
         , elements: { point: { radius: 0 }, line: { tension: 0.3, borderWidth: 2 } }
         , scales: {
-          yAxes: [{
-            ticks: {
-              min: 0
-              , max: isNetworkSize ? 20 : 10
-              , fontColor: '#999'
-            }
-            , gridLines: { color: 'rgba(255,255,255,0.06)' }
-          }]
-          , xAxes: [{
-            ticks: { fontColor: '#999', maxTicksLimit: 20 }
-            , gridLines: { color: 'rgba(255,255,255,0.06)' }
-          }]
+          y: {
+            min: 0
+            , max: isNetworkSize ? 20 : 10
+            , ticks: { color: '#999' }
+            , grid: { color: 'rgba(255,255,255,0.06)' }
+          }
+          , x: {
+            ticks: { color: '#999', maxTicksLimit: 20 }
+            , grid: { color: 'rgba(255,255,255,0.06)' }
+          }
         }
       }
     }

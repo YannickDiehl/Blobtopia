@@ -1,14 +1,14 @@
 /**
- * Vuex module: survey (Befragungsinstitut)
+ * Pinia store: survey (Befragungsinstitut).
  *
  * Holds the survey-window state: visibility, the student's free-form
  * questionnaire (items), the calibratable sampling design, the drawn sample
- * preview, fieldwork progress and the resulting dataset. Pattern mirrors
- * src/store/chat.js (namespaced, factory state).
+ * preview, fieldwork progress and the resulting dataset.
  *
  * The heavy lifting lives in the pure libs:
  *   src/lib/survey.js · survey-sampling.js · survey-engine.js · survey-dataset.js
  */
+import { defineStore } from 'pinia'
 import {
   SAMPLING, drawSample, eligibleFrame, realizedDistribution, ACCESSORS
 } from '@/lib/survey-sampling'
@@ -18,6 +18,7 @@ import { runSyntheticSurvey } from '@/lib/survey-synthetic'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
 import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
 import { CHAT_API } from '@/config/api'
+import { useSimulationStore } from '@/stores/simulation'
 
 const DEFAULT_DESIGN = () => ({
   technique: SAMPLING.SRS
@@ -33,9 +34,9 @@ const DEFAULT_DESIGN = () => ({
   , manualExclude: []       // blob ids removed from the frame
 })
 
-// getCurrentGeneration is a function-returning getter — call it if needed.
-function currentBlobs(rootGetters) {
-  let gen = rootGetters['simulation/getCurrentGeneration']
+// getCurrentGeneration is a function held in simulation state — call it.
+function currentBlobs() {
+  let gen = useSimulationStore().getCurrentGeneration
   if (typeof gen === 'function') gen = gen()
   return gen && gen.blobs ? gen.blobs : []
 }
@@ -69,12 +70,11 @@ function downloadText(text, filename, mime) {
     a.click()
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-  } catch (e) { /* ignore */ }
+  } catch (_e) { /* ignore */ }
 }
 
-export const survey = {
-  namespaced: true
-  , state: () => ({
+export const useSurveyStore = defineStore('survey', {
+  state: () => ({
     isOpen: false
     , items: []
     , design: DEFAULT_DESIGN()
@@ -87,50 +87,43 @@ export const survey = {
   })
   , getters: {
     // The eligible, filtered candidate frame for the manual picker + counts.
-    frameBlobs(state, getters, rootState, rootGetters) {
-      let gen = rootGetters['simulation/getCurrentGeneration']
-      if (typeof gen === 'function') gen = gen()
-      const blobs = gen && gen.blobs ? gen.blobs : []
-      return eligibleFrame(blobs, Object.assign({}, state.design.eligibility, {
+    frameBlobs(state) {
+      return eligibleFrame(currentBlobs(), Object.assign({}, state.design.eligibility, {
         filter: state.design.filter
         , manualExclude: state.design.manualExclude
       }))
     }
   }
-  , mutations: {
-    OPEN_SURVEY(s) { s.isOpen = true }
-    , CLOSE_SURVEY(s) { s.isOpen = false }
-    , SET_ITEMS(s, items) { s.items = items }
-    , SET_DESIGN(s, design) { s.design = design }
-    , SET_SAMPLE(s, { sample, dist }) { s.lastSample = sample; s.dist = dist }
-    , SET_RESULT(s, result) { s.result = result }
-    , SET_PROGRESS(s, p) { s.progress = p }
-    , SET_RUNNING(s, v) { s.isRunning = v }
-    , SET_ERROR(s, e) { s.error = e }
-  }
   , actions: {
+    // Ehemalige Mutations (Call-Sites in survey-window.vue nutzen sie direkt)
+    OPEN_SURVEY() { this.isOpen = true }
+    , CLOSE_SURVEY() { this.isOpen = false }
+    , SET_ITEMS(items) { this.items = items }
+    , SET_DESIGN(design) { this.design = design }
+    , SET_SAMPLE({ sample, dist }) { this.lastSample = sample; this.dist = dist }
+
     // Draw a sample over the current population and tally its distribution.
-    previewSample({ commit, state, rootGetters }) {
-      commit('SET_ERROR', null)
-      const blobs = currentBlobs(rootGetters)
-      if (!blobs.length) { commit('SET_ERROR', 'Keine Population geladen.'); return }
-      const design = buildDrawDesign(state.design, blobs)
+    , previewSample() {
+      this.error = null
+      const blobs = currentBlobs()
+      if (!blobs.length) { this.error = 'Keine Population geladen.'; return }
+      const design = buildDrawDesign(this.design, blobs)
       const sample = drawSample(blobs, design)
-      const v = (state.design.strataVars && state.design.strataVars[0]) || 'district'
+      const v = (this.design.strataVars && this.design.strataVars[0]) || 'district'
       const dist = realizedDistribution(sample.units, v, design)
-      commit('SET_SAMPLE', { sample, dist })
+      this.SET_SAMPLE({ sample, dist })
     }
 
     // Run the fieldwork: synthetic (free, default) or live LLM.
-    , async runFieldwork({ commit, state, rootState, rootGetters }) {
-      commit('SET_ERROR', null)
-      if (!state.items.length) { commit('SET_ERROR', 'Bitte zuerst mindestens eine Frage anlegen.'); return }
-      const blobs = currentBlobs(rootGetters)
-      if (!blobs.length) { commit('SET_ERROR', 'Keine Population geladen.'); return }
+    , async runFieldwork() {
+      this.error = null
+      if (!this.items.length) { this.error = 'Bitte zuerst mindestens eine Frage anlegen.'; return }
+      const blobs = currentBlobs()
+      if (!blobs.length) { this.error = 'Keine Population geladen.'; return }
 
-      const design = buildDrawDesign(state.design, blobs)
+      const design = buildDrawDesign(this.design, blobs)
       const sample = drawSample(blobs, design)
-      if (!sample.units.length) { commit('SET_ERROR', 'Die Stichprobe ist leer — bitte das Design prüfen.'); return }
+      if (!sample.units.length) { this.error = 'Die Stichprobe ist leer — bitte das Design prüfen.'; return }
 
       const demographics = b => ({
         district: b.district
@@ -138,17 +131,18 @@ export const survey = {
         , education_level: b.education_level
         , party: b.party_name
       })
-      const strataVar = (state.design.strataVars && state.design.strataVars[0]) || 'district'
+      const strataVar = (this.design.strataVars && this.design.strataVars[0]) || 'district'
 
-      commit('SET_RUNNING', true)
-      commit('SET_RESULT', null)
-      commit('SET_PROGRESS', { done: 0, total: sample.units.length })
+      this.isRunning = true
+      this.result = null
+      this.progress = { done: 0, total: sample.units.length }
       try {
         let result
-        if (state.design.mode === 'llm') {
+        if (this.design.mode === 'llm') {
           // Live LLM fieldwork — one chat call per (blob × item).
-          const tick = (rootState.simulation && rootState.simulation.tick) || 0
-          const tpy = (rootState.simulation.timelineMeta && rootState.simulation.timelineMeta.ticks_per_year) || 365
+          const sim = useSimulationStore()
+          const tick = sim.tick || 0
+          const tpy = (sim.timelineMeta && sim.timelineMeta.ticks_per_year) || 365
           const sendFn = makeChatSender(CHAT_API, localStorage.getItem('blobtopia_chat_token'))
           // Pre-build each persona prompt (async static data) so runSurvey can
           // call buildPrompt synchronously.
@@ -157,40 +151,40 @@ export const survey = {
             const b = u.blob
             const sg = await getBlobStatic(b.id)
             const cs = await getChangeSummary(b.id, tick)
-            const ctx = resolveActivity(rootState, b)
+            const ctx = resolveActivity({ simulation: sim }, b)
             promptByBlob[b.id] = buildSystemPrompt(b, sg || {}, tick, tpy, cs, ctx.activity, ctx.hour)
           }
           result = await runSurvey(sample.units, {
             sendFn: sendFn
             , buildPrompt: u => promptByBlob[u.blob.id]
-            , items: state.items
+            , items: this.items
             , tick: tick
             , concurrency: 4
             , maxRetries: 1
             , demographics: demographics
-            , onProgress: (done, total) => commit('SET_PROGRESS', { done: done, total: total })
+            , onProgress: (done, total) => { this.progress = { done, total } }
           })
         } else {
           // Synthetic (free, instant): answers from stored values + noise.
-          result = runSyntheticSurvey(sample.units, state.items, {
-            seed: state.design.seed
+          result = runSyntheticSurvey(sample.units, this.items, {
+            seed: this.design.seed
             , demographics: demographics
           })
-          commit('SET_PROGRESS', { done: result.rows.length, total: result.rows.length })
+          this.progress = { done: result.rows.length, total: result.rows.length }
         }
-        commit('SET_RESULT', result)
-        commit('SET_SAMPLE', { sample: sample, dist: realizedDistribution(sample.units, strataVar, design) })
+        this.result = result
+        this.SET_SAMPLE({ sample: sample, dist: realizedDistribution(sample.units, strataVar, design) })
       } catch (e) {
-        commit('SET_ERROR', e && e.message ? e.message : String(e))
+        this.error = e && e.message ? e.message : String(e)
       } finally {
-        commit('SET_RUNNING', false)
+        this.isRunning = false
       }
     }
 
-    , exportCsv({ state }) {
-      if (!state.result) return
-      const csv = toCSV(state.result.rows, state.items)
+    , exportCsv() {
+      if (!this.result) return
+      const csv = toCSV(this.result.rows, this.items)
       downloadText(csv, 'blobtopia-befragung.csv', 'text/csv')
     }
   }
-}
+})

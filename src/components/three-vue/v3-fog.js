@@ -1,3 +1,4 @@
+import { h } from 'vue'
 import * as THREE from 'three'
 
 const threeProps = {
@@ -21,10 +22,10 @@ export default {
   , props: {
     ...threeProps
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     this.threeVue.scene.fog = null
   }
-  , render(h){
+  , render(){
     this.threeVue.scene.fog = new THREE.Fog( this.color, this.near, this.far )
     return h('div')
   }

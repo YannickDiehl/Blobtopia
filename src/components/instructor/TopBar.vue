@@ -61,7 +61,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import FloatingPanel from '@/components/floating-panel'
 import { ERAS, getEraForTick } from '@/config/timeline-eras'
 
@@ -91,7 +92,7 @@ export default {
       const idx = getEraForTick(this.tick)
       return ERAS[idx] ? ERAS[idx].name : null
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       connectionStatus: 'connectionStatus'
       , isPaused: 'isPaused'
       , isLiveMode: 'isLiveMode'

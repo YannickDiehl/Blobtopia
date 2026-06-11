@@ -121,7 +121,7 @@ export default {
       border-bottom: 1px solid $grey-dark
       padding-bottom: 0.5rem
 
-    >>> .item
+    :deep() .item
       margin-top: 0.5rem
 .direction-up
   .panel
@@ -134,7 +134,7 @@ export default {
       border-top: 1px solid $grey-dark
       padding-top: 0.5rem
 
-    >>> .item
+    :deep() .item
       margin-bottom: 0.5rem
 .direction-left
   .panel
@@ -146,7 +146,7 @@ export default {
       border-left: 1px solid $grey-dark
       padding-left: 0.5rem
 
-    >>> .item
+    :deep() .item
       margin-right: 0.5rem
 
 .direction-right
@@ -159,6 +159,6 @@ export default {
       border-right: 1px solid $grey-dark
       padding-right: 0.5rem
 
-    >>> .item
+    :deep() .item
       margin-left: 0.5rem
 </style>

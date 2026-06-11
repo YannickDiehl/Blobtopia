@@ -3,7 +3,8 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions } from 'pinia'
+import { useAlertsStore } from '@/stores/alerts'
 
 export default {
   name: 'ErrorMessage'
@@ -22,7 +23,7 @@ export default {
     }
   }
   , methods: {
-    ...mapActions([
+    ...mapActions(useAlertsStore, [
       'clearError'
     ])
     , showAlert(){
