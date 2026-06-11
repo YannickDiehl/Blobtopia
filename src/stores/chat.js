@@ -49,22 +49,42 @@ export const useChatStore = defineStore('chat', {
       return buildSystemPrompt(blob || {}, staticBlob || {}, tick || 0, tpy, cs, ctx.activity, ctx.hour)
     }
 
-    , async _post(blobId, tick, systemPrompt, messages) {
-      const res = await fetch(CHAT_API, {
-        method: 'POST'
-        , headers: authHeaders()
-        , body: JSON.stringify({
-          blob_id: blobId
-          , tick: tick || null
-          , system_prompt: systemPrompt
-          , messages
+    // Resilienter Transport: 40s-Timeout (nie endlose Tipp-Punkte), ein
+    // automatischer Retry bei Netzwerkfehler/Timeout, leere Antworten werden
+    // als Fehler sichtbar statt als leere Sprechblase zu landen.
+    , async _post(blobId, tick, systemPrompt, messages, isRetry) {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 40000)
+      let res
+      try {
+        res = await fetch(CHAT_API, {
+          method: 'POST'
+          , headers: authHeaders()
+          , signal: controller.signal
+          , body: JSON.stringify({
+            blob_id: blobId
+            , tick: tick || null
+            , system_prompt: systemPrompt
+            , messages
+          })
         })
-      })
+      } catch (cause) {
+        clearTimeout(timer)
+        if (!isRetry) return this._post(blobId, tick, systemPrompt, messages, true)
+        throw new Error(controller.signal.aborted
+          ? 'Zeitüberschreitung — der Blob hat nicht geantwortet. Bitte erneut versuchen.'
+          : 'Netzwerkfehler — ist der Server erreichbar?', { cause })
+      }
+      clearTimeout(timer)
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error || 'Server error ' + res.status)
       }
-      return res.json()
+      const data = await res.json().catch(() => null)
+      if (!data || typeof data.reply !== 'string' || !data.reply.trim()) {
+        throw new Error('Leere Antwort vom Server — bitte erneut versuchen.')
+      }
+      return data
     }
 
     , async startInterview({ blobId, tick, blobName, blob }) {

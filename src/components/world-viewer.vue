@@ -222,13 +222,22 @@ const methods = {
     })
   }
   , draw(){
-    // Blob-Kameraführung nur wenn aktiv ein Blob verfolgt wird
-    if (this.followBlobId !== undefined) {
-      this.followBlobCamera()
-      if ( this.transitionCamera && !this.cameraDragging ){
-        this.camera.position.lerp(this.cameraGoal, 0.05)
+    // Blob-Kameraführung nur wenn aktiv ein Blob verfolgt wird.
+    // Abgeschirmt: eine Exception hier darf nie den restlichen Frame
+    // (controls.update + renderer.draw) abwürgen — sonst friert die Welt ein.
+    try {
+      if (this.followBlobId !== undefined) {
+        this.followBlobCamera()
+        if ( this.transitionCamera && !this.cameraDragging ){
+          this.camera.position.lerp(this.cameraGoal, 0.05)
+        }
+        this.controls.target.copy(this.cameraFocusGoal)
       }
-      this.controls.target.copy(this.cameraFocusGoal)
+    } catch (e) {
+      if (!this._followWarned) {
+        this._followWarned = true
+        console.warn('Blob-Kameraführung übersprungen:', e)
+      }
     }
 
     // WASD / Pfeiltasten: Kamera über die Karte gleiten
@@ -258,10 +267,12 @@ const methods = {
     this.$refs.renderer.draw()
   }
   , followBlobCamera(){
-    // Vue 3: Ref unter v-if im v-for ist eine Einzel-Instanz (kein Array mehr)
-    let goal = this.$refs.cameraGoal
-    let focusGoal = this.$refs.cameraFocusGoal && this.$refs.cameraFocusGoal[0]
-    if (!goal){ return }
+    // Vue 3: Template-Refs im v-for werden als Array gesammelt — auch unter
+    // v-if. Beide Formen abdecken und erst nach v3object-Check zugreifen.
+    const unwrap = r => (Array.isArray(r) ? r[0] : r)
+    const goal = unwrap(this.$refs.cameraGoal)
+    const focusGoal = unwrap(this.$refs.cameraFocusGoal)
+    if (!goal || !goal.v3object || !focusGoal || !focusGoal.v3object){ return }
     this.cameraGoal.setFromMatrixPosition(goal.v3object.matrixWorld)
     tmpV.setFromMatrixPosition(focusGoal.v3object.matrixWorld)
     this.cameraFocusGoal.lerp(tmpV, 0.05)
