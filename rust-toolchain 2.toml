@@ -1,4 +1,0 @@
-# Pins the Rust toolchain for rustup users and CI.
-# The crates build on current stable; no nightly features are used.
-[toolchain]
-channel = "stable"

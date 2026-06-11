@@ -1,5 +1,0 @@
-# Python-Abhängigkeiten für die Generierungs- und Validierungsskripte
-# (scripts/*.py und scripts/validation/*.py).
-# Alles andere ist Standardbibliothek (sqlite3, urllib, json, ...).
-# Die Anthropic-API wird direkt über urllib angesprochen — kein SDK nötig.
-numpy
