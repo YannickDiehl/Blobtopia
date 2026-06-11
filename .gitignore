@@ -69,3 +69,8 @@ data/*.bak*
 # e2e screenshot output (visual reference, local only)
 e2e-baseline/
 e2e-shots/
+
+# iCloud-Konflikt-Kopien ("Datei 2.js") — Documents/ ist iCloud-synchronisiert,
+# das hat schon mehrfach Duplikate und Wiedergänger gelöschter Dateien erzeugt
+* 2.*
+* 2/

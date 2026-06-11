@@ -6,12 +6,16 @@
  * Requires Google Chrome (driven via playwright channel:'chrome').
  * Target URL via E2E_URL (default http://localhost:8080).
  */
-import { chromium, devices } from 'playwright'
+import { chromium, webkit, devices } from 'playwright'
 
 export const BASE_URL = process.env.E2E_URL || 'http://localhost:8080'
 
+// E2E_BROWSER=webkit testet mit der Safari-Engine (braucht einmalig
+// `npx playwright install webkit`); Default bleibt Chrome.
 export async function launch({ device } = {}) {
-  const browser = await chromium.launch({ channel: 'chrome', headless: true })
+  const browser = process.env.E2E_BROWSER === 'webkit'
+    ? await webkit.launch({ headless: true })
+    : await chromium.launch({ channel: 'chrome', headless: true })
   const context = await browser.newContext(
     device ? { ...devices[device] } : { viewport: { width: 1440, height: 900 } }
   )

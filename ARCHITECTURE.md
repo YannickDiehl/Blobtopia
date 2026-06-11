@@ -21,7 +21,7 @@ public/data/timeline/  ─ meta, blobs-static, buildings, stats … (klein, in g
                        └ ticks/NNNN-NNNN.json (~2.3 GB, NICHT in git)
         │  fetch zur Laufzeit, 100-Tick-Blöcke, gecacht
         ▼
-Vue-2-Frontend (statisch, Vercel)  ←→  api/chat.js  ←→  Anthropic
+Vue-3-Frontend (statisch, Vercel)  ←→  api/chat.js  ←→  Anthropic
 ```
 
 ## Module und ihre Verantwortung
@@ -33,7 +33,9 @@ Vue-2-Frontend (statisch, Vercel)  ←→  api/chat.js  ←→  Anthropic
 | `crates/server` | alter Live-Server | **LEGACY**, aus Workspace ausgeschlossen, s. `crates/server/README.md` |
 | `scripts/export-timeline.js` | SQLite → kompaktes Tick-JSON | aktiv |
 | `scripts/*.py` + `scripts/validation/` | Artefakt-Generierung (Tweets, Zeitungen, Personas) + 7-Layer-Validierung; Deps: `requirements.txt` | aktiv (offline) |
-| `src/` | Vue-2-Frontend (Three.js-Stadt, Inspector, Chat, Befragungsinstitut, Feed, Zeitung) | aktiv |
+| `src/` | Vue-3-Frontend (Three.js-Stadt, Inspector, Chat, Befragungsinstitut, Feed, Zeitung) | aktiv |
+| `src/city/` | Stadt-Rendering der Welt; `catalog.js` ist die EINE Asset-Quelle (Palette, Loader, Skalen, functional_types) | aktiv |
+| `src/editor/` + `src/pages/city-editor.vue` | Stadt-Editor (Authoring-Werkzeug der Stadt-Pipeline, s. eigener Abschnitt) | aktiv |
 | `api/chat.js` | Anthropic-Proxy (Rate-Limit, Prompt-Validierung, Leak-Filter) | aktiv (Produktion) |
 
 ## Die zwei Datenverträge (Vorsicht beim Refactoring)
@@ -45,6 +47,37 @@ Vue-2-Frontend (statisch, Vercel)  ←→  api/chat.js  ←→  Anthropic
    geschrieben von `export-timeline.js`, dekodiert von
    `src/lib/timeline-decode.js` (dort vollständig dokumentiert).
    Tripwire-Test: `scripts/test-timeline-decode.mjs`.
+
+## Stadt-Editor & Stadt-Pipeline
+
+Die Stadt entsteht im **Stadt-Editor** (`/#/editor`) und fließt über zwei
+Dateien in die Simulation:
+
+```
+Stadt-Editor (/#/editor)
+   │  „In Repo speichern" (Dev-Endpoint, vite.config.js) — schreibt BEIDE synchron
+   ├──▶ data/blobtopia-city.json     → Input für `cargo precompute` (Wohn-/Arbeits-
+   │                                    zuordnung, functional_type + capacity zählen!)
+   └──▶ public/blobtopia-city.json   → visuelles Welt-Layout (layout-renderer.js)
+```
+
+Nach Stadt-Änderungen, die die Simulation betreffen sollen: `cargo run -p
+blobtopia-precompute` (~1 min für 500 Blobs) + `npm run export` + deployen.
+
+**Layout-Contract** (`src/city/constants.js`): `CITY_LAYOUT_VERSION` stempelt
+jeden Export; der Welt-Renderer akzeptiert nur passende Versionen. Drei
+getrennte localStorage-Ebenen: `blobtopia-editor-draft` (Autosave-Arbeitsstand,
+beeinflusst nichts), `blobtopia-city-preview` (explizite Welt-Vorschau via
+„In Welt ansehen" — die Welt zeigt dann einen Hinweis-Toast; Blob-Verhalten
+bleibt die precomputete Standard-Stadt), Export (Datei/Repo).
+
+**Eine Asset-Quelle**: `src/city/catalog.js` definiert Palette, Modellliste
+des Loaders, Skalierung (`scaleFor` — placement-typ-sensitiv!) und die
+`functional_types` (Spiegel des Rust-Enums in `stage/city.rs`).
+Tripwire-Test: `scripts/test-city-catalog.mjs` (Skalen-Äquivalenz gegen die
+ausgelieferten Layouts, GLB-Existenz, Enum-Abgleich gegen die .rs-Datei).
+Editor-Live-Prüfung (`src/editor/validation.js`): Wohnkapazität ≥ Population,
+Straßennetz-Zusammenhang, Gebäude-Erreichbarkeit.
 
 ## Eine Quelle der Wahrheit für den Persona-Prompt
 
@@ -58,7 +91,7 @@ Minimal-Approximation in `scripts/validation/layer4_llm_calibration.py`.
 ```bash
 npm run dev      # Vite-Dev-Server :8080 (inkl. /api/chat-Middleware aus vite.config.js)
 npm test         # alle scripts/test-*.mjs Suiten (survey + timeline-decode)
-npm run e2e      # Browser-Smoke + iPad-Touch-Suite (braucht laufenden Dev-Server)
+npm run e2e      # Browser-Smoke + iPad-Touch + Editor-Suite (braucht laufenden Dev-Server)
 npm run build    # Produktions-Build → dist/ (Vite)
 npm run export   # SQLite → public/data/timeline/ (braucht die DB, s.o.)
 cargo test --workspace   # Rust-Tests (simulation-core)
@@ -81,6 +114,7 @@ Architektur-Punkte daraus:
   `@oruga-ui/theme-bulma/style.css`, Markenfarben via
   `src/styles/_bulma-bridge.scss`.
 
-Noch offen: Three.js r111 → aktuell (Geometry-Renames, Farb-Management,
-Licht-Kalibrierung — screenshot-gated). 51 Komponenten nutzen Pug (von Vite
-nativ unterstützt).
+Three.js läuft auf r184 (Phase II): `ColorManagement.enabled=false` +
+expliziter `OutputPass` + Lichtintensitäten ×π halten den kalibrierten
+r111-Look (pixel-histogramm-verifiziert). 51 Komponenten nutzen Pug (von
+Vite nativ unterstützt).

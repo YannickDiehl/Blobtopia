@@ -1,7 +1,6 @@
 /**
  * building-registry.js — Mutable singleton registry for buildings and walkable grid
  */
-import { TYPE_LABELS, DISTRICT_LABELS } from './constants'
 
 // ── Walkable Grid (exported for pathfinding) ────────────────
 // Populated by createCity() — grid cells with value 1 are walkable (road surface).
@@ -29,6 +28,3 @@ export function tagBuildingMesh (bldg, info) {
     }
   })
 }
-
-// Re-export for convenience
-export { TYPE_LABELS, DISTRICT_LABELS }

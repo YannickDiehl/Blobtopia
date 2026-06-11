@@ -63,6 +63,34 @@ Einzige Live-Komponente: Das LLM-Chat-System für Blob-Interviews (Anthropic Cla
 
 ---
 
+## Stadt-Editor
+
+Unter `/#/editor` liegt das Authoring-Werkzeug für die Stadt (Dozenten-Werkzeug,
+Desktop). Werkzeuge: Platzieren im **Stempel-Modus** (Werkzeug bleibt aktiv,
+`R` dreht, `Esc` beendet), Auswählen/Verschieben/Drehen, **Straßenzug ziehen**
+(L-förmige Linie, Tile-Typen verbinden sich automatisch), Distrikt malen,
+Löschen, Undo/Redo (`Ctrl+Z` / `Ctrl+Shift+Z`). Der **Inspektor** (rechts)
+editiert pro Gebäude Bezeichnung, Funktion (`functional_type` aus dem
+Simulationsmodell) und Kapazität; die **Prüfung** warnt live, wenn die Stadt
+nicht simulationstauglich ist (zu wenig Wohnraum für alle Blobs, zerrissenes
+Straßennetz, unerreichbare Gebäude).
+
+Der Arbeitsstand wird automatisch als Entwurf gesichert (localStorage).
+**„In Welt ansehen"** zeigt den Entwurf sofort in der 3D-Welt (rein visuell —
+das Blob-Verhalten bleibt die vorberechnete Standard-Stadt, ein Toast weist
+darauf hin). Damit eine neue Stadt wirklich simuliert wird:
+
+```bash
+# 1. Im Editor (npm run dev): „In Repo speichern" — schreibt
+#    data/blobtopia-city.json + public/blobtopia-city.json synchron
+# 2. Simulation neu rechnen + exportieren:
+cargo run -p blobtopia-precompute    # ~1 min für 500 Blobs
+npm run export
+# 3. committen + deployen
+```
+
+---
+
 ## Die Gesellschaft
 
 ### 500 Blobs in 5 Distrikten
