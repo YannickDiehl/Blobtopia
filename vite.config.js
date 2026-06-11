@@ -98,8 +98,50 @@ function chatApiPlugin() {
   }
 }
 
+/**
+ * Dev-Middleware: Stadt-Editor → Repo. Schreibt das Layout synchron in
+ * data/blobtopia-city.json (Precompute-Input) UND public/blobtopia-city.json
+ * (ausgelieferte Welt) — die beiden Dateien können nicht mehr divergieren.
+ * Nur im Dev-Server; in Produktion exportiert der Editor per Download.
+ */
+function editorSavePlugin() {
+  return {
+    name: 'blobtopia-editor-save'
+    , async configureServer(server) {
+      const { writeFile } = await import('node:fs/promises')
+      server.middlewares.use('/api/editor/save-city', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; return res.end() }
+        const send = (status, obj) => {
+          res.statusCode = status
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(obj))
+        }
+        const chunks = []
+        req.on('data', c => chunks.push(c))
+        req.on('error', () => send(400, { error: 'bad request' }))
+        req.on('end', async () => {
+          let layout
+          try { layout = JSON.parse(Buffer.concat(chunks).toString('utf8')) }
+          catch (_e) { return send(400, { error: 'invalid JSON' }) }
+          if (!layout || !Array.isArray(layout.placements) || !layout.version) {
+            return send(400, { error: 'kein gültiges Layout (version + placements nötig)' })
+          }
+          try {
+            const json = JSON.stringify(layout, null, 2)
+            await writeFile('data/blobtopia-city.json', json)
+            await writeFile('public/blobtopia-city.json', json)
+            send(200, { written: ['data/blobtopia-city.json', 'public/blobtopia-city.json'] })
+          } catch (e) {
+            send(500, { error: String(e) })
+          }
+        })
+      })
+    }
+  }
+}
+
 export default defineConfig({
-  plugins: [vue(), chatApiPlugin()]
+  plugins: [vue(), chatApiPlugin(), editorSavePlugin()]
   , resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
