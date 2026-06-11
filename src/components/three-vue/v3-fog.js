@@ -21,7 +21,7 @@ export default {
   , props: {
     ...threeProps
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     this.threeVue.scene.fog = null
   }
   , render(h){

@@ -1,3 +1,4 @@
+import { h } from 'vue'
 import {
   Color
   , Vector3
@@ -42,7 +43,7 @@ export default {
   }
   , created(){
     this.disposables = []
-    this._teardown = []   // Aufräum-Callbacks, laufen in beforeDestroy
+    this._teardown = []   // Aufräum-Callbacks, laufen in beforeUnmount
     this.v3children = []  // Mixin-Kinder (für fade.transition)
   }
   , mounted(){
@@ -70,7 +71,7 @@ export default {
 
     this.threeVue.events.emit('scene:changed', { type: 'add', component: this, object: this.v3object })
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     this.threeVue.events.emit('scene:changed', { type: 'remove', component: this, object: this.v3object })
 
     // set this to false to prevent autoclean
@@ -85,7 +86,7 @@ export default {
     this._teardown.forEach( fn => fn() )
     this._teardown = []
   }
-  , render(h){
+  , render(){
     if ( !this.v3object ){
       this.createObject()
     }
@@ -102,7 +103,7 @@ export default {
     }
     return h(
       'div'
-      , this.visible ? this.$slots.default : []
+      , this.visible && this.$slots.default ? this.$slots.default() : []
     )
   }
   , methods: {

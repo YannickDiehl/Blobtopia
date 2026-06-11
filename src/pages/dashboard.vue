@@ -1,7 +1,7 @@
 <template lang="pug">
 .dashboard-page.scrollbars
   .dashboard-header
-    router-link.back-link(:to="{ name: 'simulation', params: $route.params }")
+    router-link.back-link(:to="{ name: 'simulation', params: { generationIndex: $route.params.generationIndex || '0' } }")
       b-icon(icon="arrow-left", size="is-small")
       span Zurück zur Simulation
     h2.title.is-size-4 Dozenten-Dashboard
@@ -12,26 +12,27 @@
       span |
       span {{ timelineMeta.events.length }} Ereignisse
 
-  b-tabs(type="is-boxed", :animated="false", v-model="activeTab")
-    b-tab-item(label="Übersicht", icon="view-dashboard")
+  //- Oruga-Tabs: v-model ist wert- statt indexbasiert — explizite :value
+  o-tabs(type="boxed", :animated="false", v-model="activeTab")
+    o-tab-item(:value="0", label="Übersicht", icon="view-dashboard")
       overview-panel(v-if="activeTab === 0")
-    b-tab-item(label="Distrikte", icon="map-marker-multiple")
+    o-tab-item(:value="1", label="Distrikte", icon="map-marker-multiple")
       district-comparison(v-if="activeTab === 1")
-    b-tab-item(label="Einstellungen", icon="chart-line")
+    o-tab-item(:value="2", label="Einstellungen", icon="chart-line")
       attitude-time-series(v-if="activeTab === 2")
-    b-tab-item(label="Konstrukte", icon="brain")
+    o-tab-item(:value="3", label="Konstrukte", icon="brain")
       latent-trait-time-series(v-if="activeTab === 3")
-    b-tab-item(label="Politik", icon="account-group")
+    o-tab-item(:value="4", label="Politik", icon="account-group")
       political-behavior(v-if="activeTab === 4")
-    b-tab-item(label="Wahlen", icon="vote")
+    o-tab-item(:value="5", label="Wahlen", icon="vote")
       election-results(v-if="activeTab === 5")
-    b-tab-item(label="Wirkung", icon="pulse")
+    o-tab-item(:value="6", label="Wirkung", icon="pulse")
       event-impact(v-if="activeTab === 6")
-    b-tab-item(label="Demografie", icon="chart-bar")
+    o-tab-item(:value="7", label="Demografie", icon="chart-bar")
       demographic-breakdown(v-if="activeTab === 7")
-    b-tab-item(label="Kinder", icon="human-child")
+    o-tab-item(:value="8", label="Kinder", icon="human-child")
       children-validation(v-if="activeTab === 8")
-    b-tab-item(label="Inspektor", icon="account-search")
+    o-tab-item(:value="9", label="Inspektor", icon="account-search")
       blob-inspector(v-if="activeTab === 9")
 </template>
 
@@ -104,7 +105,7 @@ export default {
     gap: 0.5rem
 
 // Dark theme for Buefy tabs
-::v-deep .tabs
+:deep() .tabs
   a
     color: $grey !important
     border-bottom-color: rgba(255,255,255,0.1) !important
@@ -114,6 +115,6 @@ export default {
   ul
     border-bottom-color: rgba(255,255,255,0.1) !important
 
-::v-deep .tab-content
+:deep() .tab-content
   padding: 1.5rem 0
 </style>

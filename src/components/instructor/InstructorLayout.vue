@@ -25,7 +25,7 @@
       , :followBlobId="followBlob ? followBlobId : undefined"
       , @tap-blob="onTapBlob"
       , @tap-building="onTapBuilding"
-      , @click.native="onWorldClick"
+      , @click="onWorldClick"
     )
 
     //- Follow indicator (visible when following a blob)
@@ -212,7 +212,7 @@ export default {
     // Fetch timeline summary for sparklines
     this.simulationStore.fetchTimelineSummary()
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     document.removeEventListener('keydown', this._keyHandler)
     document.removeEventListener('mousemove', this._mouseHandler)
     if (this.cursorTimer) clearTimeout(this.cursorTimer)

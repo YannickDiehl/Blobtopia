@@ -112,7 +112,7 @@
       .selection-info(v-if="selectedPlacement")
         .sel-header
           span {{ selectedPlacement.label }}
-          b-icon.close-btn(icon="close", size="is-small", @click.native="selectedPlacement = null")
+          b-icon.close-btn(icon="close", size="is-small", @click="selectedPlacement = null")
         .sel-actions
           b-button.is-small.is-outlined(@click="rotatePlacement")
             b-icon(icon="rotate-right", size="is-small")
@@ -136,7 +136,8 @@
 <script>
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-const OrbitControls = require('three-orbit-controls')(THREE)
+import threeOrbitControls from 'three-orbit-controls'
+const OrbitControls = threeOrbitControls(THREE)
 import { autoConnectRoads } from '../lib/road-auto-connect'
 import { GRID_SIZE, CELL_SIZE as CFG_CELL_SIZE } from '@/config/world'
 
@@ -377,7 +378,7 @@ export default {
     this.animate()
     window.addEventListener('resize', this.onResize)
   }
-  , beforeDestroy() {
+  , beforeUnmount() {
     this._stopped = true
     window.removeEventListener('resize', this.onResize)
     window.removeEventListener('keydown', this._onKeyDown)
@@ -765,11 +766,11 @@ export default {
         const key = `${snapped.cx},${snapped.cz}`
         if (this.selectedDistrict === -1) {
           if (this.districtMap[key] != null) {
-            this.$delete(this.districtMap, key)
+            delete this.districtMap[key]
             this.buildGround()
           }
         } else if (this.districtMap[key] !== this.selectedDistrict) {
-          this.$set(this.districtMap, key, this.selectedDistrict)
+          this.districtMap = { ...this.districtMap, [key]: this.selectedDistrict }
           this.buildGround()
         }
         return
@@ -861,9 +862,9 @@ export default {
         this.pushUndo()
         const key = `${snapped.cx},${snapped.cz}`
         if (this.selectedDistrict === -1) {
-          this.$delete(this.districtMap, key)
+          delete this.districtMap[key]
         } else {
-          this.$set(this.districtMap, key, this.selectedDistrict)
+          this.districtMap = { ...this.districtMap, [key]: this.selectedDistrict }
         }
         this.buildGround()
       } else if (this.tool === 'select') {
@@ -1060,9 +1061,9 @@ export default {
           const snapped = this.snapToGrid(pos.x, pos.z)
           const key = `${snapped.cx},${snapped.cz}`
           if (this.selectedDistrict === -1) {
-            this.$delete(this.districtMap, key)
+            delete this.districtMap[key]
           } else {
-            this.$set(this.districtMap, key, this.selectedDistrict)
+            this.districtMap = { ...this.districtMap, [key]: this.selectedDistrict }
           }
           this.buildGround()
         }
@@ -1175,7 +1176,7 @@ export default {
     }
 
     , clearAll() {
-      if (!confirm('Alle Gebäude löschen?')) return
+      if (!window.confirm('Alle Gebäude löschen?')) return
       this.pushUndo()
       this.placements = []
       this.districtMap = {}
@@ -1222,7 +1223,7 @@ export default {
             const data = JSON.parse(ev.target.result)
             this.applyLayout(data)
             this.$buefy.toast.open({ message: 'Stadt geladen!', type: 'is-success' })
-          } catch (err) {
+          } catch (_err) {
             this.$buefy.toast.open({ message: 'Fehler beim Laden', type: 'is-danger' })
           }
         }
@@ -1240,7 +1241,7 @@ export default {
           this.applyLayout(data)
           return
         }
-      } catch (e) {
+      } catch (_e) {
         // ignore
       }
       // Auto-load from public/ if localStorage is empty
@@ -1250,7 +1251,7 @@ export default {
         if (resp && resp.ok) {
           const data = await resp.json()
           this.applyLayout(data)
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch (e) { /* quota */ }
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch (_e) { /* quota */ }
           console.log('[editor] Auto-loaded blobtopia-city.json (' + (data.placements || []).length + ' placements)')
         }
       } catch (e) {
@@ -1301,7 +1302,7 @@ export default {
       requestAnimationFrame(() => this.animate())
 
       // WASD / Pfeiltasten: Kamera über die Karte gleiten
-      var panSpeed = 8
+      let panSpeed
       // Schneller gleiten wenn weiter rausgezoomt
       var dist = this.camera.position.distanceTo(this.controls.target)
       panSpeed = Math.max(4, dist * 0.008)

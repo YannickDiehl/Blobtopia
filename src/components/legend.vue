@@ -10,7 +10,7 @@ ul.legend
 import { startCase } from '@/lib/format'
 
 export default {
-  name: 'Legend'
+  name: 'ColorLegend'
   , props: {
     data: Array
   }

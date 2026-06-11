@@ -70,7 +70,7 @@ function downloadText(text, filename, mime) {
     a.click()
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-  } catch (e) { /* ignore */ }
+  } catch (_e) { /* ignore */ }
 }
 
 export const useSurveyStore = defineStore('survey', {

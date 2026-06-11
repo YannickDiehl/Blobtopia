@@ -5,7 +5,7 @@
       .district-badge(:style="{ backgroundColor: districtHex }")
       .header-text
         .blob-name(v-if="blob.name") {{ blob.name }}
-      b-icon.close-btn(icon="close", size="is-small", @click.native="$emit('close')")
+      b-icon.close-btn(icon="close", size="is-small", @click="$emit('close')")
 
     .inspector-section
       h4 Demografie

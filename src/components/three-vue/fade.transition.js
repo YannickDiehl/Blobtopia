@@ -1,3 +1,4 @@
+import { h, Transition } from 'vue'
 import Copilot from '@/lib/copilot-stub'
 import * as THREE from 'three'
 import THREEObjectMixin from '@/components/three-vue/v3-object.mixin'
@@ -14,22 +15,15 @@ export default {
   , created(){
     this.v3object = new THREE.Object3D()
   }
-  , render: function (h) {
-    let data = {
-      props: {
-        css: false
-        // , mode: 'out-in'
-        // , appear: true
-      }
-      , on: {
-        enter: this.enter
-        , beforeEnter: this.beforeEnter
-        , beforeLeave: this.beforeLeave
-        , leave: this.leave
-        , afterLeave: this.afterLeave
-      }
-    }
-    return h('transition', data, this.$slots.default)
+  , render(){
+    return h(Transition, {
+      css: false
+      , onEnter: this.enter
+      , onBeforeEnter: this.beforeEnter
+      , onBeforeLeave: this.beforeLeave
+      , onLeave: this.leave
+      , onAfterLeave: this.afterLeave
+    }, () => this.$slots.default ? this.$slots.default() : [])
   }
   , methods: {
     // this.v3children kommt aus dem Mixin-Register (ersetzt $children,

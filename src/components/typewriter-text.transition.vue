@@ -28,7 +28,7 @@ export default {
   , created(){
     this.player = Copilot.Player({ totalTime: 1 })
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     this.cancelTransition()
   }
   , watch: {
@@ -95,6 +95,6 @@ export default {
 </script>
 
 <style lang="sass" scoped>
->>> .hide
+:deep() .hide
   color: transparent
 </style>

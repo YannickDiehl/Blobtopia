@@ -216,7 +216,7 @@ export default {
     document.addEventListener('click', handler)
     this._clickHandler = handler
   }
-  , beforeDestroy() {
+  , beforeUnmount() {
     if (this._clickHandler) {
       document.removeEventListener('click', this._clickHandler)
     }

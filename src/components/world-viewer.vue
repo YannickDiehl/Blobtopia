@@ -66,7 +66,7 @@
 
       v3-group(v-if="showWorld", :position="[-gridSize * 0.5, 0, -gridSize * 0.5]")
         BlobCreature(
-          ref="v3Blobs"
+          :ref="collectBlobRef"
             , v-for="(g, index) in generation.blobs"
             , :key="index"
             , :creature="g"
@@ -83,9 +83,11 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import Copilot from '@/lib/copilot-stub'
 import { mapState } from 'pinia'
 import { useSimulationStore } from '@/stores/simulation'
+import threeOrbitControls from 'three-orbit-controls'
 import chroma from 'chroma-js'
 import sougy from '@/config/sougy-colors'
 import * as THREE from 'three'
@@ -109,7 +111,7 @@ import { blobColors } from '@/config/blob-colors'
 import { createCityFromLayout } from '@/city'
 import { GRID_SIZE } from '@/config/world'
 import Tour from '@/components/tour'
-const OrbitControls = require('three-orbit-controls')(THREE)
+const OrbitControls = threeOrbitControls(THREE)
 
 const defaultBlobColor = chroma(sougy.blue).desaturate(0.5).num()
 
@@ -173,6 +175,9 @@ const methods = {
   }
   , getBlobColor(species){
     return blobColors[species] || defaultBlobColor
+  }
+  , collectBlobRef(el){
+    if (el) this._blobRefs.push(el)
   }
   , initCamera(){
     const renderer = this.$refs.renderer.renderer
@@ -251,7 +256,8 @@ const methods = {
     this.$refs.renderer.draw()
   }
   , followBlobCamera(){
-    let goal = this.$refs.cameraGoal && this.$refs.cameraGoal[0]
+    // Vue 3: Ref unter v-if im v-for ist eine Einzel-Instanz (kein Array mehr)
+    let goal = this.$refs.cameraGoal
     let focusGoal = this.$refs.cameraFocusGoal && this.$refs.cameraFocusGoal[0]
     if (!goal){ return }
     this.cameraGoal.setFromMatrixPosition(goal.v3object.matrixWorld)
@@ -286,7 +292,7 @@ const methods = {
     let blobHit = intersects.find(i => i.object.name === 'blob')
     if (blobHit) {
       let blob = blobHit.object
-      let index = _findIndex(this.$refs.v3Blobs, g => g.v3object === blob.parent.parent)
+      let index = _findIndex(this._blobRefs, g => g.v3object === blob.parent.parent)
       if (index >= 0 && this.generation && this.generation.blobs[index]) {
         this.$emit('tap-blob', { blob: this.generation.blobs[index], index })
         return
@@ -298,14 +304,14 @@ const methods = {
 
     // 3) Proximity-Suche: Blobs sind zu klein für exaktes Raycasting,
     //    daher den nächsten Blob per Ray-Distanz finden
-    if (ray && this.$refs.v3Blobs && this.generation) {
+    if (ray && this._blobRefs && this.generation) {
       let closestIndex = -1
       let closestScreenDist = Infinity
       const tmpPos = new THREE.Vector3()
       const tmpDiff = new THREE.Vector3()
       const rayDir = ray.direction.clone().normalize()
 
-      this.$refs.v3Blobs.forEach((blobComp, index) => {
+      this._blobRefs.forEach((blobComp, index) => {
         if (!blobComp.v3object || !blobComp.v3object.visible) return
         blobComp.v3object.getWorldPosition(tmpPos)
         // Distanz vom Ray zum Blob-Zentrum
@@ -340,7 +346,7 @@ const methods = {
     renderer.removeOutline()
     if (intersects.length){
       let blob = intersects[0].object
-      let index = _findIndex(this.$refs.v3Blobs, g => g.v3object === blob.parent.parent)
+      let index = _findIndex(this._blobRefs, g => g.v3object === blob.parent.parent)
       if (index < 0 || !this.generation || !this.generation.blobs[index]) return
       let id = this.generation.blobs[index].id
 
@@ -465,8 +471,9 @@ export default {
       , top: 280
       , bottom: -280
     }
-    , cameraGoal: new THREE.Vector3()
-    , cameraFocusGoal: new THREE.Vector3()
+    // markRaw: THREE-Objekte dürfen nicht in Vue-3-Proxies gewickelt werden
+    , cameraGoal: markRaw(new THREE.Vector3())
+    , cameraFocusGoal: markRaw(new THREE.Vector3())
     , interactiveObjects: ['blob', 'building']
     , highlightColor: chroma(sougy.red).num()
     , hideStage: false
@@ -479,8 +486,14 @@ export default {
   , methods
   , created(){
     this._teardown = []
+    this._blobRefs = []
   }
-  , beforeDestroy(){
+  , beforeUpdate(){
+    // Function-Ref-Register pro Render leeren (Vue 3 sammelt v-for-Refs
+    // nicht mehr automatisch zu Arrays)
+    this._blobRefs.length = 0
+  }
+  , beforeUnmount(){
     this._teardown.forEach( fn => fn() )
     this._teardown = []
   }

@@ -43,7 +43,7 @@ export default {
     this.resizeObserver.observe(this.$refs.container)
     this.$nextTick(() => this.onResize())
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     if (this.resizeObserver) this.resizeObserver.disconnect()
   }
   , methods: {

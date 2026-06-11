@@ -2,18 +2,19 @@
 .blob-inspector
   h3.heading Blob-Inspektor
 
-  //- Search Section
+  //- Search Section (eigene Trefferliste statt Buefy-Autocomplete)
   .search-section
-    b-autocomplete(
+    b-input(
       v-model="searchQuery"
-      :data="filteredBlobs"
-      :custom-formatter="formatBlob"
       placeholder="Name oder ID eingeben..."
       icon="magnify"
       clearable
-      @select="onSelectBlob"
+      @focus="searchFocused = true"
     )
-      template(v-slot:empty) Kein Blob gefunden
+    .search-results(v-if="searchFocused && searchQuery")
+      .search-result(v-for="blob in filteredBlobs", :key="blob.id", @click="pickBlob(blob)")
+        | {{ formatBlob(blob) }}
+      .search-empty(v-if="!filteredBlobs.length") Kein Blob gefunden
 
   //- Profile Section
   .profile-section(v-if="selectedBlob")
@@ -145,6 +146,7 @@ export default {
   , components: { LineChart }
   , data: () => ({
     searchQuery: ''
+    , searchFocused: false
     , selectedBlobId: null
     , historyLoading: false
     , loadedHistory: null
@@ -261,6 +263,11 @@ export default {
       const name = g.name || g.id.substring(0, 8)
       return `${name} | ${this.districtName(g.district)} | ${g.age} J.`
     }
+    , pickBlob(blob) {
+      this.searchFocused = false
+      this.searchQuery = this.formatBlob(blob)
+      this.onSelectBlob(blob)
+    }
     , async onSelectBlob(blob) {
       if (!blob) {
         this.selectedBlobId = null
@@ -327,6 +334,31 @@ export default {
 
 .search-section
   margin-bottom: 1rem
+  position: relative
+
+.search-results
+  position: absolute
+  top: 100%
+  left: 0
+  right: 0
+  z-index: 20
+  background: rgba(20, 20, 20, 0.98)
+  border: 1px solid rgba(255, 255, 255, 0.15)
+  border-radius: 4px
+  max-height: 300px
+  overflow-y: auto
+
+.search-result
+  padding: 0.4rem 0.8rem
+  cursor: pointer
+  font-size: 0.85rem
+  &:hover
+    background: rgba(28, 193, 170, 0.15)
+
+.search-empty
+  padding: 0.4rem 0.8rem
+  color: #888
+  font-size: 0.85rem
 
 .loading-state
   padding: 2rem 0

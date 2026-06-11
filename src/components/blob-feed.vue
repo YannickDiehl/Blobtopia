@@ -130,7 +130,7 @@ export default {
     // Delegate click events for hashtags and mentions
     this.$el.addEventListener('click', this.handleContentClick)
   }
-  , beforeDestroy() {
+  , beforeUnmount() {
     this.$el.removeEventListener('click', this.handleContentClick)
   }
 }
@@ -262,13 +262,13 @@ export default {
   line-height: 1.35
   color: $grey-lighter
 
-  ::v-deep .hashtag
+  :deep() .hashtag
     color: #64b5f6
     cursor: pointer
     &:hover
       text-decoration: underline
 
-  ::v-deep .mention
+  :deep() .mention
     color: #4ecca3
     cursor: pointer
     font-weight: 600

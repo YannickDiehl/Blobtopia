@@ -174,7 +174,7 @@
                 v-if="msg.role === 'assistant'"
                 , icon="content-copy"
                 , size="is-small"
-                , @click.native.stop="copyMessage(msg)"
+                , @click.stop="copyMessage(msg)"
               )
 
           .message.assistant(v-if="chatLoading")
@@ -421,7 +421,7 @@ export default {
     this._escHandler = (e) => this.onKeyDown(e)
     document.addEventListener('keydown', this._escHandler)
   }
-  , beforeDestroy() {
+  , beforeUnmount() {
     document.removeEventListener('keydown', this._escHandler)
   }
   , methods: {
@@ -439,7 +439,7 @@ export default {
       }
     }
     , tryUnlock() {
-      const correct = process.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
+      const correct = import.meta.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
       if (this.passwordAttempt === correct) {
         this.inspectorUnlocked = true
         this.passwordError = false

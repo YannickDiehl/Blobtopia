@@ -1,11 +1,7 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import About from '@/pages/about'
 import Simulation from '@/pages/simulation'
 import CityEditor from '@/pages/city-editor'
-
-
-Vue.use(Router)
 
 let shownIntro = false
 
@@ -20,8 +16,10 @@ const parseProps = (route) => {
   }
 }
 
-const router = new Router({
-  routes: [
+const router = createRouter({
+  // Hash-Mode wie zuvor — bestehende URLs (/#/s/0) bleiben gültig
+  history: createWebHashHistory()
+  , routes: [
     {
       path: '/'
       , redirect: { name: 'simulation', params: { generationIndex: '0' } }
@@ -36,7 +34,7 @@ const router = new Router({
           return next()
         }
         shownIntro = true
-        next({ ...to, query: { intro: 1 }, replace: true })
+        next({ name: 'simulation', params: to.params, query: { ...to.query, intro: 1 }, replace: true })
       }
     }
     // Backward compatibility: redirect old routes to unified view
@@ -65,7 +63,7 @@ const router = new Router({
       , component: () => import('@/pages/dashboard')
     }
     , {
-      path: '*'
+      path: '/:pathMatch(.*)*'
       , redirect: { name: 'simulation', params: { generationIndex: '0' } }
     }
   ]

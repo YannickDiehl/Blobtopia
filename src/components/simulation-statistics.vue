@@ -86,7 +86,7 @@ export default {
     this.refresh()
     this._refreshTimer = setInterval(() => this.refresh(), 5000)
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     clearInterval(this._refreshTimer)
   }
   , computed: {

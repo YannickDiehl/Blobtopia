@@ -36,7 +36,7 @@ export default function interpolator(pts, options = {}){
 // from: https://stackoverflow.com/questions/7054272/how-to-draw-smooth-curve-through-n-points-using-javascript-html5-canvas
 function spline(pts, tension = 0.5, isClosed = false, numOfSegments = 16) {
 
-  let _pts = [], res = []    // clone array
+  let _pts, res = []    // clone array
   let x, y          // our x,y coords
   let t1x, t2x, t1y, t2y // tension vectors
   let c1, c2, c3, c4     // cardinal points

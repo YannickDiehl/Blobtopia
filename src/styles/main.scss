@@ -1,13 +1,10 @@
-;
 // Common
-// @import "~bulmaswatch/solar/_variables";
+// Bulma 1 + Oruga-Styles kommen precompiled aus
+// @oruga-ui/theme-bulma/dist/theme.css (Import in main.js);
+// die Bridge mappt unsere Markenwerte auf Bulma-1-CSS-Variablen.
 @import "./_variables";
 @import "./_fonts";
-@import "~bulma/sass/utilities/initial-variables";
-@import "~buefy/src/scss/utils/_all";
-@import "~bulma/bulma";
-@import "~buefy/src/scss/buefy";
-// @import "~bulmaswatch/solar/_overrides";
+@import "./_bulma-bridge";
 
 * > * {
   box-sizing: border-box;

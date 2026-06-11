@@ -1,3 +1,4 @@
+import { h } from 'vue'
 import * as THREE from 'three'
 import mitt from 'mitt'
 /* eslint-disable no-unused-vars */
@@ -131,7 +132,7 @@ export default {
       this.$emit('resize')
     }, { immediate: true })
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     this.renderer.dispose()
     this.effectFXAA.material.dispose()
     this.effectFXAA.fsQuad._mesh.geometry.dispose()
@@ -272,7 +273,7 @@ export default {
       this.outlinePass.selectedObjects.splice( idx, 1 )
     }
   }
-  , render(h){
+  , render(){
     return h('div'
       , {
         style: {
@@ -281,7 +282,7 @@ export default {
           , lineHeight: 0
         }
       }
-      , this.$slots.default
+      , this.$slots.default ? this.$slots.default() : []
     )
   }
 }

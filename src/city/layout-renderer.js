@@ -33,7 +33,7 @@ export async function createCityFromLayout () {
         localStorage.removeItem('globtopia-city-layout')
       }
     }
-  } catch (e) {
+  } catch (_e) {
     localStorage.removeItem(EDITOR_STORAGE_KEY)
     localStorage.removeItem('globtopia-city-layout')
   }
@@ -45,7 +45,7 @@ export async function createCityFromLayout () {
       if (resp && resp.ok) {
         layoutData = await resp.json()
         // Cache in localStorage for next time
-        try { localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(layoutData)) } catch (e) { /* quota */ }
+        try { localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(layoutData)) } catch (_e) { /* quota */ }
         console.log('[city] Auto-loaded blobtopia-city.json (' + (layoutData.placements || []).length + ' placements)')
       }
     } catch (e) {

@@ -37,9 +37,9 @@
               th Zuhause
               th Status
           tbody
-            template(v-for="(row, i) in sortedChildren")
+            //- Vue 3: key gehört auf das template, nicht auf die Kinder
+            template(v-for="(row, i) in sortedChildren", :key="row.id")
               tr(
-                :key="row.id"
                 :class="{ 'violation-row': row.hasViolation }"
               )
                 td {{ i + 1 }}
@@ -55,7 +55,7 @@
                 td.status-cell
                   span.status-ok(v-if="!row.hasViolation") \u2713
                   span.status-bad(v-else) \u2717
-              tr.violation-detail(v-if="row.hasViolation" :key="row.id + '-v'")
+              tr.violation-detail(v-if="row.hasViolation")
                 td(colspan="9")
                   span.violation-text {{ violationDetails(row) }}
 

@@ -52,7 +52,7 @@
           b-icon(icon="rss", size="is-small")
 
       //- Follow creature toggle
-      b-icon.icon-btn(icon="cctv", :class="{ active: followBlob }", size="is-medium", @click.native.stop="followBlob = !followBlob")
+      b-icon.icon-btn(icon="cctv", :class="{ active: followBlob }", size="is-medium", @click.stop="followBlob = !followBlob")
 
   .screen
     b-loading.loading-cover(:is-full-page="false", :active="!showIntro && isLoading")
@@ -249,7 +249,7 @@ export default {
   }
   , deactivated(){
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     this.stopHourTimer()
     document.removeEventListener('keydown', this._keyHandler)
   }

@@ -20,7 +20,7 @@
             , @keydown.esc="showPasswordInput = false"
             , ref="passwordInput"
           )
-        b-icon.close-btn(icon="close", size="is-small", @click.native="$emit('close')")
+        b-icon.close-btn(icon="close", size="is-small", @click="$emit('close')")
 
     .inspector-section(v-if="inspectorUnlocked")
       .info-grid
@@ -225,7 +225,7 @@ export default {
         if (!vp) continue
         const dx = vp.x - bx, dz = vp.z - bz
         if (dx * dx + dz * dz > 36 * 36) continue
-        let reason = ''
+        let reason
         if (c.home_building_id === this.building.id) reason = 'Bewohner'
         else if (c.workplace_id === this.building.id) reason = 'Arbeitet hier'
         else if (c.lunch_spot_id === this.building.id) reason = 'Mittagessen'
@@ -252,7 +252,7 @@ export default {
       }
     }
     , tryUnlock() {
-      var correct = process.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
+      var correct = import.meta.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
       if (this.passwordAttempt === correct) {
         this.inspectorUnlocked = true
         this.passwordError = false

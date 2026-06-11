@@ -30,7 +30,7 @@ function getCoords( e, el ){
 }
 
 export default {
-  inserted(el, binding) {
+  mounted(el, binding) {
     var draggedElem
     if (!document){ return }
 
@@ -120,7 +120,7 @@ export default {
     )
   }
 
-  , unbind(el) {
+  , unmounted(el) {
     removeEventListeners(el, POINTER_START_EVENTS)
     removeEventListeners(document.documentElement, POINTER_END_EVENTS)
     removeEventListeners(document.documentElement, POINTER_MOVE_EVENTS)

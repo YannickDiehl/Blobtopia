@@ -6,8 +6,8 @@
       span Interview: {{ blobName }}
     .chat-actions
       b-tooltip(label="Transkript exportieren", position="is-left")
-        b-icon.action-btn(icon="download", size="is-small", @click.native="showExport = true")
-      b-icon.action-btn(icon="close", size="is-small", @click.native="onClose")
+        b-icon.action-btn(icon="download", size="is-small", @click="showExport = true")
+      b-icon.action-btn(icon="close", size="is-small", @click="onClose")
 
   .chat-messages(ref="messagesContainer")
     .message(v-for="(msg, i) in messages", :key="i", :class="msg.role")

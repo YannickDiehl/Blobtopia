@@ -3,7 +3,7 @@
   .export-card
     .export-header
       h3 Transkript exportieren
-      b-icon.close-btn(icon="close", size="is-small", @click.native="$emit('close')")
+      b-icon.close-btn(icon="close", size="is-small", @click="$emit('close')")
 
     .export-body
       p.export-info {{ messages.length }} Nachrichten mit {{ blobName }}

@@ -25,8 +25,9 @@
     .chart-section
       h4.subheading Altersverteilung
       .view-toggle
-        b-radio-button(v-model="ageView" native-value="district" size="is-small" type="is-primary") Pro Distrikt
-        b-radio-button(v-model="ageView" native-value="total" size="is-small" type="is-primary") Gesamt
+        //- Oruga hat keine Button-Radios — Toggle über zwei Buttons
+        b-button(size="is-small", :type="ageView === 'district' ? 'is-primary' : ''", @click="ageView = 'district'") Pro Distrikt
+        b-button(size="is-small", :type="ageView === 'total' ? 'is-primary' : ''", @click="ageView = 'total'") Gesamt
       .chart-wrap(style="height:300px")
         bar-chart(:chart-data="ageChartData" :options="stackedBarOptions")
 

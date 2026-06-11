@@ -15,7 +15,7 @@ export default {
     this.pos = new THREE.Vector2()
     this._teardown = []
   }
-  , beforeDestroy(){
+  , beforeUnmount(){
     this._teardown.forEach( fn => fn() )
     this._teardown = []
   }
@@ -43,7 +43,7 @@ export default {
     }
 
     this.threeVue.events.on('scene:changed', updateMonitored)
-    // (war vorher ein nie feuernder $on('beforeDestroy')-Tippfehler)
+    // (war vorher ein nie feuernder $on('beforeUnmount')-Tippfehler)
     this._teardown.push(() => {
       this.threeVue.events.off('scene:changed', updateMonitored)
     })
