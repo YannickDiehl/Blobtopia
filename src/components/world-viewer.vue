@@ -45,17 +45,19 @@
       )
         v3-dom(ref="tour", :position="tourPosition")
           Tour
-      v3-light(type="ambient", :intensity="0.5")
+      //- Intensitäten ×π: three hat den Legacy-Lighting-Modus entfernt
+      //- (physikalisch korrekte Lichter) — alte Werte: 0.5 / 0.35 / 0.15
+      v3-light(type="ambient", :intensity="1.571")
       v3-light(
         type="directional"
-        , :intensity="0.35"
+        , :intensity="1.1"
         , :color="0xfff8e8"
         , :position="[300, 500, 200]"
         , :cast-shadow="false"
       )
       v3-light(
         type="directional"
-        , :intensity="0.15"
+        , :intensity="0.471"
         , :color="0xe8f0ff"
         , :position="[-200, 300, -100]"
         , :cast-shadow="false"

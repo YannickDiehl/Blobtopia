@@ -456,13 +456,13 @@ export default {
       window.addEventListener('keyup', this._onKeyUp)
 
       // Lights — gedämpft für natürlichere Farben
-      const ambient = new THREE.AmbientLight(0xffffff, 0.5)
+      const ambient = new THREE.AmbientLight(0xffffff, 1.571)
       this.scene.add(ambient)
-      const dir = new THREE.DirectionalLight(0xfff8e8, 0.35)
+      const dir = new THREE.DirectionalLight(0xfff8e8, 1.1)
       dir.position.set(300, 500, 200)
       this.scene.add(dir)
       // Zweites Fülllicht von der anderen Seite für weichere Schatten
-      const fill = new THREE.DirectionalLight(0xe8f0ff, 0.15)
+      const fill = new THREE.DirectionalLight(0xe8f0ff, 0.471)
       fill.position.set(-200, 300, -100)
       this.scene.add(fill)
 
