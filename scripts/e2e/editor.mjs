@@ -40,22 +40,27 @@ const sizes = await page.evaluate(() => {
 report('Canvas füllt den Viewport', Math.abs(sizes.vw - sizes.cw) < 4 && Math.abs(sizes.vh - sizes.ch) < 4
   , `canvas ${sizes.cw}x${sizes.ch} in viewport ${sizes.vw}x${sizes.vh}`)
 
-// Stempel-Modus: Villa wählen, zweimal platzieren ohne erneute Auswahl
+// Stempel-Modus: Villa wählen und platzieren — Werkzeug bleibt danach aktiv
 await page.locator('.palette-item:has-text("Villa A")').first().click()
 const canvasBox = await page.locator('.viewport canvas').boundingBox()
 const cx = canvasBox.x + canvasBox.width / 2
 const cy = canvasBox.y + canvasBox.height / 2
 await page.mouse.click(cx, cy)
 await page.waitForTimeout(400)
-await page.mouse.click(cx + 60, cy)
-await page.waitForTimeout(400)
 const afterPlace = await stat('Gebäude')
-report('Stempel-Modus platziert 2× ohne Neuauswahl', afterPlace === initial + 2, `${initial} → ${afterPlace}`)
+report('Stempel platziert', afterPlace === initial + 1, `${initial} → ${afterPlace}`)
+await page.mouse.move(cx + 30, cy + 30)
+await page.waitForTimeout(200)
+const stampInfo = await page.evaluate(() => (document.querySelector('.placement-info') || {}).innerText || '')
+report('Stempel-Modus bleibt nach Platzierung aktiv', stampInfo.includes('Villa'), stampInfo.trim())
 
-// Undo ×2 (Ctrl+Z) → Ausgangszustand
+// Belegungs-Check: erneuter Klick auf dieselbe (jetzt belegte) Zelle wird blockiert
+await page.mouse.click(cx, cy)
+await page.waitForTimeout(400)
+report('belegte Zelle blockiert Platzierung', await stat('Gebäude') === afterPlace, `bleibt ${afterPlace}`)
+
+// Undo (Ctrl+Z) → Ausgangszustand
 await page.keyboard.press('Escape')
-await page.keyboard.press('Control+z')
-await page.waitForTimeout(800)
 await page.keyboard.press('Control+z')
 await page.waitForTimeout(1500)
 report('Undo stellt Ausgangszustand her', await stat('Gebäude') === initial)
@@ -100,12 +105,59 @@ if (inspectorVisible) {
 const draftSaved = await page.evaluate(() => localStorage.getItem('blobtopia-editor-draft') != null)
 report('Entwurf-Autosave in localStorage', draftSaved)
 
-// Löschen-Werkzeug: Klick entfernt das Gebäude unter dem Cursor
+// Zuletzt-benutzt-Leiste zeigt die platzierte Villa
+report('Zuletzt-benutzt-Leiste gefüllt', await page.locator('.recent-row .recent-item').count() >= 1)
+
+// Wohnen/Arbeit-Meter im Header
+const meterText = await page.evaluate(() => document.querySelector('.capacity-meter').innerText)
+report('Wohnen/Arbeit-Meter zeigt Kapazitäten', /\d+\/\d+/.test(meterText), meterText.replace(/\s+/g, ' '))
+
+// Pipette: Alt+Klick übernimmt das Gebäude unter dem Cursor als Stempel
+await page.keyboard.press('Escape')
+await page.keyboard.down('Alt')
+await page.mouse.click(cx, cy)
+await page.keyboard.up('Alt')
+await page.mouse.move(cx + 40, cy + 40)
+await page.waitForTimeout(300)
+const infoText = await page.evaluate(() => (document.querySelector('.placement-info') || {}).innerText || '')
+report('Pipette (Alt+Klick) übernimmt Asset als Stempel', infoText.includes('|'), infoText.trim())
+
+// Drag-Painting: Bäume mit gedrückter Maustaste streuen
+await page.keyboard.press('Escape')
+await page.locator('.palette-filter input').fill('Eiche')
+await page.waitForTimeout(300)
+await page.locator('.palette-item:has-text("Eiche")').first().click()
+const beforePaint = await stat('Gebäude')
+await page.mouse.move(cx - 100, cy + 70)
+await page.mouse.down()
+await page.mouse.move(cx + 100, cy + 70, { steps: 12 })
+await page.mouse.up()
+await page.waitForTimeout(600)
+const afterPaint = await stat('Gebäude')
+report('Drag-Painting streut Deko über mehrere Zellen', afterPaint >= beforePaint + 3, `${beforePaint} → ${afterPaint}`)
+await page.keyboard.press('Escape')
+await page.locator('.palette-filter input').fill('')
+
+// Erreichbarkeits-Layer-Toggle
+const reachBtn = page.locator('.layer-btn:has-text("Erreichbarkeit")')
+await reachBtn.click()
+await page.waitForTimeout(600)
+const active = await reachBtn.evaluate(el => el.classList.contains('active'))
+await reachBtn.click()
+await page.waitForTimeout(300)
+const inactive = await reachBtn.evaluate(el => !el.classList.contains('active'))
+report('Erreichbarkeits-Overlay schaltbar', active && inactive)
+
+// Bulldozer: Löschen mit gezogener Maus reißt mehrere Gebäude ab
 const beforeDel = await stat('Gebäude')
 await page.locator('.palette-item:has-text("Löschen")').click()
-await page.mouse.click(cx, cy)
-await page.waitForTimeout(400)
-report('Löschen-Werkzeug entfernt per Klick', await stat('Gebäude') === beforeDel - 1, `${beforeDel} → ${await stat('Gebäude')}`)
+await page.mouse.move(cx - 80, cy)
+await page.mouse.down()
+await page.mouse.move(cx + 80, cy, { steps: 12 })
+await page.mouse.up()
+await page.waitForTimeout(500)
+const afterDel = await stat('Gebäude')
+report('Bulldozer-Drag reißt Gebäude ab', afterDel < beforeDel, `${beforeDel} → ${afterDel}`)
 
 // Distrikt-Radieren per Drag: districtMap im Draft schrumpft
 await page.locator('.palette-item:has-text("Distrikt malen")').click()

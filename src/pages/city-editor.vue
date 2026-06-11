@@ -8,6 +8,14 @@
       span.header-label Stadt-Editor
       transition(name="fade")
         span.draft-status(v-if="editorStore.draftSavedAt") Entwurf gespeichert · {{ draftTime }}
+    //- Wohnen/Arbeit-Meter (RCI-Gefühl): die Größen, die fürs Precompute zählen
+    .capacity-meter
+      .meter-item(:class="{ bad: meterStats.housing < meterStats.population }", title="Wohnplätze vs. Blobs")
+        b-icon(icon="home", size="is-small")
+        span {{ meterStats.housing }}/{{ meterStats.population }}
+      .meter-item(title="Arbeitsplätze")
+        b-icon(icon="briefcase", size="is-small")
+        span {{ meterStats.workplaces }}
     .header-actions
       b-button.is-small.is-outlined(@click="onUndo", :disabled="!editorStore.canUndo", title="Rückgängig (Ctrl+Z)")
         b-icon(icon="undo", size="is-small")
@@ -73,9 +81,23 @@
             span Radieren
 
       .palette-header
-        h3 Gebäude
+        .palette-title-row
+          h3 Gebäude
+          button.dice-btn(:class="{ active: randomVariant }", @click="randomVariant = !randomVariant", title="Zufallsvariante: jeder Stempel würfelt aus der Asset-Familie (z. B. alle Villen)")
+            b-icon(icon="dice-multiple", size="is-small")
         .palette-filter
           b-input(v-model="searchFilter", placeholder="Suchen...", size="is-small", icon="magnify")
+        //- Zuletzt benutzt: Schnellzugriff auf die letzten Stempel
+        .recent-row(v-if="recentItems.length")
+          .recent-item(
+            v-for="it in recentItems"
+            , :key="'r' + it.model"
+            , :class="{ active: editorStore.selectedAsset === it.model }"
+            , :style="{ backgroundColor: it.previewColor }"
+            , :title="it.label"
+            , @click="selectAsset(it.model)"
+          )
+            b-icon(:icon="it.icon", size="is-small")
 
       .palette-section(v-for="cat in filteredCategories", :key="cat.name")
         .section-header(@click="toggleCategory(cat.name)")
@@ -99,6 +121,14 @@
       canvas(ref="canvas")
       .controls-hint
         span(v-for="(hint, i) in toolHints", :key="i") {{ hint }}
+      //- Daten-Layer (SimCity-Style)
+      .layer-controls
+        button.layer-btn(:class="{ active: showDistricts }", @click="toggleDistricts", title="Distrikt-Einfärbung ein/aus")
+          b-icon(icon="palette", size="is-small")
+          span Distrikte
+        button.layer-btn(:class="{ active: showReach }", @click="toggleReach", title="Erreichbarkeit: begehbares Netz grün, abgeschnittene Gebäude rot")
+          b-icon(icon="walk", size="is-small")
+          span Erreichbarkeit
       .placement-info(v-if="hoveredCell")
         span {{ hoveredCell.cx }}, {{ hoveredCell.cz }}
         span(v-if="editorStore.selectedAsset")  | {{ selectedAssetLabel }}
@@ -183,14 +213,15 @@ import { CELL_SIZE } from '@/config/world'
 import { CATEGORIES, ASSET_MAP, FUNCTIONAL_TYPES, FUNCTIONAL_MAP } from '@/city/catalog'
 import { DISTRICTS } from '@/city/districts'
 import { downloadJSON, pickJSONFile, saveToRepo } from '@/editor/io'
+import { computeReachability } from '@/editor/validation'
 import { openToast } from '@/lib/toast'
 
 const TOOL_HINTS = {
-  select: ['Klick = Auswählen', 'Ziehen = Verschieben', 'R = Drehen', 'Entf = Löschen', 'Ctrl+Z = Rückgängig']
-  , place: ['Klick = Platzieren (Stempel bleibt aktiv)', 'R = Drehen', 'Esc = Beenden']
+  select: ['Klick = Auswählen', 'Ziehen = Verschieben', 'Alt+Klick = Pipette', 'R = Drehen', 'Entf = Löschen']
+  , place: ['Klick/Ziehen = Platzieren', 'R = Drehen', 'Alt+Klick = Pipette', 'Esc = Beenden']
   , road: ['Ziehen = Straßenzug legen', 'Esc = Beenden']
   , district: ['Klicken/Ziehen = Distrikt malen', 'Esc = Beenden']
-  , delete: ['Klick = Löschen', 'Esc = Beenden']
+  , delete: ['Klicken/Ziehen = Abreißen', 'Esc = Beenden']
 }
 
 export default {
@@ -201,6 +232,9 @@ export default {
       , searchFilter: ''
       , openCategories: { suburban: true }
       , isDev: import.meta.env.DEV
+      , randomVariant: false
+      , showDistricts: true
+      , showReach: false
     }
   }
   , computed: {
@@ -210,7 +244,11 @@ export default {
     , selected () { return this.editorStore.selectedPlacement }
     , validation () { return this.editorStore.validation }
     , toolHints () {
-      return ['WASD = Gleiten', 'Scrollrad = Zoom', 'Rechtsklick = Drehen'].concat(TOOL_HINTS[this.editorStore.tool] || [])
+      return ['WASD = Gleiten', 'Q/E = Kamera drehen', 'Scrollrad = Zoom'].concat(TOOL_HINTS[this.editorStore.tool] || [])
+    }
+    , meterStats () { return this.validation.stats }
+    , recentItems () {
+      return this.editorStore.recentAssets.map(m => ASSET_MAP[m]).filter(Boolean)
     }
     , selectedAssetLabel () {
       const info = ASSET_MAP[this.editorStore.selectedAsset]
@@ -285,6 +323,8 @@ export default {
       this.editorStore.selectedAsset = null
       this._scene.clearGhost()
       this._scene.clearRoadPreview()
+      this._scene.clearHover()
+      this._scene.setCellCursor(null)
       if (tool !== 'select') this.deselect()
     }
     , selectAsset (model) {
@@ -318,7 +358,9 @@ export default {
     }
     , async _fullRebuild () {
       this.deselect()
+      this._scene.clearHover()
       await this._scene.rebuildAll(this.editorStore.placements, this.editorStore.districtMap)
+      this._refreshOverlays()
     }
 
     // ── Pointer-Events ───────────────────────────────────────
@@ -327,28 +369,61 @@ export default {
       if (!cell) return
       this.hoveredCell = cell
       const store = this.editorStore
+      const scene = this._scene
 
       if (this._dragState) {
         const { placement, changedRoads } = store.move(this._dragState.placementId, cell.x, cell.z)
         if (placement) {
           this._dragState.didMove = true
-          this._scene.updateTransform(placement)
-          this._scene.showSelection(placement)
+          scene.updateTransform(placement)
+          scene.showSelection(placement)
           this._syncPlacements(changedRoads)
         }
         return
       }
       if (this._roadDrag) {
         this._roadDrag.cells = this._cellsForLine(this._roadDrag.start, cell)
-        this._scene.showRoadPreview(this._roadDrag.cells)
+        scene.showRoadPreview(this._roadDrag.cells)
         return
       }
       if (this._districtPainting && store.tool === 'district') {
         this._paintCell(cell)
         return
       }
+      // Drag-Painting: Deko mit gedrückter Maustaste streuen
+      if (this._paintDrag && store.tool === 'place') {
+        const key = `${cell.cx},${cell.cz}`
+        if (!this._paintDrag.cells.has(key)) {
+          this._paintDrag.cells.add(key)
+          this._placeAt(cell, { withUndo: !this._paintDrag.snapshotDone })
+          this._paintDrag.snapshotDone = true
+        }
+        return
+      }
+      // Bulldozer: Löschen mit gedrückter Maustaste
+      if (this._bulldozer && store.tool === 'delete') {
+        this._bulldozeAt(event)
+        return
+      }
+
+      // Zell-Cursor + Hover-Feedback je Werkzeug
       if (store.tool === 'place' && store.selectedAsset) {
-        this._scene.moveGhost(cell.x, cell.z, this._placementRotation)
+        scene.moveGhost(cell.x, cell.z, this._placementRotation)
+        const blocked = this._isBlocked(cell)
+        scene.setGhostValidity(!blocked)
+        scene.setCellCursor(cell, blocked
+          ? { color: 0xe74c3c, opacity: 0.3 }
+          : { color: 0x4ecca3, opacity: 0.15 })
+        scene.clearHover()
+      } else if (store.tool === 'delete') {
+        scene.setCellCursor(cell, { color: 0xe74c3c, opacity: 0.18 })
+        scene.setHover(scene.pickPlacementId(event), { color: 0xe74c3c, intensity: 0.55 })
+      } else if (store.tool === 'select') {
+        scene.setCellCursor(null)
+        scene.setHover(scene.pickPlacementId(event), { color: 0xffffff, intensity: 0.25 })
+      } else {
+        scene.setCellCursor(cell, { color: 0xffffff, opacity: 0.13 })
+        scene.clearHover()
       }
     }
 
@@ -374,6 +449,26 @@ export default {
         }
         return
       }
+      if (store.tool === 'place' && store.selectedAsset && !event.altKey) {
+        const info = ASSET_MAP[store.selectedAsset]
+        // Deko wird per Drag „gestreut" — alles andere bleibt Klick-Platzierung
+        if (info && info.type === 'deco') {
+          const cell = scene.pickCell(event)
+          if (cell) {
+            this._paintDrag = { cells: new Set([`${cell.cx},${cell.cz}`]), snapshotDone: false }
+            this._placeAt(cell, { withUndo: true })
+            this._paintDrag.snapshotDone = true
+            this._suppressClick = true
+          }
+        }
+        return
+      }
+      if (store.tool === 'delete' && !event.altKey) {
+        this._bulldozer = { snapshotDone: false }
+        this._bulldozeAt(event)
+        this._suppressClick = true
+        return
+      }
       if (store.tool !== 'select') return
 
       // Rotations-Ring? (Klick rotiert — im click-Handler)
@@ -397,12 +492,22 @@ export default {
       scene.controls.enabled = true
       this._districtPainting = false
 
+      if (this._paintDrag) {
+        this._paintDrag = null
+        this._refreshOverlays()
+      }
+      if (this._bulldozer) {
+        // Drag ohne Treffer: kein Undo-Schritt entstanden — nichts zu tun
+        this._bulldozer = null
+        this._refreshOverlays()
+      }
       if (this._roadDrag) {
         const cells = this._roadDrag.cells
         this._roadDrag = null
         scene.clearRoadPreview()
         const { added, changedRoads } = this.editorStore.placeRoadLine(cells)
         this._syncPlacements([...added, ...changedRoads])
+        this._refreshOverlays()
         return
       }
       if (this._dragState) {
@@ -412,30 +517,37 @@ export default {
         if (!ds.didMove && this.editorStore.undoStack.length) {
           this.editorStore.undoStack.pop()
         }
+        if (ds.didMove) this._refreshOverlays()
       }
     }
 
     , onCanvasClick (event) {
+      if (this._suppressClick) { this._suppressClick = false; return }
       const store = this.editorStore
       const scene = this._scene
       const cell = scene.pickCell(event)
       if (!cell) return
 
-      if (store.tool === 'place' && store.selectedAsset) {
-        const { placement, changedRoads } = store.place({
-          model: store.selectedAsset, x: cell.x, z: cell.z, rotation: this._placementRotation
-        })
-        this._syncPlacements([placement, ...changedRoads])
-        // Stempel-Modus: Werkzeug bleibt aktiv
-      } else if (store.tool === 'delete') {
+      // Pipette (Alt+Klick in jedem Werkzeug): Gebäude unter dem Cursor
+      // als Stempel übernehmen — inkl. Rotation
+      if (event.altKey) {
         const id = scene.pickPlacementId(event)
-        if (id != null) {
-          const { removed, changedRoads } = store.removeById(id)
-          if (removed) {
-            scene.removePlacement(id)
-            this._syncPlacements(changedRoads)
-          }
+        const p = id != null && store.placements.find(pl => pl.id === id)
+        if (p && p.type !== 'water') {
+          this._placementRotation = p.rotation || 0
+          store.selectedAsset = p.model
+          store.tool = 'place'
+          this.deselect()
+          scene.setGhost(p.model, p.type)
+          scene.moveGhost(cell.x, cell.z, this._placementRotation)
         }
+        return
+      }
+
+      if (store.tool === 'place' && store.selectedAsset) {
+        this._placeAt(cell, { withUndo: true })
+        this._refreshOverlays()
+        // Stempel-Modus: Werkzeug bleibt aktiv
       } else if (store.tool === 'select') {
         if (store.selectedId != null && scene.pickRotateRing(event)) {
           this.onRotateSelected()
@@ -449,6 +561,81 @@ export default {
 
     , onContextMenu (event) {
       event.preventDefault()
+    }
+
+    // ── Platzieren / Abreißen (gemeinsame Pfade) ─────────────
+    , _isBlocked (cell) {
+      const info = ASSET_MAP[this.editorStore.selectedAsset]
+      if (!info || info.type === 'deco') return false
+      return this.editorStore.occupiedCells.has(`${cell.cx},${cell.cz}`)
+    }
+
+    , _placeAt (cell, { withUndo }) {
+      const store = this.editorStore
+      if (this._isBlocked(cell)) return // roter Ghost zeigt es bereits
+      const { placement, changedRoads } = store.place({
+        model: store.selectedAsset, x: cell.x, z: cell.z, rotation: this._placementRotation
+      }, { withUndo })
+      this._scene.addPlacement(placement, { plop: true })
+      this._syncPlacements(changedRoads)
+      // Zufallsvariante: nächsten Stempel aus der Asset-Familie würfeln
+      if (this.randomVariant) {
+        const pool = this._variantPool(placement.model)
+        if (pool.length > 1) {
+          const next = pool[Math.floor(Math.random() * pool.length)]
+          store.selectedAsset = next
+          this._scene.setGhost(next, ASSET_MAP[next].type)
+            .then(() => this._scene.moveGhost(cell.x, cell.z, this._placementRotation))
+        }
+      }
+    }
+
+    , _bulldozeAt (event) {
+      const scene = this._scene
+      const id = scene.pickPlacementId(event)
+      if (id == null) return
+      scene.clearHover()
+      if (!this._bulldozer.snapshotDone) {
+        this.editorStore.snapshot()
+        this._bulldozer.snapshotDone = true
+      }
+      const { removed, changedRoads } = this.editorStore.removeById(id, { withUndo: false })
+      if (removed) {
+        scene.removePlacement(id)
+        this._syncPlacements(changedRoads)
+      }
+    }
+
+    /** Asset-Familie für die Zufallsvariante: gleiche Kategorie + Typ + Icon. */
+    , _variantPool (model) {
+      const info = ASSET_MAP[model]
+      if (!info) return [model]
+      for (const cat of CATEGORIES) {
+        if (cat.items.some(i => i.model === model)) {
+          const pool = cat.items
+            .filter(i => i.type === info.type && i.icon === info.icon && i.glb !== false)
+            .map(i => i.model)
+          return pool.length ? pool : [model]
+        }
+      }
+      return [model]
+    }
+
+    // ── Layer ─────────────────────────────────────────────────
+    , toggleDistricts () {
+      this.showDistricts = !this.showDistricts
+      this._scene.setDistrictOverlayVisible(this.showDistricts)
+    }
+    , toggleReach () {
+      this.showReach = !this.showReach
+      this._refreshOverlays()
+    }
+    , _refreshOverlays () {
+      if (this.showReach) {
+        this._scene.showReachability(computeReachability(this.editorStore.placements))
+      } else {
+        this._scene.clearReachability()
+      }
     }
 
     , _paintCell (cell) {
@@ -519,17 +706,20 @@ export default {
     }
     , onDeleteSelected () {
       if (!this.selected) return
+      this._scene.clearHover()
       const { removed, changedRoads } = this.editorStore.removeById(this.selected.id)
       if (removed) {
         this._scene.removePlacement(removed.id)
         this._scene.showSelection(null)
         this._syncPlacements(changedRoads)
+        this._refreshOverlays()
       }
     }
     , updateSelected (fields, retint = false) {
       if (!this.selected) return
       const p = this.editorStore.updatePlacement(this.selected.id, fields)
       if (p && retint) this._scene.addPlacement(p)
+      this._refreshOverlays()
     }
     , async onUndo () {
       if (this.editorStore.undo()) await this._fullRebuild()
@@ -638,6 +828,20 @@ export default {
     font-size: 0.7rem
     color: $grey
 
+  .capacity-meter
+    display: flex
+    gap: 0.75rem
+    margin-left: 1rem
+    .meter-item
+      display: flex
+      align-items: center
+      gap: 0.25rem
+      font-size: 0.78rem
+      font-weight: 600
+      color: #4ecca3
+      &.bad
+        color: #e74c3c
+
   .header-actions
     margin-left: auto
     display: flex
@@ -664,6 +868,50 @@ export default {
       margin-bottom: 0.5rem
     .palette-filter
       margin-top: 0.3rem
+
+    .palette-title-row
+      display: flex
+      align-items: center
+      justify-content: space-between
+      h3
+        margin-bottom: 0
+
+    .dice-btn
+      background: rgba(255, 255, 255, 0.06)
+      border: 1px solid rgba(255, 255, 255, 0.12)
+      border-radius: 4px
+      color: $grey
+      cursor: pointer
+      padding: 0.15rem 0.35rem
+      display: flex
+      align-items: center
+      &:hover
+        color: $grey-lighter
+      &.active
+        color: $primary
+        border-color: $primary
+        background: rgba($primary, 0.15)
+
+    .recent-row
+      display: flex
+      gap: 0.3rem
+      margin-top: 0.5rem
+      flex-wrap: wrap
+
+    .recent-item
+      width: 26px
+      height: 26px
+      border-radius: 4px
+      display: flex
+      align-items: center
+      justify-content: center
+      cursor: pointer
+      border: 1px solid transparent
+      &:hover
+        filter: brightness(1.2)
+      &.active
+        border-color: $primary
+        box-shadow: 0 0 0 1px $primary
 
   .palette-section
     border-bottom: 1px solid rgba(255, 255, 255, 0.05)
@@ -783,6 +1031,33 @@ export default {
     border-radius: 4px
     font-size: 0.75rem
     color: $grey-light
+
+  .layer-controls
+    position: absolute
+    top: 2.4rem
+    right: 0.75rem
+    display: flex
+    flex-direction: column
+    gap: 0.3rem
+
+  .layer-btn
+    display: flex
+    align-items: center
+    gap: 0.3rem
+    background: rgba(0, 0, 0, 0.6)
+    backdrop-filter: blur(4px)
+    border: 1px solid rgba(255, 255, 255, 0.15)
+    border-radius: 4px
+    color: $grey
+    cursor: pointer
+    font-size: 0.72rem
+    padding: 0.25rem 0.5rem
+    &:hover
+      color: $grey-lighter
+    &.active
+      color: $primary
+      border-color: rgba($primary, 0.6)
+      background: rgba($primary, 0.12)
 
 .side-panel
   width: 260px

@@ -34,6 +34,7 @@ export const useEditorStore = defineStore('editor', {
     , previewActive: false
     , draftSavedAt: null
     , loadedFrom: null // 'draft' | 'shipped' | 'file'
+    , recentAssets: [] // zuletzt platzierte Modelle (Schnellzugriff)
   })
 
   , getters: {
@@ -48,6 +49,15 @@ export const useEditorStore = defineStore('editor', {
     , validation: state => computeValidation({ placements: state.placements, population: state.population })
     , canUndo: state => state.undoStack.length > 0
     , canRedo: state => state.redoStack.length > 0
+    /** Zellen, die von „blockierenden" Platzierungen belegt sind (alles außer Deko). */
+    , occupiedCells: state => {
+      const set = new Set()
+      for (const p of state.placements) {
+        if (p.type === 'deco') continue
+        set.add(`${Math.floor(p.x / CELL_SIZE)},${Math.floor(p.z / CELL_SIZE)}`)
+      }
+      return set
+    }
   }
 
   , actions: {
@@ -118,8 +128,9 @@ export const useEditorStore = defineStore('editor', {
 
     // ── Platzieren / Löschen / Bewegen ────────────────────────
     /** Legt eine Platzierung an. Gibt { placement, changedRoads } zurück. */
-    , place ({ model, x, z, rotation = 0 }) {
-      this.snapshot()
+    , place ({ model, x, z, rotation = 0 }, { withUndo = true } = {}) {
+      if (withUndo) this.snapshot()
+      this._touchRecent(model)
       const info = ASSET_MAP[model] || { type: 'building', label: model }
       const placement = {
         id: this.nextId++
@@ -239,6 +250,10 @@ export const useEditorStore = defineStore('editor', {
       for (const p of affected) p.district = districtIdx === -1 ? -1 : districtIdx
       this._scheduleAutosave()
       return affected
+    }
+
+    , _touchRecent (model) {
+      this.recentAssets = [model, ...this.recentAssets.filter(m => m !== model)].slice(0, 8)
     }
 
     , _districtAtWorld (x, z) {

@@ -12,6 +12,51 @@ import { generateWalkableGrid } from './io'
 
 const NON_FUNCTIONAL = new Set(['decoration', 'road', 'water'])
 
+/**
+ * Erreichbarkeit über das echte Walkable-Grid: Flood-Fill von den Straßen
+ * über R∪D (Gehwege). Eigenständig exportiert, weil der Editor daraus auch
+ * das Erreichbarkeits-Overlay rendert.
+ */
+export function computeReachability (placements) {
+  const cells = GRID_CELLS
+  const tileMap = generateWalkableGrid(placements).map
+  const flooded = new Uint8Array(cells * cells)
+  const stack = []
+  for (let i = 0; i < tileMap.length; i++) {
+    if (tileMap[i] === 'R') { flooded[i] = 1; stack.push(i) }
+  }
+  while (stack.length) {
+    const idx = stack.pop()
+    const cx = idx % cells, cz = (idx / cells) | 0
+    for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+      const nx = cx + dx, nz = cz + dz
+      if (nx < 0 || nx >= cells || nz < 0 || nz >= cells) continue
+      const nIdx = nz * cells + nx
+      if (!flooded[nIdx] && (tileMap[nIdx] === 'R' || tileMap[nIdx] === 'D')) {
+        flooded[nIdx] = 1
+        stack.push(nIdx)
+      }
+    }
+  }
+  const unreachable = []
+  for (const p of placements) {
+    const ft = FUNCTIONAL_MAP[p.functional_type]
+    if (!ft || NON_FUNCTIONAL.has(ft.value)) continue
+    const cx = Math.max(0, Math.min(cells - 1, Math.floor(p.x / CELL_SIZE)))
+    const cz = Math.max(0, Math.min(cells - 1, Math.floor(p.z / CELL_SIZE)))
+    let reachable = false
+    for (let dx = -1; dx <= 1 && !reachable; dx++) {
+      for (let dz = -1; dz <= 1 && !reachable; dz++) {
+        if (dx === 0 && dz === 0) continue
+        const nx = cx + dx, nz = cz + dz
+        if (nx >= 0 && nx < cells && nz >= 0 && nz < cells && flooded[nz * cells + nx]) reachable = true
+      }
+    }
+    if (!reachable) unreachable.push(p)
+  }
+  return { cells, flooded, unreachable }
+}
+
 export function computeValidation ({ placements, population = 500 }) {
   const errors = []
   const warnings = []
@@ -90,44 +135,10 @@ export function computeValidation ({ placements, population = 500 }) {
       warnings.push(`Straßennetz zerfällt in ${fragments} getrennte Teile — Blobs wechseln nicht zwischen ihnen.`)
     }
 
-    // Erreichbarkeit über das ECHTE Walkable-Grid: Blobs laufen auch über
-    // Gehweg-Zellen (D = Deko/Pfade + leere Zellen neben Straßen/Gebäuden).
-    // Flood-Fill von den Straßen über R∪D; ein Gebäude ist erreichbar, wenn
-    // sein Eingangs-Ring (8 Nachbarzellen) das geflutete Netz berührt.
-    // Kalibriert an der ausgelieferten Stadt: dort 0 Treffer.
-    const tileMap = generateWalkableGrid(placements).map
-    const flooded = new Uint8Array(cells * cells)
-    const stack = []
-    for (let i = 0; i < tileMap.length; i++) {
-      if (tileMap[i] === 'R') { flooded[i] = 1; stack.push(i) }
-    }
-    while (stack.length) {
-      const idx = stack.pop()
-      const cx = idx % cells, cz = (idx / cells) | 0
-      for (const [dx, dz] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-        const nx = cx + dx, nz = cz + dz
-        if (nx < 0 || nx >= cells || nz < 0 || nz >= cells) continue
-        const nIdx = nz * cells + nx
-        if (!flooded[nIdx] && (tileMap[nIdx] === 'R' || tileMap[nIdx] === 'D')) {
-          flooded[nIdx] = 1
-          stack.push(nIdx)
-        }
-      }
-    }
-    const unreachable = []
-    for (const p of functional) {
-      const cx = Math.max(0, Math.min(cells - 1, Math.floor(p.x / CELL_SIZE)))
-      const cz = Math.max(0, Math.min(cells - 1, Math.floor(p.z / CELL_SIZE)))
-      let reachable = false
-      for (let dx = -1; dx <= 1 && !reachable; dx++) {
-        for (let dz = -1; dz <= 1 && !reachable; dz++) {
-          if (dx === 0 && dz === 0) continue
-          const nx = cx + dx, nz = cz + dz
-          if (nx >= 0 && nx < cells && nz >= 0 && nz < cells && flooded[nz * cells + nx]) reachable = true
-        }
-      }
-      if (!reachable) unreachable.push(p)
-    }
+    // Erreichbarkeit über das ECHTE Walkable-Grid (siehe computeReachability):
+    // Blobs laufen auch über Gehweg-Zellen — kalibriert an der
+    // ausgelieferten Stadt (dort 0 Treffer).
+    const { unreachable } = computeReachability(placements)
     if (unreachable.length > 0) {
       const sample = unreachable.slice(0, 3).map(p => p.label || p.model).join(', ')
       warnings.push(`${unreachable.length} Gebäude ohne Anbindung ans Straßen-/Gehwegnetz (${sample}${unreachable.length > 3 ? ', …' : ''}).`)

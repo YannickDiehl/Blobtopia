@@ -93,6 +93,8 @@ export class EditorScene {
       , MIDDLE: THREE.MOUSE.DOLLY
       , RIGHT: THREE.MOUSE.ROTATE
     }
+    // Scrollrad zoomt auf die Stelle unter dem Cursor (Aufbauspiel-Standard)
+    this.controls.zoomToCursor = true
     this.controls.target.set(GRID / 2, 0, GRID / 2)
 
     // Lichter — ×π-kalibrierte Werte (wie Welt-Viewer, Three r155+)
@@ -104,9 +106,17 @@ export class EditorScene {
     fill.position.set(-200, 300, -100)
     this.scene.add(fill)
 
-    // Boden + Distrikt-Overlays
+    // Boden + Distrikt-Overlays (getrennt, damit der Layer schaltbar ist)
     this.groundGroup = new THREE.Group()
     this.scene.add(this.groundGroup)
+    this.districtOverlay = new THREE.Group()
+    this.scene.add(this.districtOverlay)
+
+    // Erreichbarkeits-Overlay (Lehr-Layer, default aus)
+    this.reachOverlay = new THREE.Group()
+    this.reachOverlay.visible = false
+    this.scene.add(this.reachOverlay)
+    this._pulseMats = []
 
     const gridHelper = new THREE.GridHelper(GRID, CELLS, 0x444444, 0x333333)
     gridHelper.position.set(GRID / 2, 0.1, GRID / 2)
@@ -128,6 +138,23 @@ export class EditorScene {
     this.selectionIndicator.visible = false
     this.scene.add(this.selectionIndicator)
 
+    // Zell-Cursor: markiert die anvisierte Rasterzelle
+    const ccGeo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
+    const ccMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.13, depthWrite: false })
+    ccGeo.userData._owned = true
+    ccMat.userData._owned = true
+    this.cellCursor = new THREE.Mesh(ccGeo, ccMat)
+    this.cellCursor.rotation.x = -Math.PI / 2
+    this.cellCursor.position.y = 0.45
+    this.cellCursor.visible = false
+    this.scene.add(this.cellCursor)
+
+    // Hover-Highlight (Material-Tausch nur am gehoverten Objekt)
+    this._hoverId = null
+    this._hoverBackup = []
+    // Plop-Animationen
+    this._plops = []
+
     this.raycaster = new THREE.Raycaster()
     this.mouse = new THREE.Vector2()
     this.groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
@@ -142,6 +169,11 @@ export class EditorScene {
       this.groundGroup.remove(child)
       disposeOwned(child)
     }
+    while (this.districtOverlay.children.length) {
+      const child = this.districtOverlay.children[0]
+      this.districtOverlay.remove(child)
+      disposeOwned(child)
+    }
     const groundGeo = new THREE.PlaneGeometry(GRID, GRID)
     const groundMat = new THREE.MeshLambertMaterial({ color: 0x3a5a3a })
     const ground = new THREE.Mesh(groundGeo, groundMat)
@@ -149,25 +181,115 @@ export class EditorScene {
     ground.position.set(GRID / 2, -0.1, GRID / 2)
     this.groundGroup.add(markOwned(ground))
 
+    // Distrikt-Quads: ein geteiltes Material je Distrikt
+    const distMats = {}
+    const quadGeo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
+    quadGeo.userData._owned = true
     for (const key of Object.keys(districtMap || {})) {
       const [cx, cz] = key.split(',').map(Number)
-      const d = DISTRICTS[districtMap[key]]
+      const dIdx = districtMap[key]
+      const d = DISTRICTS[dIdx]
       if (!d) continue
-      const geo = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE)
-      const mat = new THREE.MeshLambertMaterial({
-        color: new THREE.Color(d.groundColor[0], d.groundColor[1], d.groundColor[2])
-        , transparent: true
-        , opacity: 0.6
-      })
-      const mesh = new THREE.Mesh(geo, mat)
+      if (!distMats[dIdx]) {
+        distMats[dIdx] = new THREE.MeshLambertMaterial({
+          color: new THREE.Color(d.groundColor[0], d.groundColor[1], d.groundColor[2])
+          , transparent: true
+          , opacity: 0.6
+        })
+        distMats[dIdx].userData._owned = true
+      }
+      const mesh = new THREE.Mesh(quadGeo, distMats[dIdx])
       mesh.rotation.x = -Math.PI / 2
       mesh.position.set(cx * CELL_SIZE + CELL_SIZE / 2, 0.05, cz * CELL_SIZE + CELL_SIZE / 2)
-      this.groundGroup.add(markOwned(mesh))
+      this.districtOverlay.add(mesh)
     }
   }
 
+  setDistrictOverlayVisible (visible) {
+    this.districtOverlay.visible = visible
+  }
+
+  // ── Erreichbarkeits-Overlay ────────────────────────────────
+  showReachability ({ cells, flooded, unreachable }) {
+    this.clearReachability()
+    this.reachOverlay.visible = true
+    const quadGeo = new THREE.PlaneGeometry(CELL_SIZE * 0.96, CELL_SIZE * 0.96)
+    const floodMat = new THREE.MeshBasicMaterial({ color: 0x4ecca3, transparent: true, opacity: 0.22, depthWrite: false })
+    quadGeo.userData._owned = true
+    floodMat.userData._owned = true
+    for (let i = 0; i < flooded.length; i++) {
+      if (!flooded[i]) continue
+      const cx = i % cells, cz = (i / cells) | 0
+      const mesh = new THREE.Mesh(quadGeo, floodMat)
+      mesh.rotation.x = -Math.PI / 2
+      mesh.position.set(cx * CELL_SIZE + CELL_SIZE / 2, 0.5, cz * CELL_SIZE + CELL_SIZE / 2)
+      this.reachOverlay.add(mesh)
+    }
+    // Abgeschnittene Gebäude: rot pulsierend
+    const badGeo = new THREE.PlaneGeometry(CELL_SIZE * 1.2, CELL_SIZE * 1.2)
+    badGeo.userData._owned = true
+    for (const p of unreachable) {
+      const mat = new THREE.MeshBasicMaterial({ color: 0xe74c3c, transparent: true, opacity: 0.5, depthWrite: false })
+      mat.userData._owned = true
+      this._pulseMats.push(mat)
+      const mesh = new THREE.Mesh(badGeo, mat)
+      mesh.rotation.x = -Math.PI / 2
+      mesh.position.set(p.x, 0.6, p.z)
+      this.reachOverlay.add(mesh)
+    }
+  }
+
+  clearReachability () {
+    const seen = new Set()
+    for (const child of this.reachOverlay.children) {
+      if (!seen.has(child.geometry)) { seen.add(child.geometry); if (child.geometry.userData._owned) child.geometry.dispose() }
+      if (!seen.has(child.material)) { seen.add(child.material); if (child.material.userData._owned) child.material.dispose() }
+    }
+    this.reachOverlay.clear()
+    this._pulseMats = []
+    this.reachOverlay.visible = false
+  }
+
+  // ── Zell-Cursor ────────────────────────────────────────────
+  setCellCursor (cell, { color = 0xffffff, opacity = 0.13 } = {}) {
+    if (!cell) { this.cellCursor.visible = false; return }
+    this.cellCursor.visible = true
+    this.cellCursor.position.x = cell.x
+    this.cellCursor.position.z = cell.z
+    this.cellCursor.material.color.set(color)
+    this.cellCursor.material.opacity = opacity
+  }
+
+  // ── Hover-Highlight ────────────────────────────────────────
+  setHover (id, { color = 0xffffff, intensity = 0.3 } = {}) {
+    if (this._hoverId === id) return
+    this.clearHover()
+    if (id == null) return
+    const obj = this.meshById.get(id)
+    if (!obj) return
+    this._hoverId = id
+    obj.traverse(c => {
+      if (c.isMesh && c.material && c.material.emissive !== undefined) {
+        this._hoverBackup.push({ mesh: c, material: c.material })
+        const m = c.material.clone() // Klon: geteilte Template-Materialien nie mutieren
+        m.emissive.set(color)
+        m.emissiveIntensity = intensity
+        c.material = m
+      }
+    })
+  }
+
+  clearHover () {
+    for (const { mesh, material } of this._hoverBackup) {
+      if (mesh.material !== material) mesh.material.dispose()
+      mesh.material = material
+    }
+    this._hoverBackup = []
+    this._hoverId = null
+  }
+
   // ── Platzierungen ──────────────────────────────────────────
-  async addPlacement (p) {
+  async addPlacement (p, { plop = false } = {}) {
     let obj
     if (p.type === 'water') {
       const tileSize = p.model === 'water-tile-small' ? CELL_SIZE / 2 : CELL_SIZE
@@ -193,6 +315,12 @@ export class EditorScene {
     this.removePlacement(p.id)
     this.meshById.set(p.id, obj)
     this.buildingGroup.add(obj)
+    if (plop) {
+      // Townscaper-Plop: kurz überskaliert einsetzen, auf Zielgröße einrasten
+      const base = obj.scale.x || 1
+      obj.scale.setScalar(base * 1.18)
+      this._plops.push({ obj, base, t: 0 })
+    }
     return obj
   }
 
@@ -297,6 +425,19 @@ export class EditorScene {
 
   hideGhost () { this.ghostGroup.visible = false }
 
+  /** Roter Schimmer auf dem Ghost, wenn die Zelle belegt ist. */
+  setGhostValidity (valid) {
+    if (this._ghostValid === valid) return
+    this._ghostValid = valid
+    this.ghostGroup.traverse(c => {
+      if (c.isMesh && c.material && c.material.emissive !== undefined) {
+        // Ghost-Materialien sind eigene Klone — Mutation ist sicher
+        c.material.emissive.set(valid ? 0x000000 : 0xe74c3c)
+        c.material.emissiveIntensity = valid ? 0 : 0.7
+      }
+    })
+  }
+
   // ── Straßenzug-Vorschau ────────────────────────────────────
   showRoadPreview (cellsList) {
     this.clearRoadPreview()
@@ -397,6 +538,7 @@ export class EditorScene {
 
   // ── Loop / Resize / Teardown ───────────────────────────────
   start () {
+    const UP = new THREE.Vector3(0, 1, 0)
     const animate = () => {
       if (this._stopped) return
       requestAnimationFrame(animate)
@@ -408,7 +550,7 @@ export class EditorScene {
       this.camera.getWorldDirection(forward)
       forward.y = 0
       forward.normalize()
-      const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize()
+      const right = new THREE.Vector3().crossVectors(forward, UP).normalize()
       const dir = new THREE.Vector3()
       if (this._keys['w'] || this._keys['arrowup']) dir.add(forward)
       if (this._keys['s'] || this._keys['arrowdown']) dir.sub(forward)
@@ -418,6 +560,33 @@ export class EditorScene {
         dir.normalize().multiplyScalar(panSpeed)
         this.camera.position.add(dir)
         this.controls.target.add(dir)
+      }
+
+      // Q/E: Kamera um das Ziel drehen (Cities:-Skylines-Gefühl)
+      const rot = (this._keys['q'] ? 1 : 0) - (this._keys['e'] ? 1 : 0)
+      if (rot !== 0) {
+        const v = this.camera.position.clone().sub(this.controls.target)
+        v.applyAxisAngle(UP, rot * 0.025)
+        this.camera.position.copy(this.controls.target).add(v)
+      }
+
+      // Plop-Animationen (ease-out, ~10 Frames)
+      for (let i = this._plops.length - 1; i >= 0; i--) {
+        const plop = this._plops[i]
+        plop.t += 0.12
+        if (plop.t >= 1) {
+          plop.obj.scale.setScalar(plop.base)
+          this._plops.splice(i, 1)
+        } else {
+          const ease = 1 - Math.pow(1 - plop.t, 3)
+          plop.obj.scale.setScalar(plop.base * (1.18 - 0.18 * ease))
+        }
+      }
+
+      // Pulsieren der Unerreichbar-Marker
+      if (this._pulseMats.length) {
+        const o = 0.35 + 0.25 * Math.sin(performance.now() / 240)
+        for (const m of this._pulseMats) m.opacity = o
       }
 
       this.controls.update()
@@ -439,6 +608,8 @@ export class EditorScene {
 
   dispose () {
     this._stopped = true
+    this.clearHover()
+    this.clearReachability()
     for (const id of [...this.meshById.keys()]) this.removePlacement(id)
     this.clearGhost()
     this.clearRoadPreview()
@@ -447,7 +618,13 @@ export class EditorScene {
       this.groundGroup.remove(child)
       disposeOwned(child)
     }
+    while (this.districtOverlay.children.length) {
+      const child = this.districtOverlay.children[0]
+      this.districtOverlay.remove(child)
+      disposeOwned(child)
+    }
     disposeOwned(this.selectionIndicator)
+    disposeOwned(this.cellCursor)
     this._gridHelper.geometry.dispose()
     this._gridHelper.material.dispose()
     this.controls.dispose()
