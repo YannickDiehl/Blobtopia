@@ -11,6 +11,7 @@ import { getScheduledState } from './blob-schedule'
 import { snapToWalkable } from './blob-movement'
 import { computeHourPositions, interpolateAlongPath, getCachedPath } from './position-cache'
 import { computeWanderPosition } from './film-wander'
+import { useSimulationStore } from '@/stores/simulation'
 
 // Deterministic PRNG (mulberry32) — same seed = same sequence on all clients
 function mulberry32 (seed) {
@@ -67,6 +68,9 @@ export default {
     }
   }
   , created(){
+    // Store-Instanz einmal cachen — draw() läuft pro Frame, useStore()
+    // pro Aufruf wäre unnötiger Overhead
+    this._sim = useSimulationStore()
     // Per-blob animation state (persistent across frames, survives tick updates)
     this._cx = null  // current smoothed x
     this._cy = null  // current smoothed y
@@ -182,7 +186,7 @@ export default {
       // ══════════════════════════════════════════════════════════
       // FILM MODE: Deterministic timeline playback
       // ══════════════════════════════════════════════════════════
-      if (this.$store.state.simulation.timelineMode && this._locationsAssigned) {
+      if (this._sim.timelineMode && this._locationsAssigned) {
         this._filmModeDraw(pos)
         // Write visual position for building-inspector (film mode)
         if (this.creature && this.creature.id) {
@@ -192,12 +196,12 @@ export default {
       }
 
       // Skip animation when paused
-      if (this.$store && this.$store.state.simulation.paused) {
+      if (this._sim.paused) {
         return
       }
 
       // --- Resolve current state from individual schedule ---
-      const hour = this.$store.state.simulation.hour
+      const hour = this._sim.hour
       let prevState = this._dayState
       const scheduled = getScheduledState(this._schedule, hour)
 
@@ -329,7 +333,7 @@ export default {
         // Start a micro-walk when timer expires
         if (!this._inMicroWalk && this._microWalkTimer > intervalMs && this._idleCenter && walkableGrid.grid) {
           this._microWalkTimer = 0
-          const tick = this.$store.state.simulation.tick
+          const tick = this._sim.tick
           const seed = (this.creature.id || this._phase * 1000) * 10000 + tick * 100 + hour
           const rng = mulberry32(seed)
           const target = randomWalkableNear(this._cx, this._cy, microRadius, walkableGrid, rng)
@@ -445,7 +449,7 @@ export default {
     // Film-mode draw: deterministic position from keyframes
     // ══════════════════════════════════════════════════════════
     , _filmModeDraw(pos) {
-        const simState = this.$store.state.simulation
+        const simState = this._sim
         const hour = simState.hour
         const frac = simState.subHourFraction || 0
         const tick = simState.tick || 0

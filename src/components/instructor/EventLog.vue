@@ -17,7 +17,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 
 export default {
   name: 'EventLog'
@@ -25,7 +26,7 @@ export default {
     events(){
       return this.timelineEvents || []
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       timelineEvents: 'timelineEvents'
       , tick: 'tick'
     })

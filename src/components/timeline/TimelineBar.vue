@@ -23,7 +23,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import TransportControls from './TransportControls'
 import TimelineScrubber from './TimelineScrubber'
 import DayCycleStrip from './DayCycleStrip'
@@ -41,19 +42,19 @@ export default {
       return this.timelineExpanded ? 50 : 30
     }
     , showEventCard(){
-      return this.$store.state.simulation.showEventCard
+      return this.simulationStore.showEventCard
     }
     , currentEvent(){
       if (!this.timelineEvents || !this.timelineEvents.length) return null
       return this.timelineEvents.find(e => Math.abs(e.tick - (this.tick || 0)) <= 3 && e.tick !== this.dismissedEventTick)
     }
     , currentEventImpact(){
-      const impact = this.$store.state.simulation.dashboardCache.eventsImpact
+      const impact = this.simulationStore.dashboardCache.eventsImpact
       if (!impact || !this.currentEvent) return null
       const events = impact.events || []
       return events.find(e => e.tick === this.currentEvent.tick) || null
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       uiMode: 'uiMode'
       , timelineExpanded: 'timelineExpanded'
       , isPaused: 'isPaused'
@@ -62,6 +63,7 @@ export default {
       , timelineEvents: 'timelineEvents'
       , timelineSummary: 'timelineSummary'
     })
+    , ...mapStores(useSimulationStore)
   }
   , watch: {
     tick(){
@@ -76,13 +78,13 @@ export default {
   }
   , methods: {
     toggleExpand(){
-      this.$store.commit('simulation/setTimelineExpanded', !this.timelineExpanded)
+      this.simulationStore.setTimelineExpanded(!this.timelineExpanded)
     }
     , togglePlayback(){
       if (this.isPaused) {
-        this.$store.dispatch('simulation/startPlayback')
+        this.simulationStore.startPlayback()
       } else {
-        this.$store.dispatch('simulation/stopPlayback')
+        this.simulationStore.stopPlayback()
       }
     }
     , dismissEvent(){

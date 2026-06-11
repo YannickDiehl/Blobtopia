@@ -23,7 +23,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 import LineChart from '@/components/charts/LineChart'
 
@@ -44,7 +45,7 @@ export default {
     ]
   })
   , computed: {
-    ...mapGetters('simulation', ['timelineEvents'])
+    ...mapState(useSimulationStore, ['timelineEvents'])
     , currentConstruct() {
       return this.constructs[this.selectedIndex]
     }
@@ -61,7 +62,7 @@ export default {
   }
   , async mounted() {
     this.loading = true
-    const data = await this.$store.dispatch('simulation/fetchDashboardLatentTraits')
+    const data = await useSimulationStore().fetchDashboardLatentTraits()
     if (data && data.districts) {
       this.districts = data.districts
     }

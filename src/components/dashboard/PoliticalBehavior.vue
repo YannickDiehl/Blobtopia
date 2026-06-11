@@ -10,19 +10,19 @@
     .chart-section
       h4.subheading Protestbereitschaft über Zeit
       .chart-wrap(style="height:300px")
-        line-chart(:chart-data="protestTimeData" :options="protestTimeOptions" :styles="chartStyles")
+        line-chart(:chart-data="protestTimeData" :options="protestTimeOptions")
 
     //- Election turnout trend
     .chart-section(v-if="electionList.length")
       h4.subheading Wahlbeteiligung
       .chart-wrap(style="height:250px")
-        line-chart(:chart-data="turnoutData" :options="turnoutOptions" :styles="chartStyles")
+        line-chart(:chart-data="turnoutData" :options="turnoutOptions")
 
     //- Party strength over elections
     .chart-section(v-if="electionList.length")
       h4.subheading Parteistärke über Wahlen
       .chart-wrap(style="height:300px")
-        line-chart(:chart-data="partyStrengthData" :options="partyStrengthOptions" :styles="chartStyles")
+        line-chart(:chart-data="partyStrengthData" :options="partyStrengthOptions")
 
     //- Protest readiness snapshot
     .chart-section
@@ -36,7 +36,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS, NUM_DISTRICTS } from '@/lib/blob-adapter'
 import LineChart from '@/components/charts/LineChart.vue'
 
@@ -48,7 +49,7 @@ export default {
   name: 'PoliticalBehavior'
   , components: { LineChart }
   , computed: {
-    ...mapGetters('simulation', ['dashboardAttitudes', 'dashboardElections', 'statistics', 'timelineMeta'])
+    ...mapState(useSimulationStore, ['dashboardAttitudes', 'dashboardElections', 'statistics', 'timelineMeta'])
     , attitudes() {
       const raw = this.dashboardAttitudes || null
       return raw ? (raw.districts || raw) : null
@@ -60,9 +61,6 @@ export default {
     }
     , hasData() {
       return this.attitudes || this.electionList.length > 0
-    }
-    , chartStyles() {
-      return { height: '100%', position: 'relative' }
     }
     , districtIndices() {
       const arr = []
@@ -198,8 +196,9 @@ export default {
     }
   }
   , mounted() {
-    this.$store.dispatch('simulation/fetchDashboardAttitudes')
-    this.$store.dispatch('simulation/fetchDashboardElections')
+    const sim = useSimulationStore()
+    sim.fetchDashboardAttitudes()
+    sim.fetchDashboardElections()
   }
 }
 </script>

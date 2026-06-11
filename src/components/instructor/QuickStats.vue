@@ -57,7 +57,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import LineChart from '@/components/charts/LineChart'
 import { DISTRICT_NAMES, DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 
@@ -147,17 +148,18 @@ export default {
         , datasets: [{ data: s.global.protest, borderColor: '#e74c3c', backgroundColor: 'rgba(231,76,60,0.08)', fill: true }]
       }
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       timelineSummary: 'timelineSummary'
       , statistics: 'statistics'
     })
+    , ...mapStores(useSimulationStore)
   }
   , mounted(){
     this.loadData()
   }
   , methods: {
     loadData(){
-      this.$store.dispatch('simulation/fetchTimelineSummary')
+      this.simulationStore.fetchTimelineSummary()
     }
   }
 }

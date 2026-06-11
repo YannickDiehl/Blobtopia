@@ -4,7 +4,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import InstructorLayout from '@/components/instructor/InstructorLayout'
 
 export default {
@@ -35,7 +36,8 @@ export default {
     , genIndex(){
       return this.generationIndex
     }
-    , ...mapGetters('simulation', {
+    , ...mapStores(useSimulationStore)
+    , ...mapState(useSimulationStore, {
       canContinue: 'canContinue'
       , isLoading: 'isLoading'
       , isContinuing: 'isContinuing'
@@ -47,7 +49,7 @@ export default {
   }
   , methods: {
     run(fresh){
-      return this.$store.dispatch('simulation/run', fresh)
+      return this.simulationStore.run(fresh)
     }
   }
 }

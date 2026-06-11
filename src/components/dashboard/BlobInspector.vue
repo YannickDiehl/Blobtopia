@@ -106,7 +106,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS } from '@/lib/blob-adapter'
 import LineChart from '@/components/charts/LineChart.vue'
 
@@ -150,7 +151,7 @@ export default {
     , localBlobList: []
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardBlobList', 'dashboardBlobHistory'])
+    ...mapState(useSimulationStore, ['dashboardBlobList', 'dashboardBlobHistory'])
     , loading() {
       return !this.dashboardBlobList
     }
@@ -269,7 +270,7 @@ export default {
       this.selectedBlobId = blob.id
       this.loadedHistory = null
       this.historyLoading = true
-      const data = await this.$store.dispatch('simulation/fetchDashboardBlobHistory', blob.id)
+      const data = await useSimulationStore().fetchDashboardBlobHistory(blob.id)
       this.loadedHistory = data
       this.historyLoading = false
     }
@@ -312,7 +313,7 @@ export default {
     }
   }
   , async mounted() {
-    const data = await this.$store.dispatch('simulation/fetchDashboardBlobList')
+    const data = await useSimulationStore().fetchDashboardBlobList()
     if (data && (data.globs || data.blobs)) {
       this.localBlobList = data.globs || data.blobs
     }

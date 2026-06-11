@@ -61,7 +61,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS, NUM_DISTRICTS } from '@/lib/blob-adapter'
 import BarChart from '@/components/charts/BarChart.vue'
 
@@ -72,7 +73,7 @@ export default {
     ageView: 'district'
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardBlobList'])
+    ...mapState(useSimulationStore, ['dashboardBlobList'])
     , blobList() {
       return this.dashboardBlobList || null
     }
@@ -214,7 +215,7 @@ export default {
     }
   }
   , mounted() {
-    this.$store.dispatch('simulation/fetchDashboardBlobList')
+    useSimulationStore().fetchDashboardBlobList()
   }
 }
 </script>

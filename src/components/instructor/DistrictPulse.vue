@@ -33,7 +33,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 
 export default {
@@ -56,7 +57,7 @@ export default {
         }
       })
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       statistics: 'statistics'
     })
   }

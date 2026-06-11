@@ -14,7 +14,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 
 export default {
@@ -40,7 +41,7 @@ export default {
       if (days > 365) return null
       return days + 'd'
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       uiMode: 'uiMode'
       , statistics: 'statistics'
       , tick: 'tick'

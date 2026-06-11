@@ -42,7 +42,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import BarChart from '@/components/charts/BarChart.vue'
 import LineChart from '@/components/charts/LineChart.vue'
 
@@ -56,7 +57,7 @@ export default {
     loading: true
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardElections'])
+    ...mapState(useSimulationStore, ['dashboardElections'])
     , elections() {
       const cached = this.dashboardElections
       return cached && cached.elections ? cached.elections : []
@@ -127,7 +128,7 @@ export default {
     }
   }
   , async mounted() {
-    await this.$store.dispatch('simulation/fetchDashboardElections')
+    await useSimulationStore().fetchDashboardElections()
     this.loading = false
   }
 }

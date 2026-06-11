@@ -93,6 +93,7 @@
 import { DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 import { visualPositions } from '@/blobs/visual-positions'
 import draggablePanel from '@/mixins/draggable-panel'
+import { useSimulationStore } from '@/stores/simulation'
 
 const FUNCTIONAL_LABELS = {
   apartment: 'Mehrfamilienhaus', rowhouse: 'Reihenhaus', villa: 'Villa'
@@ -161,7 +162,7 @@ export default {
       return icons[this.building.functional_type] || icons[this.building.type] || 'office-building'
     }
     , generation(){
-      const fn = this.$store.getters['simulation/getCurrentGeneration']
+      const fn = useSimulationStore().getCurrentGeneration
       return fn ? fn() : null
     }
     , blobs(){

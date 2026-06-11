@@ -19,7 +19,8 @@ transition(name="slide-panel")
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import DistrictPulse from './DistrictPulse'
 import EventLog from './EventLog'
 import QuickStats from './QuickStats'
@@ -39,18 +40,19 @@ export default {
   })
   , computed: {
     activeTab(){
-      return this.$store.state.simulation.rightPanelTab
+      return this.simulationStore.rightPanelTab
     }
     , panelWidthClass(){
       return this.uiMode === 'analysis' ? 'panel-wide' : 'panel-normal'
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       uiMode: 'uiMode'
     })
+    , ...mapStores(useSimulationStore)
   }
   , methods: {
     setTab(tab) {
-      this.$store.commit('simulation/setRightPanelTab', tab)
+      this.simulationStore.setRightPanelTab(tab)
     }
   }
 }

@@ -26,7 +26,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 import LineChart from '@/components/charts/LineChart'
 
@@ -38,7 +39,7 @@ export default {
     , districts: null
   })
   , computed: {
-    ...mapGetters('simulation', ['timelineEvents'])
+    ...mapState(useSimulationStore, ['timelineEvents'])
     , labels() {
       if (!this.districts) return []
       const firstKey = Object.keys(this.districts)[0]
@@ -104,7 +105,7 @@ export default {
   }
   , async mounted() {
     this.loading = true
-    const data = await this.$store.dispatch('simulation/fetchDashboardAttitudes')
+    const data = await useSimulationStore().fetchDashboardAttitudes()
     if (data && data.districts) {
       this.districts = data.districts
     }

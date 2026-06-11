@@ -43,7 +43,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS } from '@/lib/blob-adapter'
 
 export default {
@@ -52,7 +53,7 @@ export default {
     loading: true
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardEventsImpact'])
+    ...mapState(useSimulationStore, ['dashboardEventsImpact'])
     , events() {
       const cached = this.dashboardEventsImpact
       return cached && cached.events ? cached.events : []
@@ -93,7 +94,7 @@ export default {
     }
   }
   , async mounted() {
-    await this.$store.dispatch('simulation/fetchDashboardEventsImpact')
+    await useSimulationStore().fetchDashboardEventsImpact()
     this.loading = false
   }
 }

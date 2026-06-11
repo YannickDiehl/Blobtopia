@@ -162,7 +162,8 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSurveyStore } from '@/stores/survey'
 import draggablePanel from '@/mixins/draggable-panel'
 import { parseItem } from '@/lib/survey-parse'
 import { DISTRICT_NAMES, PARTY_NAMES, EDUCATION_LABELS } from '@/lib/blob-adapter'
@@ -233,7 +234,7 @@ export default {
       return PARTY_NAMES
     }
     , frameBlobs() {
-      return this.$store.getters['survey/frameBlobs']
+      return this.surveyStore.frameBlobs
     }
     , sampleN() {
       if (this.design.technique === 'manual') return this.design.manualInclude.length
@@ -258,12 +259,13 @@ export default {
       if (!this.dist) return 1
       return Math.max(1, ...Object.keys(this.dist).map(k => this.dist[k]))
     }
-    , ...mapState('survey', ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'])
+    , ...mapStores(useSurveyStore)
+    , ...mapState(useSurveyStore, ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'])
   }
   , created() {
-    const storedItems = this.$store.state.survey.items
+    const storedItems = this.surveyStore.items
     this.localItems = (storedItems && storedItems.length) ? clone(storedItems) : [this.blankItem(1)]
-    const d = this.$store.state.survey.design
+    const d = this.surveyStore.design
     if (d) {
       this.design.technique = d.technique || 'srs'
       this.design.n = d.n != null ? d.n : 40
@@ -281,11 +283,11 @@ export default {
   , watch: {
     localItems: {
       deep: true
-      , handler(v) { this.$store.commit('survey/SET_ITEMS', clone(v)) }
+      , handler(v) { this.surveyStore.SET_ITEMS(clone(v)) }
     }
     , design: {
       deep: true
-      , handler() { this.$store.commit('survey/SET_DESIGN', this.canonicalDesign()) }
+      , handler() { this.surveyStore.SET_DESIGN(this.canonicalDesign()) }
     }
   }
   , methods: {
@@ -351,8 +353,8 @@ export default {
       this.onFilterChange()
     }
     , onFilterChange() {
-      this.$store.commit('survey/SET_DESIGN', this.canonicalDesign())
-      if (this.design.technique !== 'manual') this.$store.dispatch('survey/previewSample')
+      this.surveyStore.SET_DESIGN(this.canonicalDesign())
+      if (this.design.technique !== 'manual') this.surveyStore.previewSample()
     }
     , resetFilter() {
       this.design.filter = { districts: [], education: [], parties: [], ageMin: null, ageMax: null, incomeMin: null, incomeMax: null }
@@ -360,8 +362,8 @@ export default {
     }
     // ── Draw / pick ──
     , onPreview() {
-      this.$store.commit('survey/SET_DESIGN', this.canonicalDesign())
-      this.$store.dispatch('survey/previewSample')
+      this.surveyStore.SET_DESIGN(this.canonicalDesign())
+      this.surveyStore.previewSample()
     }
     , isPicked(b) {
       return this.design.manualInclude.indexOf(b.id) >= 0
@@ -370,13 +372,13 @@ export default {
       const i = this.design.manualInclude.indexOf(b.id)
       if (i >= 0) this.design.manualInclude.splice(i, 1)
       else this.design.manualInclude.push(b.id)
-      this.$store.commit('survey/SET_DESIGN', this.canonicalDesign())
-      this.$store.dispatch('survey/previewSample')
+      this.surveyStore.SET_DESIGN(this.canonicalDesign())
+      this.surveyStore.previewSample()
     }
     , excludeUnit(id) {
       if (this.design.manualExclude.indexOf(id) < 0) this.design.manualExclude.push(id)
-      this.$store.commit('survey/SET_DESIGN', this.canonicalDesign())
-      this.$store.dispatch('survey/previewSample')
+      this.surveyStore.SET_DESIGN(this.canonicalDesign())
+      this.surveyStore.previewSample()
     }
     // ── Labels ──
     , districtName(d) {
@@ -397,10 +399,10 @@ export default {
     }
     // ── Run / export ──
     , onRun() {
-      this.$store.dispatch('survey/runFieldwork')
+      this.surveyStore.runFieldwork()
     }
     , onExport() {
-      this.$store.dispatch('survey/exportCsv')
+      this.surveyStore.exportCsv()
     }
   }
 }

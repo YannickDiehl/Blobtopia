@@ -67,7 +67,7 @@
     SurveyWindow(
       v-if="surveyOpen"
       , :timeline-mode="timelineMode"
-      , @close="$store.commit('survey/CLOSE_SURVEY')"
+      , @close="surveyStore.CLOSE_SURVEY()"
     )
 
   //- BlobFeed (slide-in from right)
@@ -96,7 +96,10 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
+import { useChatStore } from '@/stores/chat'
+import { useSurveyStore } from '@/stores/survey'
 import WorldViewer from '@/components/world-viewer'
 import BlobInteraction from '@/components/blob-interaction'
 import BuildingInspector from '@/components/building-inspector'
@@ -150,10 +153,10 @@ export default {
       return 'world-full'
     }
     , spotlightActive(){
-      return this.$store.state.simulation.spotlightActive
+      return this.simulationStore.spotlightActive
     }
     , spotlightTarget(){
-      const st = this.$store.state.simulation.spotlightTarget
+      const st = this.simulationStore.spotlightTarget
       if (!st) return null
       if (st.type === 'blob') {
         const gen = this.getCurrentGeneration()
@@ -167,7 +170,7 @@ export default {
     , generation(){
       return this.getCurrentGeneration()
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       uiMode: 'uiMode'
       , getCurrentGeneration: 'getCurrentGeneration'
       , generationIndex: 'currentGenerationIndex'
@@ -178,8 +181,9 @@ export default {
       , newspapers: 'newspapers'
       , connectionStatus: 'connectionStatus'
     })
+    , ...mapStores(useSimulationStore, useChatStore, useSurveyStore)
     , surveyOpen(){
-      return this.$store.state.survey.isOpen
+      return this.surveyStore.isOpen
     }
   }
   , watch: {
@@ -206,7 +210,7 @@ export default {
     document.addEventListener('mousemove', this._mouseHandler)
 
     // Fetch timeline summary for sparklines
-    this.$store.dispatch('simulation/fetchTimelineSummary')
+    this.simulationStore.fetchTimelineSummary()
   }
   , beforeDestroy(){
     document.removeEventListener('keydown', this._keyHandler)
@@ -222,14 +226,14 @@ export default {
     // --- Server Controls ---
     , toggleServerPause(){
       if (this.isPaused) {
-        this.$store.dispatch('simulation/resumeServer')
+        this.simulationStore.resumeServer()
       } else {
-        this.$store.dispatch('simulation/pauseServer')
+        this.simulationStore.pauseServer()
       }
     }
     , fireEvent(type, params){
       const event = { type, ...params }
-      this.$store.dispatch('simulation/triggerEvent', event)
+      this.simulationStore.triggerEvent(event)
     }
 
     // --- Blob/Building Selection ---
@@ -249,7 +253,7 @@ export default {
       this.selectedBuilding = null
       // Spotlight
       if (this.spotlightActive) {
-        this.$store.commit('simulation/setSpotlightTarget', { type: 'blob', id: blob.id })
+        this.simulationStore.setSpotlightTarget({ type: 'blob', id: blob.id })
       }
     }
     , onNewspaperSelectBlob(blobId) {
@@ -268,19 +272,23 @@ export default {
     , onCloseInteraction(){
       this.selectedBlob = null
       this.followBlob = false
-      this.$store.dispatch('chat/closeChat')
+      this.chatStore.closeChat()
     }
     , onCommandSelectBlob(blob){
       this.onTapBlob({ blob })
     }
     , toggleSurvey(){
-      this.$store.commit(this.$store.state.survey.isOpen ? 'survey/CLOSE_SURVEY' : 'survey/OPEN_SURVEY')
+      if (this.surveyStore.isOpen) {
+        this.surveyStore.CLOSE_SURVEY()
+      } else {
+        this.surveyStore.OPEN_SURVEY()
+      }
     }
 
     // --- Spotlight ---
     , deactivateSpotlight(){
-      this.$store.commit('simulation/setSpotlightActive', false)
-      this.$store.commit('simulation/setSpotlightTarget', null)
+      this.simulationStore.setSpotlightActive(false)
+      this.simulationStore.setSpotlightTarget(null)
     }
 
     // --- Navigation ---
@@ -289,8 +297,8 @@ export default {
       console.log('[InstructorLayout] Fly to district', idx)
     }
     , jumpToEvent(tick){
-      this.$store.dispatch('simulation/stopPlayback')
-      this.$store.dispatch('simulation/seekTick', tick)
+      this.simulationStore.stopPlayback()
+      this.simulationStore.seekTick(tick)
     }
 
     // --- Keyboard ---
@@ -308,7 +316,7 @@ export default {
       // Escape
       if (e.key === 'Escape') {
         e.preventDefault()
-        if (this.surveyOpen) { this.$store.commit('survey/CLOSE_SURVEY'); return }
+        if (this.surveyOpen) { this.surveyStore.CLOSE_SURVEY(); return }
         if (this.showNewspaper) { this.showNewspaper = false; return }
         if (this.showCommandPalette) { this.showCommandPalette = false; return }
         if (this.spotlightActive) { this.deactivateSpotlight(); return }
@@ -337,18 +345,18 @@ export default {
 
       // Timeline expand/collapse
       if (e.key === 'f' || e.key === 'F') {
-        const current = this.$store.state.simulation.timelineExpanded
-        this.$store.commit('simulation/setTimelineExpanded', !current)
+        const current = this.simulationStore.timelineExpanded
+        this.simulationStore.setTimelineExpanded(!current)
         return
       }
 
       // Spotlight toggle
       if (e.key === 's' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
-        const active = this.$store.state.simulation.spotlightActive
+        const active = this.simulationStore.spotlightActive
         if (active) {
           this.deactivateSpotlight()
         } else {
-          this.$store.commit('simulation/setSpotlightActive', true)
+          this.simulationStore.setSpotlightActive(true)
         }
         return
       }
@@ -356,10 +364,10 @@ export default {
       // Data overlay cycle
       if (e.key === 'd' || e.key === 'D') {
         const overlays = ['off', 'satisfaction', 'ideology', 'trust', 'party']
-        const current = this.$store.state.simulation.dataOverlay
+        const current = this.simulationStore.dataOverlay
         const idx = overlays.indexOf(current)
         const next = overlays[(idx + 1) % overlays.length]
-        this.$store.commit('simulation/setDataOverlay', next)
+        this.simulationStore.setDataOverlay(next)
         return
       }
 
@@ -368,36 +376,36 @@ export default {
         const delta = e.shiftKey ? 365 : e.altKey ? 30 : e.ctrlKey || e.metaKey ? 7 : 1
         if (e.key === 'ArrowLeft') {
           e.preventDefault()
-          this.$store.dispatch('simulation/stopPlayback')
-          this.$store.dispatch('simulation/stepTick', -delta)
+          this.simulationStore.stopPlayback()
+          this.simulationStore.stepTick(-delta)
           return
         }
         if (e.key === 'ArrowRight') {
           e.preventDefault()
-          this.$store.dispatch('simulation/stopPlayback')
-          this.$store.dispatch('simulation/stepTick', delta)
+          this.simulationStore.stopPlayback()
+          this.simulationStore.stepTick(delta)
           return
         }
         if (e.key === ' ') {
           e.preventDefault()
           if (this.isPaused) {
-            this.$store.dispatch('simulation/startPlayback')
+            this.simulationStore.startPlayback()
           } else {
-            this.$store.dispatch('simulation/stopPlayback')
+            this.simulationStore.stopPlayback()
           }
           return
         }
         // Event navigation
         if (e.key === 'e') {
           e.preventDefault()
-          this.$store.dispatch('simulation/stopPlayback')
-          this.$store.dispatch('simulation/jumpToEvent', 1)
+          this.simulationStore.stopPlayback()
+          this.simulationStore.jumpToEvent(1)
           return
         }
         if (e.key === 'E') {
           e.preventDefault()
-          this.$store.dispatch('simulation/stopPlayback')
-          this.$store.dispatch('simulation/jumpToEvent', -1)
+          this.simulationStore.stopPlayback()
+          this.simulationStore.jumpToEvent(-1)
           return
         }
       }
@@ -407,7 +415,7 @@ export default {
         const num = parseInt(e.key)
         if (num >= 4 && num <= 8) {
           const districtIdx = num - 4
-          this.$store.commit('simulation/setSpotlightTarget', { type: 'district', id: districtIdx })
+          this.simulationStore.setSpotlightTarget({ type: 'district', id: districtIdx })
           return
         }
       }

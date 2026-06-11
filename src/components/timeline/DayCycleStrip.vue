@@ -20,7 +20,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 
 const HOUR_COLORS = [
   '#1a1a3e','#1a1a3e','#1a1a3e','#1a1a3e','#1e2a4a','#2d3a5c'  // 0-5
@@ -41,9 +42,10 @@ const ACTIVITY_LABELS = {
 export default {
   name: 'DayCycleStrip'
   , computed: {
-    ...mapGetters('simulation', {
+    ...mapState(useSimulationStore, {
       hour: 'hour'
     })
+    , ...mapStores(useSimulationStore)
   }
   , methods: {
     hourColor(h) {
@@ -53,8 +55,8 @@ export default {
       return ACTIVITY_LABELS[h] || ''
     }
     , setHour(h) {
-      this.$store.commit('simulation/setHour', h)
-      this.$store.commit('simulation/setSubHourFraction', 0)
+      this.simulationStore.setHour(h)
+      this.simulationStore.setSubHourFraction(0)
     }
   }
 }

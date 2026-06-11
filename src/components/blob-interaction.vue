@@ -233,7 +233,9 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState, mapStores } from 'pinia'
+import { useChatStore } from '@/stores/chat'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_COLORS } from '@/lib/blob-adapter'
 import BlobChatExport from './blob-chat-export'
 import draggablePanel from '@/mixins/draggable-panel'
@@ -280,8 +282,9 @@ export default {
         , resizable: true
       }
     }
-    , ...mapState('chat', { chatLoading: 'isLoading', chatError: 'error' })
-    , ...mapGetters('chat', ['activeSession', 'activeMessages'])
+    , ...mapStores(useChatStore, useSimulationStore)
+    , ...mapState(useChatStore, { chatLoading: 'isLoading', chatError: 'error' })
+    , ...mapState(useChatStore, ['activeSession', 'activeMessages'])
     , cardStyle() {
       if (this.panelW !== null || this.panelH !== null) {
         return { width: '100%', height: '100%', maxHeight: 'none' }
@@ -449,8 +452,8 @@ export default {
       }
     }
     , startChat() {
-      const tick = this.timelineMode ? (this.$store.getters['simulation/tick'] || 0) : null
-      this.$store.dispatch('chat/startInterview', {
+      const tick = this.timelineMode ? (this.simulationStore.tick || 0) : null
+      this.chatStore.startInterview({
         blobId: this.blob.id
         , tick
         , blobName: this.blob.name || 'Blob'
@@ -461,7 +464,7 @@ export default {
     , send() {
       const text = this.inputText.trim()
       if (!text || this.chatLoading) return
-      this.$store.dispatch('chat/sendMessage', text)
+      this.chatStore.sendMessage(text)
       this.inputText = ''
       if (this.$refs.chatInput) {
         this.$refs.chatInput.style.height = 'auto'
@@ -493,7 +496,7 @@ export default {
       }
     }
     , endInterview() {
-      this.$store.dispatch('chat/endInterview')
+      this.chatStore.endInterview()
       this.showExport = true
     }
     , async copyMessage(msg) {

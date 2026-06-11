@@ -75,7 +75,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_NAMES, DISTRICT_COLORS, EDUCATION_LABELS } from '@/lib/blob-adapter'
 
 export default {
@@ -85,7 +86,7 @@ export default {
     , sortAsc: true
   })
   , computed: {
-    ...mapGetters('simulation', ['dashboardBlobList'])
+    ...mapState(useSimulationStore, ['dashboardBlobList'])
     , blobList() {
       return this.dashboardBlobList || null
     }
@@ -169,7 +170,7 @@ export default {
     }
   }
   , mounted() {
-    this.$store.dispatch('simulation/fetchDashboardBlobList')
+    useSimulationStore().fetchDashboardBlobList()
   }
 }
 </script>

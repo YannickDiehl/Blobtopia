@@ -84,7 +84,8 @@
 
 <script>
 import Copilot from '@/lib/copilot-stub'
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import chroma from 'chroma-js'
 import sougy from '@/config/sougy-colors'
 import * as THREE from 'three'
@@ -151,7 +152,7 @@ const computed = {
   , showWorld(){
     return this.generation && !this.hideStage
   }
-  , ...mapGetters('simulation', {
+  , ...mapState(useSimulationStore, {
     'getCurrentGeneration': 'getCurrentGeneration'
     , 'statistics': 'statistics'
   })

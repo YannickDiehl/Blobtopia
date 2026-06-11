@@ -39,7 +39,8 @@ transition(name="fade")
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import { DISTRICT_COLORS_HEX } from '@/lib/blob-adapter'
 
 export default {
@@ -87,7 +88,7 @@ export default {
       if (!this.target || !this.target.political_state) return '—'
       return Math.round(this.target.political_state.protest_readiness * 100) + '%'
     }
-    , ...mapGetters('simulation', {
+    , ...mapState(useSimulationStore, {
       uiMode: 'uiMode'
     })
   }

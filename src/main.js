@@ -1,7 +1,7 @@
 import Vue from 'vue'
+import { createPinia, PiniaVuePlugin } from 'pinia'
 import App from '@/app'
 import router from '@/router'
-import store from '@/store'
 import Filters from '@/plugins/filters'
 import Gestures from '@/plugins/gestures'
 import onResize from '@/plugins/on-resize'
@@ -35,8 +35,11 @@ Vue.use(onResize)
 
 Vue.config.productionTip = false
 
+Vue.use(PiniaVuePlugin)
+const pinia = createPinia()
+
 new Vue({
   render: h => h(App)
   , router
-  , store
+  , pinia
 }).$mount('#app')

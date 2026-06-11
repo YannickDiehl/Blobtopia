@@ -36,7 +36,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { useSimulationStore } from '@/stores/simulation'
 import OverviewPanel from '@/components/dashboard/OverviewPanel'
 import DistrictComparison from '@/components/dashboard/DistrictComparison'
 import AttitudeTimeSeries from '@/components/dashboard/AttitudeTimeSeries'
@@ -66,7 +67,7 @@ export default {
     activeTab: 0
   })
   , computed: {
-    ...mapGetters('simulation', {
+    ...mapState(useSimulationStore, {
       timelineMeta: 'timelineMeta'
     })
   }

@@ -100,7 +100,15 @@ module.exports = {
     }
   }
   , configureWebpack: {
-    resolve: {
+    module: {
+      rules: [
+        // webpack 4 behandelt .mjs strikt (kein CJS-Named-Import-Interop) —
+        // bricht pinia/vue-demi. javascript/auto stellt volle Interop her.
+        // (Obsolet unter Vite.)
+        { test: /\.mjs$/, include: /node_modules/, type: 'javascript/auto' }
+      ]
+    }
+    , resolve: {
       symlinks: true
     }
     , node: {
