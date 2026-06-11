@@ -334,6 +334,9 @@ Top-Bar oder Taste `b`):
    (Codebook-Stil). Das System erkennt Skala, gemessenes Konstrukt und
    Wording-Effekte heuristisch (`src/lib/survey-parse.js`); das erkannte
    Konstrukt bleibt für Studierende unsichtbar (blinder Fragebogen).
+   **Hintergrundmerkmale** (Name, Distrikt, Alter, Bildung, Partei, Einkommen)
+   landen nur im Datensatz, wenn sie explizit zur Erhebung ausgewählt werden
+   (`src/lib/survey-demographics.js`) — wie im echten Fragebogen.
 2. **Stichprobe** — kalibrierbares Ziehungsdesign mit Grundgesamtheits-Filtern
    (Distrikt, Bildung, Partei, Alter, Einkommen) und fünf Verfahren:
    Zufallsauswahl, geschichtet, Klumpen, Quote, manuell (Selektionsbias
@@ -343,8 +346,9 @@ Top-Bar oder Taste `b`):
    beantwortet Items aus den gespeicherten Blob-Werten plus kalibriertem
    Messfehler und **modellierten Fragebogeneffekten** (Akquieszenz —
    bildungsabhängig —, Framing, soziale Erwünschtheit, nicht-zufällige
-   Item-Nonresponse). Export als CSV (Semikolon + Dezimalkomma, deutsches
-   Excel) mit Codebook.
+   Item-Nonresponse). Die erhobene Datenmatrix ist direkt im Fenster sichtbar
+   (Nonresponse bleibt als `kA`/`wn` lesbar); Export als CSV (Semikolon +
+   Dezimalkomma, deutsches Excel) mit Codebook.
 4. **Wahrheit** (hinter dem Dozenten-Schloss, Passwort wie beim
    Blob-Inspektor) — weil die Simulation die wahren Werte kennt, wird jeder
    Schätzer **exakt** in die Total-Survey-Error-Komponenten zerlegt

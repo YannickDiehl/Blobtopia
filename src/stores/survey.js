@@ -16,6 +16,7 @@ import { toCSV } from '@/lib/survey-dataset'
 import { runSurvey, makeChatSender } from '@/lib/survey-engine'
 import { runSyntheticSurvey } from '@/lib/survey-synthetic'
 import { snapshotTruth, decompose, simulateSamplingDistribution } from '@/lib/survey-truth'
+import { buildDemographics } from '@/lib/survey-demographics'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
 import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
 import { CHAT_API } from '@/config/api'
@@ -33,6 +34,9 @@ const DEFAULT_DESIGN = () => ({
   , filter: null            // { districts:[], education:[], ageMin, ageMax, parties:[], incomeMin, incomeMax }
   , manualInclude: []       // hand-picked blob ids (the whole sample in 'manual' mode)
   , manualExclude: []       // blob ids removed from the frame
+  // Hintergrundmerkmale: nothing is recorded automatically — students pick
+  // them in the Fragebogen step (keys from survey-demographics.js).
+  , demographics: ['name']
 })
 
 // getCurrentGeneration is a function held in simulation state — call it.
@@ -136,12 +140,7 @@ export const useSurveyStore = defineStore('survey', {
       const sample = drawSample(blobs, design)
       if (!sample.units.length) { this.error = 'Die Stichprobe ist leer — bitte das Design prüfen.'; return }
 
-      const demographics = b => ({
-        district: b.district
-        , age: b.age
-        , education_level: b.education_level
-        , party: b.party_name
-      })
+      const demographics = buildDemographics(this.design.demographics)
       const strataVar = (this.design.strataVars && this.design.strataVars[0]) || 'district'
 
       this.isRunning = true

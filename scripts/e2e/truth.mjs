@@ -25,6 +25,22 @@ await page.locator('button:has-text("Befragung durchführen")').click()
 await page.waitForTimeout(1500)
 report('fieldwork produced a dataset', /Datensätze/.test(await page.locator('.survey-section').innerText()))
 
+// ── Ergebnis-Datentabelle: echte Antworten sichtbar, Name default, Rest opt-in ──
+report('data matrix shows the collected answers', (await page.locator('.data-table tbody tr').count()) > 0)
+const tableHead = await page.locator('.data-table thead').innerText()
+report('respondent names collected by default', /Name/.test(tableHead))
+report('sociodemographics are NOT collected automatically', !/Alter|Bildung|Partei/.test(tableHead))
+const firstAnswer = await page.locator('.data-table tbody tr').first().innerText()
+report('answer cells are populated', /\d|kA|wn/.test(firstAnswer))
+// Alter dazuwählen → neue Erhebung trägt die Spalte
+await page.locator('.step-tab:has-text("Fragebogen")').first().click()
+await page.locator('.demo-block .chip:has-text("Alter")').click()
+await page.locator('.step-tab:has-text("Ergebnis")').first().click()
+await page.locator('button:has-text("Befragung durchführen")').click()
+await page.waitForTimeout(1200)
+report('opting in adds the column on the next run'
+  , /Alter/.test(await page.locator('.data-table thead').innerText()))
+
 // ── Schloss ──
 await page.locator('.step-tab.truth-tab').click()
 await page.waitForTimeout(400)

@@ -31,6 +31,14 @@
         button.survey-btn.add-btn(@click="addItem")
           b-icon(icon="plus", size="is-small")
           span Item hinzufügen
+        .panel-block.demo-block
+          .block-head
+            span.block-title Hintergrundmerkmale erheben
+            span.block-meta {{ design.demographics.length }} gewählt
+          .block-body
+            p.mini-hint Wie im echten Fragebogen landet Soziodemographie nur im Datensatz, wenn du sie ausdrücklich erhebst.
+            .chips
+              span.chip(v-for="d in demographicsCatalog", :key="d.key", :class="{ active: isDemoOn(d.key) }", @click="toggleDemo(d.key)") {{ d.label }}
 
       //- ═══════════ STICHPROBE ═══════════
       .survey-section(v-else-if="step === 'sample'")
@@ -159,6 +167,17 @@
           .info-item
             span.info-label Items
             span.info-value {{ result.meta.items }}
+          .data-table-wrap
+            table.data-table
+              thead
+                tr
+                  th #
+                  th(v-for="c in tableColumns", :key="c.key") {{ c.label }}
+              tbody
+                tr(v-for="(r, ri) in result.rows", :key="r.blobId")
+                  td.idx {{ ri + 1 }}
+                  td(v-for="c in tableColumns", :key="c.key") {{ c.cell(r) }}
+          p.mini-hint kA = keine Angabe (verweigert) · wn = weiß nicht
           button.survey-btn.primary(@click="onExport")
             b-icon(icon="download", size="is-small")
             span Als CSV exportieren
@@ -236,6 +255,8 @@ import { mapState, mapStores } from 'pinia'
 import { useSurveyStore } from '@/stores/survey'
 import draggablePanel from '@/mixins/draggable-panel'
 import { parseItem } from '@/lib/survey-parse'
+import { datasetColumns } from '@/lib/survey-dataset'
+import { DEMOGRAPHICS, DEMOGRAPHICS_BY_KEY } from '@/lib/survey-demographics'
 import { DISTRICT_NAMES, PARTY_NAMES, EDUCATION_LABELS } from '@/lib/blob-adapter'
 
 function clone(x) { return JSON.parse(JSON.stringify(x)) }
@@ -279,6 +300,7 @@ export default {
         , filter: { districts: [], education: [], parties: [], ageMin: null, ageMax: null, incomeMin: null, incomeMax: null }
         , manualInclude: []
         , manualExclude: []
+        , demographics: ['name']
       }
     }
   }
@@ -335,6 +357,23 @@ export default {
       if (!this.dist) return 1
       return Math.max(1, ...Object.keys(this.dist).map(k => this.dist[k]))
     }
+    , demographicsCatalog() {
+      return DEMOGRAPHICS
+    }
+    // Columns of the visible data matrix: collected demographics, then items.
+    , tableColumns() {
+      if (!this.result || !this.result.rows.length) return []
+      const cols = datasetColumns(this.result.rows).map(k => ({
+        key: k
+        , label: DEMOGRAPHICS_BY_KEY[k] ? DEMOGRAPHICS_BY_KEY[k].label : k
+        , cell: r => (r[k] == null ? '' : r[k])
+      }))
+      for (const it of this.localItems) {
+        const id = it.id
+        cols.push({ key: id, label: id, cell: r => this.fmtAnswer(r.answers && r.answers[id]) })
+      }
+      return cols
+    }
     , ...mapStores(useSurveyStore)
     , ...mapState(useSurveyStore, ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'
       , 'truthRevealed', 'simResult', 'isSimulating', 'simProgress', 'decomposition'])
@@ -355,6 +394,7 @@ export default {
       if (d.filter) this.design.filter = Object.assign(this.design.filter, d.filter)
       this.design.manualInclude = (d.manualInclude || []).slice()
       this.design.manualExclude = (d.manualExclude || []).slice()
+      this.design.demographics = (d.demographics || ['name']).slice()
     }
   }
   , watch: {
@@ -403,6 +443,7 @@ export default {
         , filter: this.cleanFilter()
         , manualInclude: this.design.manualInclude.slice()
         , manualExclude: this.design.manualExclude.slice()
+        , demographics: this.design.demographics.slice()
       }
     }
     , cleanFilter() {
@@ -473,6 +514,23 @@ export default {
     }
     , distPct(c) {
       return Math.round(100 * c / this.distMax)
+    }
+    // ── Hintergrundmerkmale ──
+    , isDemoOn(key) {
+      return this.design.demographics.indexOf(key) >= 0
+    }
+    , toggleDemo(key) {
+      const i = this.design.demographics.indexOf(key)
+      if (i >= 0) this.design.demographics.splice(i, 1)
+      else this.design.demographics.push(key)
+    }
+    // Nonresponse stays visible in the matrix — that IS the teaching point.
+    , fmtAnswer(a) {
+      if (!a) return ''
+      if (a.status === 'answered') return a.value
+      if (a.status === 'refused') return 'kA'
+      if (a.status === 'dontknow') return 'wn'
+      return '—'
     }
     // ── Run / export ──
     , onRun() {
@@ -944,6 +1002,43 @@ export default {
 .results-divider
   border-top: 1px solid rgba(255, 255, 255, 0.1)
   margin: 0.6rem 0 0.4rem
+
+// ── Ergebnis-Datentabelle ──
+.data-table-wrap
+  margin-top: 0.4rem
+  max-height: 240px
+  overflow: auto
+  border: 1px solid rgba(255, 255, 255, 0.1)
+  border-radius: 4px
+
+.data-table
+  width: 100%
+  border-collapse: collapse
+  font-size: 0.68rem
+  white-space: nowrap
+
+  th
+    position: sticky
+    top: 0
+    background: #1a1a1a
+    color: $grey
+    font-weight: 600
+    text-align: left
+    padding: 0.25rem 0.45rem
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15)
+
+  td
+    padding: 0.2rem 0.45rem
+    color: $grey-lighter
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+    &.idx
+      color: $grey
+
+  tbody tr:last-child td
+    border-bottom: none
+
+.demo-block
+  margin-top: 0.6rem
 
 .progress-line
   margin-top: 0.5rem
