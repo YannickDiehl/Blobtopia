@@ -272,182 +272,225 @@ export default {
 </script>
 
 <style lang="sass" scoped>
+// Die Hausakte: Karteikarte eines Gebäudes (Bewohner, Beschäftigte,
+// Gäste) — gleiche Formsprache wie die Blob-Karteikarte.
+$korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")
+
 .building-inspector
   position: absolute
   bottom: 1rem
   left: 1rem
-  // Über der TimelineBar (6/7), unter der TopBar (10) — Touch-Gesten am
-  // Grip dürfen nicht von der Timeline abgefangen werden
   z-index: 8
   pointer-events: auto
+  filter: drop-shadow(0 12px 24px rgba(40, 28, 8, 0.4))
+  .inspector-card
+    max-height: calc(100vh - 48px - 2rem)
   &.has-timeline
-    bottom: 10rem
+    bottom: 7.5rem
+    .inspector-card
+      max-height: calc(100vh - 48px - 8.5rem)
 
 .inspector-card
-  background: rgba(0, 0, 0, 0.85)
-  backdrop-filter: blur(8px)
-  border-radius: 8px
-  border: 1px solid rgba(255, 255, 255, 0.15)
-  width: 300px
-  color: $grey-lighter
-  font-size: 0.8rem
-  max-height: 500px
-  overflow-y: auto
+  width: 340px
+  max-height: 75vh
+  display: flex
+  flex-direction: column
+  overflow: hidden
+  color: var(--inst-tinte)
+  font-family: var(--inst-druck)
+  font-size: 0.78rem
+  background-color: var(--inst-papier-hell)
+  background-image: repeating-linear-gradient(180deg, transparent 0 26px, var(--inst-kartei-linie) 26px 27px), $korn
+  border-radius: 2px
+  position: relative
+  &::before
+    content: ''
+    position: absolute
+    top: 0
+    bottom: 0
+    left: 14px
+    width: 1.5px
+    background: var(--inst-randlinie)
+    pointer-events: none
+    z-index: 1
 
 .inspector-header
+  flex-shrink: 0
   display: flex
   align-items: center
   gap: 0.5rem
-  padding: 0.6rem 0.75rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+  padding: 10px 12px 7px 24px
+  border-bottom: 1.5px solid rgba(43, 58, 85, 0.5)
+  margin: 0 12px 0 0
   cursor: grab
+  position: relative
   &:active
     cursor: grabbing
 
   .building-icon
-    width: 28px
-    height: 28px
+    flex: none
+    width: 30px
+    height: 30px
     border-radius: 4px
-    background: rgba(255, 255, 255, 0.1)
+    background: rgba(51, 81, 142, 0.12)
+    color: var(--inst-stempelblau)
     display: flex
     align-items: center
     justify-content: center
-    flex-shrink: 0
 
   .header-text
     flex: 1
     min-width: 0
-    .building-name
-      font-weight: 700
-      font-size: 1rem
-      white-space: nowrap
-      overflow: hidden
-      text-overflow: ellipsis
-    .building-subtitle
-      font-size: 0.7rem
-      color: $grey
-      margin-top: 1px
+
+  .building-name
+    font-family: var(--inst-schreibmaschine)
+    font-weight: bold
+    font-size: 0.92rem
+    color: var(--inst-tinte)
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+
+  .building-subtitle
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.62rem
+    color: var(--inst-beschriftung)
+    margin-top: 1px
 
   .header-actions
     display: flex
     align-items: center
-    gap: 0.3rem
-    margin-left: auto
+    gap: 0.25rem
     flex-shrink: 0
+    position: relative
 
-  .action-btn
+  .password-input
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.72rem
+    color: var(--inst-tinte)
+    background: rgba(255, 255, 255, 0.6)
+    border: none
+    border-bottom: 1.5px dotted var(--inst-linie)
+    outline: none
+    width: 130px
+    padding: 2px 4px
+    &:focus
+      border-bottom: 2px solid var(--inst-pink)
+    &.has-error
+      border-bottom-color: var(--inst-stempelrot)
+
+  .action-btn, .close-btn
     cursor: pointer
-    color: $grey
+    color: var(--inst-beschriftung)
     display: inline-flex
     align-items: center
     padding: 2px
     &:hover
-      color: $grey-lighter
-    &.lock-btn
-      color: rgba(255, 255, 255, 0.35)
-      &:hover
-        color: rgba(255, 255, 255, 0.6)
+      color: var(--inst-stempelrot)
+  .action-btn.lock-btn:hover
+    color: var(--inst-pink)
 
-  .password-popover
-    display: flex
-    align-items: center
-
-    .password-input
-      width: 90px
-      height: 22px
-      background: rgba(255, 255, 255, 0.08)
-      border: 1px solid rgba(255, 255, 255, 0.2)
-      border-radius: 4px
-      color: $grey-lighter
-      padding: 0 0.4rem
-      font-size: 0.7rem
-      outline: none
-      font-family: inherit
-      &:focus
-        border-color: $primary
-      &.has-error
-        border-color: #e74c3c
-        &::placeholder
-          color: #e74c3c
-      &::placeholder
-        color: $grey
-
-  .close-btn
-    cursor: pointer
-    color: $grey
-    &:hover
-      color: $grey-lighter
+.password-popover
+  position: absolute
+  top: 26px
+  right: 0
+  z-index: 5
+  background: var(--inst-papier)
+  padding: 6px
+  box-shadow: 0 6px 14px rgba(40, 28, 8, 0.35)
+  border: 1.5px solid rgba(224, 105, 159, 0.5)
 
 .inspector-section
-  padding: 0.5rem 0.75rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05)
-  &:last-child
-    border-bottom: none
+  padding: 8px 12px 4px 24px
+  overflow-y: auto
+  &::-webkit-scrollbar
+    width: 6px
+  &::-webkit-scrollbar-thumb
+    border-radius: 3px
+    background: rgba(43, 58, 85, 0.25)
 
   h4
-    color: $grey
-    font-size: 0.7rem
+    font-size: 0.58rem
+    font-weight: 800
+    letter-spacing: 1.5px
     text-transform: uppercase
-    margin-bottom: 0.4rem
-    letter-spacing: 0.5px
+    color: var(--inst-beschriftung)
+    border-bottom: 1px solid rgba(141, 127, 99, 0.4)
+    padding-bottom: 2px
+    margin: 0 0 0.35rem
 
 .info-grid
   display: grid
   grid-template-columns: 1fr 1fr
-  gap: 0.3rem 0.75rem
+  gap: 0.25rem 0.7rem
 
 .info-item
-  display: flex
-  justify-content: space-between
   .info-label
-    color: $grey
-    font-size: 0.75rem
+    font-size: 0.56rem
+    font-weight: 800
+    letter-spacing: 1px
+    text-transform: uppercase
+    color: var(--inst-beschriftung)
   .info-value
-    font-weight: 600
-    font-size: 0.75rem
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.74rem
+    color: var(--inst-tinte)
 
+// Namensliste der Anwesenden (Haushalts-Gruppen)
 .household-list
-  display: flex
-  flex-direction: column
-  gap: 0.2rem
+  max-height: 300px
+  overflow-y: auto
+
+.household-header
+  font-family: var(--inst-hand)
+  font-size: 0.92rem
+  color: var(--inst-graphit)
+  margin: 0.35rem 0 0.1rem
+
+.household-indented
+  margin-left: 10px
 
 .household-member
   display: flex
   align-items: center
-  gap: 0.5rem
-  padding: 0.25rem 0.4rem
-  border-radius: 4px
+  gap: 0.45rem
+  padding: 0.18rem 0
   cursor: pointer
-  transition: background 0.15s
+  border-radius: 3px
   &:hover
-    background: rgba(255, 255, 255, 0.08)
+    background: rgba(51, 81, 142, 0.08)
 
   .blob-dot
-    width: 8px
-    height: 8px
-    border-radius: 50%
-    flex-shrink: 0
+    flex: none
+    width: 10px
+    height: 9px
+    border-radius: 46% 54% 52% 48% / 58% 56% 44% 42%
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25)
 
   .blob-info
+    flex: 1
+    min-width: 0
     display: flex
-    gap: 0.5rem
     align-items: baseline
+    gap: 0.4rem
 
   .blob-name
-    font-weight: 600
-    font-size: 0.75rem
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.72rem
+    color: var(--inst-tinte)
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
 
   .blob-detail
-    color: $grey
-    font-size: 0.65rem
+    font-size: 0.6rem
+    color: var(--inst-beschriftung)
+    white-space: nowrap
 
-.household-header
-  padding: 0.3rem 0.4rem 0.1rem
-  .household-label
-    font-size: 0.7rem
-    font-weight: 600
-    color: $grey-light
-
-.household-indented
-  padding-left: 1rem !important
+.household-label
+  font-size: 0.56rem
+  font-weight: 800
+  letter-spacing: 1px
+  text-transform: uppercase
+  color: var(--inst-beschriftung)
 </style>

@@ -1,30 +1,46 @@
 <template lang="pug">
 .blob-interaction(:class="{ 'has-timeline': timelineMode }", :style="panelStyle", @click.self="$emit('close')")
   .interaction-card(:class="{ 'chat-mode': mode === 'chat' }", :style="cardStyle")
-    //- Header (shared across both modes)
+    //- Karteikarten-Kopf (shared across both modes, doubles as drag handle)
     .interaction-header
-      .district-badge(:style="{ backgroundColor: districtHex }")
-      .header-text
-        .blob-name(v-if="blob.name") {{ blob.name }}
-      .header-actions
-        span.action-btn.lock-btn(v-if="mode === 'inspect'", @click="onLockClick")
-          b-icon(:icon="inspectorUnlocked ? 'lock-open-variant' : 'lock'", size="is-small")
-        .password-popover(v-if="showPasswordInput")
-          input.password-input(
-            type="password"
-            , v-model="passwordAttempt"
-            , :placeholder="passwordError ? 'Falsch' : 'Passwort'"
-            , :class="{ 'has-error': passwordError }"
-            , @keydown.enter="tryUnlock"
-            , @keydown.esc="showPasswordInput = false"
-            , ref="passwordInput"
-          )
-        span.action-btn(v-if="mode === 'inspect'", @click="startChat")
-          b-icon(icon="forum", size="is-small")
-        span.action-btn(v-if="mode === 'chat'", @click="mode = 'inspect'")
-          b-icon(icon="information-outline", size="is-small")
-        span.action-btn(@click="$emit('close')")
-          b-icon(icon="close", size="is-small")
+      .kk-kopfzeile
+        span {{ mode === 'chat' ? 'INTERVIEW-PROTOKOLL' : 'KARTEIKARTE' }}
+        span.rec-indikator(v-if="mode === 'chat'")
+          i.rec-punkt
+          | AUFNAHME
+        span(v-else) FELDNOTIZ
+      .kopf-reihe
+        .polaroid
+          .foto
+            .blob-avatar(:style="avatarStyle")
+            span.auge.a1
+            span.auge.a2
+            span(:class="emotionMouth")
+          .unterschrift {{ vorname }}
+        .header-text
+          .blob-name(v-if="blob.name") {{ blob.name }}
+          .kk-beobachtet
+            span.distrikt-flagge(:style="{ backgroundColor: districtHex }")
+            span.emotion-notiz(v-if="emotionLabel") wirkt {{ emotionLabel }}!
+        .header-actions
+          span.action-btn.lock-btn(v-if="mode === 'inspect'", @click="onLockClick")
+            b-icon(:icon="inspectorUnlocked ? 'lock-open-variant' : 'lock'", size="is-small")
+          .password-popover(v-if="showPasswordInput")
+            input.password-input(
+              type="password"
+              , v-model="passwordAttempt"
+              , :placeholder="passwordError ? 'Falsch' : 'Passwort'"
+              , :class="{ 'has-error': passwordError }"
+              , @keydown.enter="tryUnlock"
+              , @keydown.esc="showPasswordInput = false"
+              , ref="passwordInput"
+            )
+          span.action-btn(v-if="mode === 'inspect'", @click="startChat")
+            b-icon(icon="forum", size="is-small")
+          span.action-btn(v-if="mode === 'chat'", @click="mode = 'inspect'")
+            b-icon(icon="information-outline", size="is-small")
+          span.action-btn(@click="$emit('close')")
+            b-icon(icon="close", size="is-small")
 
     //- Body: Inspect or Chat
     transition(name="mode-fade", mode="out-in")
@@ -295,6 +311,27 @@ export default {
       const hex = DISTRICT_COLORS[this.blob.district] || 0x999999
       return '#' + hex.toString(16).padStart(6, '0')
     }
+    // Polaroid-Porträt: Distrikt-UI-Ton + Emotionsgesicht (s. _institut.scss)
+    , avatarStyle() {
+      const tones = [
+        ['#84d995', '#46a85c'], ['#f6d564', '#e3af2c'], ['#7cc0ee', '#4596d8']
+        , ['#f3b070', '#e8893a'], ['#aab3c4', '#7d8ca3']
+      ]
+      const d = tones[this.blob.district] || tones[4]
+      return { background: `linear-gradient(180deg, ${d[0]}, ${d[1]})` }
+    }
+    , vorname() {
+      return (this.blob.name || '').split(' ')[0] || 'Blob'
+    }
+    , emotionLabel() {
+      return this.blob.emotion && this.blob.emotion.label
+    }
+    , emotionMouth() {
+      const l = (this.emotionLabel || '').toLowerCase()
+      if (/wütend|frustriert|besorgt|angespannt/.test(l)) return 'mund-sauer'
+      if (/begeistert|hoffnungsvoll|zufrieden/.test(l)) return 'mund-froh'
+      return 'mund-neutral'
+    }
     , satisfactionColor() {
       if (!this.blob.attitudes) return '#999'
       const sat = this.blob.attitudes.political_satisfaction
@@ -517,421 +554,559 @@ export default {
 </script>
 
 <style lang="sass" scoped>
+// ═══════════════════════════════════════════════════════════════════════
+// Die Karteikarte des Feldforschers (Inspect) bzw. das Interview-Protokoll
+// (Chat) — liniertes Karteipapier mit Polaroid, rote Randlinie,
+// Schreibmaschine. Zielbild: design-prototyp/komplett.html
+// ═══════════════════════════════════════════════════════════════════════
+
+$korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")
+
 .blob-interaction
   position: absolute
   bottom: 1rem
   left: 1rem
-  // Über der TimelineBar (6/7), unter der TopBar (10) — Touch-Gesten am
-  // Grip dürfen nicht von der Timeline abgefangen werden
   z-index: 8
   pointer-events: auto
+  filter: drop-shadow(0 12px 24px rgba(40, 28, 8, 0.4))
+  .interaction-card
+    max-height: calc(100vh - 48px - 2rem)
   &.has-timeline
-    bottom: 10rem
+    bottom: 7.5rem
+    .interaction-card
+      max-height: calc(100vh - 48px - 8.5rem)
 
 .interaction-card
-  background: rgba(0, 0, 0, 0.85)
-  backdrop-filter: blur(8px)
-  border-radius: 8px
-  border: 1px solid rgba(255, 255, 255, 0.15)
-  width: 320px
-  max-height: 70vh
-  overflow-y: auto
-  color: $grey-lighter
-  font-size: 0.8rem
-  transition: width 200ms ease-out
+  width: 360px
+  max-height: 80vh
+  display: flex
+  flex-direction: column
+  overflow: hidden
+  color: var(--inst-tinte)
+  font-family: var(--inst-druck)
+  font-size: 0.78rem
+  background-color: var(--inst-papier-hell)
+  background-image: repeating-linear-gradient(180deg, transparent 0 26px, var(--inst-kartei-linie) 26px 27px), $korn
+  border-radius: 2px
+  // rote Karteikarten-Randlinie
+  &::before
+    content: ''
+    position: absolute
+    top: 0
+    bottom: 0
+    left: 14px
+    width: 1.5px
+    background: var(--inst-randlinie)
+    pointer-events: none
+    z-index: 1
   &.chat-mode
     width: 400px
-    max-height: calc(100vh - 28rem)
-    overflow: hidden
-    display: flex
-    flex-direction: column
 
-// ═══ Header ═══
+// ── Kopf (Drag-Griff) ──
 .interaction-header
-  display: flex
-  align-items: center
-  gap: 0.5rem
-  padding: 0.6rem 0.75rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1)
   flex-shrink: 0
+  padding: 8px 12px 6px 24px
   cursor: grab
+  position: relative
   &:active
     cursor: grabbing
 
-  .district-badge
-    width: 12px
-    height: 12px
-    border-radius: 50%
-    flex-shrink: 0
-
-  .header-text
-    flex: 1
-    min-width: 0
-
-    .blob-name
-      font-weight: 700
-      font-size: 1rem
-      white-space: nowrap
-      overflow: hidden
-      text-overflow: ellipsis
-
-    .blob-subtitle
-      font-size: 0.7rem
-      color: $grey
-      margin-top: 1px
-
-  .header-actions
-    display: flex
-    gap: 0.3rem
-    flex-shrink: 0
-
-  .action-btn
-    cursor: pointer
-    color: $grey
-    display: inline-flex
-    align-items: center
-    padding: 2px
-    &:hover
-      color: $grey-lighter
-    &.lock-btn
-      color: rgba(255, 255, 255, 0.35)
-      &:hover
-        color: rgba(255, 255, 255, 0.6)
-
-  .password-popover
-    display: flex
-    align-items: center
-
-    .password-input
-      width: 90px
-      height: 22px
-      background: rgba(255, 255, 255, 0.08)
-      border: 1px solid rgba(255, 255, 255, 0.2)
-      border-radius: 4px
-      color: $grey-lighter
-      padding: 0 0.4rem
-      font-size: 0.7rem
-      outline: none
-      font-family: inherit
-      &:focus
-        border-color: $primary
-      &.has-error
-        border-color: #e74c3c
-        &::placeholder
-          color: #e74c3c
-      &::placeholder
-        color: $grey
-
-// ═══ Quick Stats ═══
-.quick-stats
+.kk-kopfzeile
   display: flex
-  justify-content: space-around
-  padding: 0.5rem 0.75rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1)
-  background: rgba(255, 255, 255, 0.03)
+  justify-content: space-between
+  align-items: center
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.56rem
+  letter-spacing: 2px
+  color: var(--inst-beschriftung)
+  border-bottom: 1.5px solid rgba(43, 58, 85, 0.5)
+  padding-bottom: 3px
 
-  .qs-item
-    display: flex
-    flex-direction: column
-    align-items: center
-    gap: 1px
+.rec-indikator
+  display: inline-flex
+  align-items: center
+  gap: 5px
+  font-weight: bold
+  color: #c0392b
+  letter-spacing: 1.5px
+  .rec-punkt
+    width: 8px
+    height: 8px
+    border-radius: 50%
+    background: #e8463a
+    box-shadow: 0 0 6px #e8463a
+    animation: rec-blink 1.4s infinite
 
-  .qs-value
-    font-size: 0.85rem
-    font-weight: 700
-    color: $grey-lighter
+@keyframes rec-blink
+  0%, 100%
+    opacity: 1
+  50%
+    opacity: 0.25
 
-  .qs-label
-    font-size: 0.55rem
-    color: $grey
-    text-transform: uppercase
-    letter-spacing: 0.3px
+.kopf-reihe
+  display: flex
+  align-items: center
+  gap: 10px
+  margin-top: 7px
 
-// ═══ Inspect Body ═══
+// Polaroid mit Blob-Porträt (Emotion = Gesicht)
+.polaroid
+  flex: none
+  width: 64px
+  padding: 4px 4px 14px
+  background: #fff
+  box-shadow: 0 4px 9px rgba(0, 0, 0, 0.3)
+  transform: rotate(-4deg)
+  position: relative
+
+  .foto
+    width: 56px
+    height: 50px
+    background: linear-gradient(180deg, #bfe3f7 0 62%, #9fd3a0 62%)
+    position: relative
+    overflow: hidden
+
+  .blob-avatar
+    position: absolute
+    left: 50%
+    bottom: 3px
+    transform: translateX(-50%)
+    width: 36px
+    height: 32px
+    border-radius: 46% 54% 52% 48% / 60% 58% 42% 40%
+    &::before
+      content: ''
+      position: absolute
+      left: 16%
+      top: 10%
+      width: 36%
+      height: 24%
+      background: rgba(255, 255, 255, 0.55)
+      border-radius: 50%
+      transform: rotate(-14deg)
+
+  .auge
+    position: absolute
+    width: 4.5px
+    height: 5.5px
+    background: #1d2b3a
+    border-radius: 50%
+    top: 28px
+    z-index: 2
+  .a1
+    left: 21px
+  .a2
+    left: 31px
+
+  .mund-sauer, .mund-froh, .mund-neutral
+    position: absolute
+    left: 50%
+    transform: translateX(-50%)
+    z-index: 2
+  .mund-sauer
+    width: 9px
+    height: 4.5px
+    border-top: 2px solid #1d2b3a
+    border-radius: 50%
+    top: 36px
+  .mund-froh
+    width: 9px
+    height: 5px
+    border-bottom: 2px solid #1d2b3a
+    border-radius: 50%
+    top: 33px
+  .mund-neutral
+    width: 8px
+    height: 2px
+    background: #1d2b3a
+    border-radius: 2px
+    top: 36px
+
+  .unterschrift
+    position: absolute
+    bottom: 0
+    left: 0
+    right: 0
+    text-align: center
+    font-family: var(--inst-hand)
+    font-size: 0.66rem
+    color: var(--inst-graphit)
+
+.header-text
+  flex: 1
+  min-width: 0
+
+.blob-name
+  font-family: var(--inst-schreibmaschine)
+  font-weight: bold
+  font-size: 1.02rem
+  color: var(--inst-tinte)
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+
+.kk-beobachtet
+  display: flex
+  align-items: center
+  gap: 6px
+  margin-top: 3px
+
+.distrikt-flagge
+  display: inline-block
+  width: 11px
+  height: 11px
+  border-radius: 2px
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25)
+  flex-shrink: 0
+
+.emotion-notiz
+  font-family: var(--inst-hand)
+  font-size: 0.92rem
+  color: var(--inst-handrot)
+  transform: rotate(-1.5deg)
+  white-space: nowrap
+  overflow: hidden
+  text-overflow: ellipsis
+
+.header-actions
+  display: flex
+  gap: 0.25rem
+  flex-shrink: 0
+  align-self: flex-start
+  position: relative
+
+.action-btn
+  cursor: pointer
+  color: var(--inst-beschriftung)
+  display: inline-flex
+  align-items: center
+  padding: 2px
+  &:hover
+    color: var(--inst-stempelrot)
+  &.lock-btn:hover
+    color: var(--inst-pink)
+
+.password-popover
+  position: absolute
+  top: 26px
+  right: 0
+  z-index: 5
+  background: var(--inst-papier)
+  padding: 6px
+  box-shadow: 0 6px 14px rgba(40, 28, 8, 0.35)
+  border: 1.5px solid rgba(224, 105, 159, 0.5)
+
+.password-input
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.72rem
+  color: var(--inst-tinte)
+  background: rgba(255, 255, 255, 0.6)
+  border: none
+  border-bottom: 1.5px dotted var(--inst-linie)
+  outline: none
+  width: 130px
+  padding: 2px 4px
+  &:focus
+    border-bottom: 2px solid var(--inst-pink)
+  &.has-error
+    border-bottom-color: var(--inst-stempelrot)
+    &::placeholder
+      color: var(--inst-stempelrot)
+
+// ── Karteikarten-Körper (Inspektion) ──
 .inspect-body
+  flex: 1 1 auto
+  min-height: 0
   overflow-y: auto
+  padding: 8px 12px 12px 24px
+  &::-webkit-scrollbar
+    width: 6px
+  &::-webkit-scrollbar-thumb
+    border-radius: 3px
+    background: rgba(43, 58, 85, 0.25)
 
 .inspector-section
-  padding: 0.5rem 0.75rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+  margin-bottom: 0.7rem
   &:last-child
-    border-bottom: none
+    margin-bottom: 0
 
   h4
-    color: $grey
-    font-size: 0.7rem
+    font-size: 0.58rem
+    font-weight: 800
+    letter-spacing: 1.5px
     text-transform: uppercase
-    margin-bottom: 0.4rem
-    letter-spacing: 0.5px
+    color: var(--inst-beschriftung)
+    border-bottom: 1px solid rgba(141, 127, 99, 0.4)
+    padding-bottom: 2px
+    margin: 0 0 0.35rem
+    display: flex
+    justify-content: space-between
+    align-items: center
+
+  h5
+    font-size: 0.56rem
+    font-weight: 800
+    letter-spacing: 1px
+    text-transform: uppercase
+    color: #9c2f63
+    margin: 0.45rem 0 0.2rem
 
 .info-grid
   display: grid
   grid-template-columns: 1fr 1fr
-  gap: 0.3rem 0.75rem
+  gap: 0.25rem 0.7rem
 
 .info-item
-  display: flex
-  justify-content: space-between
-
   .info-label
-    color: $grey
-    font-size: 0.75rem
+    font-size: 0.56rem
+    font-weight: 800
+    letter-spacing: 1px
+    text-transform: uppercase
+    color: var(--inst-beschriftung)
   .info-value
-    font-weight: 600
-    font-size: 0.75rem
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.74rem
+    color: var(--inst-tinte)
 
+// Einstellungs-Balken in Bleistift
 .bar-item
   display: flex
   align-items: center
   gap: 0.4rem
-  margin-bottom: 0.3rem
+  margin-bottom: 0.25rem
 
   .bar-label
-    width: 90px
-    font-size: 0.7rem
-    color: $grey
-    flex-shrink: 0
+    width: 86px
+    font-size: 0.62rem
+    color: var(--inst-tinte-soft)
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
 
   .bar-track
     flex: 1
-    height: 6px
-    background: rgba(255, 255, 255, 0.1)
-    border-radius: 3px
+    height: 9px
+    background: rgba(43, 58, 85, 0.07)
+    border-radius: 2px
     overflow: hidden
     position: relative
 
   .bar-fill
+    display: block
     height: 100%
-    border-radius: 3px
-    transition: width 0.3s
-
-  .lr-track
-    overflow: visible
-
-    .lr-marker
-      position: absolute
-      top: -3px
-      width: 12px
-      height: 12px
-      border-radius: 50%
-      background: $grey-lighter
-      transform: translateX(-50%)
-      border: 2px solid rgba(0, 0, 0, 0.4)
-      transition: left 0.3s
+    // Distrikt-/Statusfarbe kommt inline — Schraffur als Überzug
+    background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 2px, transparent 2px 4px)
 
   .bar-value
-    width: 28px
+    width: 30px
     text-align: right
-    font-size: 0.7rem
-    flex-shrink: 0
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.66rem
+    color: var(--inst-tinte)
 
-// Latent traits
+  .lr-track
+    background: linear-gradient(90deg, rgba(69, 150, 216, 0.25), rgba(43, 58, 85, 0.06) 50%, rgba(192, 57, 43, 0.25))
+
+.lr-marker
+  position: absolute
+  top: -2px
+  bottom: -2px
+  width: 3px
+  background: var(--inst-handrot)
+  transform: translateX(-50%)
+  border-radius: 2px
+
+// Latente Konstrukte (Dozenten-Bereich → pink angehaucht)
 .collapsible
-  h4.clickable
+  .clickable
     cursor: pointer
-    display: flex
-    align-items: center
-    justify-content: space-between
-    &:hover
-      color: $grey-light
 
 .latent-content
-  .latent-group
-    margin-bottom: 0.5rem
-    h5
-      color: $grey-light
-      font-size: 0.7rem
-      margin-bottom: 0.2rem
-      font-weight: 600
+  border-left: 3px solid rgba(224, 105, 159, 0.45)
+  padding-left: 8px
+  margin-left: 1px
+
+.latent-group
+  margin-bottom: 0.4rem
 
 .mini-bar
   display: flex
   align-items: center
-  gap: 0.3rem
-  margin-bottom: 0.15rem
+  gap: 0.35rem
+  margin-bottom: 2px
 
   .mini-label
-    width: 100px
-    font-size: 0.65rem
-    color: $grey
+    width: 110px
+    font-size: 0.58rem
+    color: var(--inst-tinte-soft)
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
 
   .mini-track
     flex: 1
-    height: 4px
-    background: rgba(255, 255, 255, 0.08)
+    height: 6px
+    background: rgba(43, 58, 85, 0.07)
     border-radius: 2px
     overflow: hidden
 
   .mini-fill
+    display: block
     height: 100%
-    background: $primary
-    border-radius: 2px
+    background: repeating-linear-gradient(45deg, rgba(156, 47, 99, 0.55) 0 2px, rgba(156, 47, 99, 0.25) 2px 4px)
 
   .mini-value
-    width: 24px
+    width: 26px
     text-align: right
-    font-size: 0.65rem
-    color: $grey
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.6rem
+    color: var(--inst-tinte)
 
 .collapse-enter-active, .collapse-leave-active
-  transition: max-height 0.3s ease, opacity 0.3s ease
-  max-height: 600px
+  transition: all 0.25s ease
   overflow: hidden
 .collapse-enter, .collapse-enter-from, .collapse-leave-to
-  max-height: 0
   opacity: 0
+  max-height: 0
 
 .interview-section
-  padding-bottom: 0.75rem
+  padding-top: 0.3rem
 
-// ═══ Chat Body ═══
+// ── Interview-Protokoll (Chat) ──
 .chat-body
+  flex: 1 1 auto
+  min-height: 0
   display: flex
   flex-direction: column
-  overflow: hidden
-  flex: 1
-  min-height: 0
-
-.compact-profile
-  display: flex
-  gap: 0.75rem
-  padding: 0.4rem 0.75rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08)
-  flex-shrink: 0
-
-  .compact-item
-    display: flex
-    flex-direction: column
-    align-items: center
-
-  .compact-label
-    font-size: 0.6rem
-    color: $grey
-    text-transform: uppercase
-    letter-spacing: 0.3px
-
-  .compact-value
-    font-size: 0.7rem
-    font-weight: 600
 
 .chat-messages
   flex: 1
+  min-height: 120px
   overflow-y: auto
-  padding: 0.75rem
-  display: flex
-  flex-direction: column
-  gap: 0.5rem
+  padding: 8px 14px 8px 24px
+  &::-webkit-scrollbar
+    width: 6px
+  &::-webkit-scrollbar-thumb
+    border-radius: 3px
+    background: rgba(43, 58, 85, 0.25)
 
+// Nachrichten als Protokollzeilen mit Sprecher-Vermerk
 .message
-  display: flex
+  margin-bottom: 0.55rem
 
-  &.user
-    justify-content: flex-end
-    .bubble
-      background: $primary
-      color: #fff
-      border-radius: 12px 12px 2px 12px
+  &::before
+    display: block
+    font-size: 0.52rem
+    font-weight: 800
+    letter-spacing: 1.5px
+    color: var(--inst-beschriftung)
+    margin-bottom: 1px
 
-  &.assistant
-    justify-content: flex-start
-    .bubble
-      background: rgba(255, 255, 255, 0.12)
-      color: $grey-lighter
-      border-radius: 12px 12px 12px 2px
+  &.user::before
+    content: 'INTERVIEWER:IN'
+    color: var(--inst-stempelblau)
+
+  &.assistant::before
+    content: 'BEFRAGTE:R'
 
   .bubble
-    max-width: 85%
-    padding: 0.5rem 0.75rem
-    font-size: 0.82rem
-    line-height: 1.45
-    white-space: pre-wrap
-    word-wrap: break-word
     position: relative
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.74rem
+    line-height: 1.5
+    color: var(--inst-tinte)
+    padding-right: 20px
 
-  .bubble.typing
-    display: flex
-    gap: 0.25rem
-    padding: 0.6rem 0.8rem
-    .dot
-      width: 6px
-      height: 6px
-      border-radius: 50%
-      background: $grey
-      animation: typing-bounce 1.2s infinite
-      &:nth-child(2)
-        animation-delay: 0.2s
-      &:nth-child(3)
-        animation-delay: 0.4s
+  &.user .bubble
+    color: #2c4470
 
-@keyframes typing-bounce
-  0%, 80%, 100%
-    transform: translateY(0)
-  40%
-    transform: translateY(-6px)
-
-.copy-btn
-  position: absolute
-  top: 0.3rem
-  right: 0.3rem
-  opacity: 0
-  transition: opacity 0.15s
-  cursor: pointer
-  color: $grey
-  &:hover
-    color: $grey-lighter
+  .copy-btn
+    position: absolute
+    right: 0
+    top: 0
+    cursor: pointer
+    color: var(--inst-beschriftung)
+    opacity: 0
+    transition: opacity 0.15s
+    &:hover
+      color: var(--inst-tinte)
 
 .message.assistant .bubble:hover .copy-btn
-  opacity: 0.6
+  opacity: 1
+
+// Tipp-Indikator: drei Bleistift-Punkte
+.bubble.typing
+  display: inline-flex
+  gap: 4px
+  align-items: center
+  .dot
+    width: 6px
+    height: 6px
+    border-radius: 50%
+    background: var(--inst-graphit)
+    animation: typing-dot 1.2s infinite
+    &:nth-child(2)
+      animation-delay: 0.2s
+    &:nth-child(3)
+      animation-delay: 0.4s
+
+@keyframes typing-dot
+  0%, 60%, 100%
+    opacity: 0.25
+  30%
+    opacity: 1
 
 .error-banner
   display: flex
   align-items: center
-  gap: 0.3rem
-  padding: 0.4rem 0.6rem
-  background: rgba(231, 76, 60, 0.15)
-  border: 1px solid rgba(231, 76, 60, 0.3)
-  border-radius: 6px
-  font-size: 0.75rem
-  color: #e74c3c
+  gap: 0.4rem
+  margin: 0.4rem 0
+  padding: 0.35rem 0.5rem
+  border: 2px double var(--inst-stempelrot)
+  border-radius: 3px
+  color: var(--inst-stempelrot)
+  font-size: 0.68rem
+  font-weight: 600
+  transform: rotate(-0.4deg)
+  background: rgba(255, 255, 255, 0.4)
 
 .chat-footer
-  border-top: 1px solid rgba(255, 255, 255, 0.12)
-  padding: 0.5rem 0.75rem
   flex-shrink: 0
+  padding: 6px 12px 10px 24px
+  border-top: 1.5px dashed rgba(43, 58, 85, 0.25)
 
 .input-row
   display: flex
   gap: 0.4rem
-  margin-bottom: 0.4rem
+  align-items: flex-end
 
 .chat-input
   flex: 1
-  background: rgba(255, 255, 255, 0.08)
-  border: 1px solid rgba(255, 255, 255, 0.15)
-  border-radius: 8px
-  color: $grey-lighter
-  padding: 0.4rem 0.6rem
-  font-size: 0.82rem
-  resize: none
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.76rem
+  color: var(--inst-tinte)
+  background: transparent
+  border: none
+  border-bottom: 1.5px dotted var(--inst-linie)
   outline: none
-  font-family: inherit
-  max-height: 80px
+  resize: none
+  padding: 2px 2px 3px
+  line-height: 1.4
   &:focus
-    border-color: $primary
+    border-bottom: 2px solid var(--inst-stempelblau)
   &::placeholder
-    color: $grey
+    color: var(--inst-beschriftung)
   &:disabled
     opacity: 0.5
 
 .send-btn
-  align-self: flex-end
+  flex-shrink: 0
 
 .end-row
-  margin-top: 0.25rem
+  margin-top: 0.45rem
 
-// ═══ Mode transition ═══
 .mode-fade-enter-active, .mode-fade-leave-active
-  transition: opacity 150ms ease
+  transition: opacity 0.18s ease
 .mode-fade-enter, .mode-fade-enter-from, .mode-fade-leave-to
   opacity: 0
 </style>

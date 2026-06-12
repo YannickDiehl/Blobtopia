@@ -2,6 +2,7 @@
 transition(name="fade")
   .command-palette-backdrop(v-if="visible", @click.self="close")
     .command-palette
+      .register-titel Einwohnermelderegister · Stadtarchiv
       .search-row
         b-icon(icon="magnify", size="is-small")
         input.search-input(
@@ -209,86 +210,114 @@ export default {
 </script>
 
 <style lang="sass" scoped>
+// Der Suchzettel des Einwohnermelderegisters: ein Karteikasten-Auszug
+// auf Papier (Zielbild design-prototyp/komplett.html)
+$korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")
+
 .command-palette-backdrop
   position: fixed
   top: 0
   left: 0
   right: 0
   bottom: 0
-  background: rgba(0, 0, 0, 0.5)
+  background: rgba(35, 25, 10, 0.45)
   z-index: 100
   display: flex
   align-items: flex-start
   justify-content: center
-  padding-top: 15vh
+  padding-top: 13vh
 
 .command-palette
   width: 600px
   max-width: 90vw
-  background: rgba(20, 20, 25, 0.98)
-  backdrop-filter: blur(20px)
-  border: 1px solid rgba(255, 255, 255, 0.12)
-  border-radius: 12px
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5)
+  background-color: var(--inst-papier-hell)
+  background-image: $korn
+  border-radius: 2px
+  box-shadow: 0 2px 0 rgba(120, 90, 40, 0.25), 0 22px 50px rgba(40, 28, 8, 0.5)
   overflow: hidden
+  transform: rotate(-0.4deg)
+  color: var(--inst-tinte)
+
+.register-titel
+  font-family: var(--inst-druck)
+  font-size: 0.58rem
+  font-weight: 800
+  letter-spacing: 2.5px
+  text-transform: uppercase
+  color: var(--inst-beschriftung)
+  text-align: center
+  padding: 0.55rem 1rem 0
+
 
 .search-row
   display: flex
   align-items: center
   gap: 0.5rem
-  padding: 0.75rem 1rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08)
-  color: $grey
+  margin: 0.3rem 1rem 0
+  padding: 0.45rem 0.2rem
+  border-bottom: 2px solid rgba(43, 58, 85, 0.5)
+  color: var(--inst-beschriftung)
 
 .search-input
   flex: 1
   background: transparent
   border: none
-  color: $grey-lighter
-  font-size: 1rem
+  color: var(--inst-tinte)
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.95rem
   outline: none
   &::placeholder
-    color: rgba(255, 255, 255, 0.3)
+    color: var(--inst-beschriftung)
+    opacity: 0.7
 
 .results-list
   max-height: 400px
   overflow-y: auto
+  padding: 0.3rem 0
+  &::-webkit-scrollbar
+    width: 6px
+  &::-webkit-scrollbar-thumb
+    border-radius: 3px
+    background: rgba(43, 58, 85, 0.25)
 
 .result-item
   display: flex
   align-items: center
   gap: 0.75rem
-  padding: 0.5rem 1rem
+  padding: 0.4rem 1rem
   cursor: pointer
   transition: background 0.1s
-  color: $grey
+  color: var(--inst-beschriftung)
+  border-left: 3px solid transparent
   &:hover, &.selected
-    background: rgba(255, 255, 255, 0.05)
+    background: rgba(51, 81, 142, 0.07)
   &.selected
-    border-left: 2px solid $primary
+    border-left-color: var(--inst-handrot)
 
 .result-text
   flex: 1
   min-width: 0
 
 .result-title
-  font-size: 0.9rem
-  color: $grey-lighter
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.85rem
+  color: var(--inst-tinte)
   white-space: nowrap
   overflow: hidden
   text-overflow: ellipsis
 
 .result-desc
-  font-size: 0.7rem
-  color: $grey
+  font-size: 0.66rem
+  color: var(--inst-beschriftung)
   margin-top: 1px
 
 .shortcut-hint
-  padding: 0.5rem 1rem
+  padding: 0.45rem 1rem
   text-align: center
-  font-size: 0.65rem
-  color: rgba(255, 255, 255, 0.2)
-  border-top: 1px solid rgba(255, 255, 255, 0.05)
+  font-family: var(--inst-hand)
+  font-size: 0.85rem
+  color: var(--inst-graphit)
+  border-top: 1.5px dashed rgba(43, 58, 85, 0.2)
 
 .fade-enter-active, .fade-leave-active
   transition: opacity 0.15s ease

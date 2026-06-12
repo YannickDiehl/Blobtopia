@@ -77,9 +77,9 @@
       , @close="closeDeskToStadt"
     )
 
-  //- BlobFeed (slide-in from right, Stadt-Artefakt)
+  //- BlobPhone (BlobFeed — das Twitter der Blobs, Stadt-Artefakt)
   transition(name="slide-right")
-    BlobFeed(v-if="showFeed && !onDesk", :tweets="tweets")
+    BlobFeed(v-if="showFeed && !onDesk", :tweets="tweets", @close="showFeed = false")
 
   //- Presse-Mappe (Zeitungen) — liegt auf dem Schreibtisch
   transition(name="fade")
