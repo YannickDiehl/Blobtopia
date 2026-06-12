@@ -22,15 +22,29 @@ div
     )
       span Presse
       i.farbreiter(style="background: var(--inst-orange)")
+    button.mappe.dozent(
+      :class="{ aktiv: deskSection === 'dozent', offen: instructorUnlocked }"
+      , :title="instructorUnlocked ? 'Dozentenzimmer (entriegelt)' : 'Dozentenzimmer — hier wohnt die Wahrheit (verschlossen)'"
+      , @click="$emit('select-section', 'dozent')"
+    )
+      span Dozentenzimmer
+      span.schloss {{ instructorUnlocked ? '🔓' : '🔒' }}
+      i.farbreiter(style="background: var(--inst-pink)")
 </template>
 
 <script>
+import { mapState } from 'pinia'
+import { useSurveyStore } from '@/stores/survey'
+
 export default {
   name: 'DeskRoom'
   , props: {
     deskSection: { type: String, default: 'studien' }
   }
   , emits: ['select-section']
+  , computed: {
+    ...mapState(useSurveyStore, ['instructorUnlocked'])
+  }
 }
 </script>
 
@@ -102,6 +116,23 @@ export default {
     background: linear-gradient(180deg, #fbf6e8, #f1e8d0)
     width: 112%
     color: var(--inst-tinte)
+
+  // Dozentenzimmer: dunkle Mappe, entriegelt wird sie pink
+  &.dozent
+    background: linear-gradient(180deg, #5c5468, #4c4556)
+    color: #cfc7da
+    .schloss
+      margin-left: auto
+      margin-right: 16px
+      font-size: 15px
+    &:hover
+      background: linear-gradient(180deg, #6a6178, #595166)
+    &.offen
+      background: linear-gradient(180deg, #8d5b77, #7b4a66)
+      color: #ffe3f1
+    &.aktiv
+      background: linear-gradient(180deg, #9c6886, #8a5573)
+      color: #fff0f8
 
   .farbreiter
     position: absolute

@@ -68,10 +68,11 @@
       , @select-blob="blob => onTapBlob({ blob })"
     )
 
-  //- Studienmappe (Befragungsinstitut) — liegt auf dem Schreibtisch
+  //- Studienmappe (Befragungsinstitut) — liegt auf dem Schreibtisch;
+  //- die Dozentenzimmer-Mappe öffnet dieselbe Mappe auf dem Wahrheit-Blatt
   transition(name="fade")
     SurveyWindow(
-      v-if="onDesk && deskSection === 'studien' && surveyOpen"
+      v-if="onDesk && (deskSection === 'studien' || deskSection === 'dozent') && surveyOpen"
       , :timeline-mode="timelineMode"
       , @close="closeDeskToStadt"
     )
@@ -302,13 +303,23 @@ export default {
       }
     }
     , openDeskSection(section){
-      this.simulationStore.openDesk(section || 'studien')
-      if ((section || 'studien') === 'studien' && !this.surveyStore.isOpen) {
-        this.surveyStore.OPEN_SURVEY()
+      const s = section || 'studien'
+      this.simulationStore.openDesk(s)
+      if (s === 'studien' || s === 'dozent') {
+        if (!this.surveyStore.isOpen) this.surveyStore.OPEN_SURVEY()
+        if (s === 'dozent') {
+          // Die Dozentenzimmer-Mappe schlägt die Studienmappe direkt
+          // beim Wahrheit-Blatt auf (Schloss sitzt dort)
+          this.surveyStore.SET_STEP('truth')
+        } else if (this.surveyStore.step === 'truth') {
+          this.surveyStore.SET_STEP('editor')
+        }
       }
     }
     , closeDeskToStadt(){
-      if (this.deskSection === 'studien') this.surveyStore.CLOSE_SURVEY()
+      if (this.deskSection === 'studien' || this.deskSection === 'dozent') {
+        this.surveyStore.CLOSE_SURVEY()
+      }
       this.simulationStore.setRoom('stadt')
     }
     , toggleSurvey(){

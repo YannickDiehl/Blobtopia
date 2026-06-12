@@ -315,8 +315,16 @@
             span.reset-link(@click="relock") Wieder sperren
         template(v-else-if="!truthRevealed")
           .truth-lock
-            p.hint Die Simulation kennt die wahren Werte aller Blobs. Beim Aufdecken wird jeder Schätzer exakt in die vier Fehlerquellen zerlegt: Coverage, Ziehung, Nonresponse, Messung.
-            button.survey-btn.primary(@click="surveyStore.revealTruth()")
+            //- Versiegelter Umschlag: die Wahrheit liegt physisch im Raum,
+            //- das Aufdecken ist ein Siegelbruch
+            .umschlag(role="img", aria-label="Versiegelter Umschlag mit den wahren Werten")
+              .klappe
+              .siegel B
+              .aufschrift
+                span.geheim-stempel Nur für Dozent:innen
+                .zeile2 WAHRE WERTE · STUDIE {{ studienNr }}
+            p.hint Die Simulation kennt die wahren Werte aller Blobs. Beim Siegelbruch wird jeder Schätzer exakt in die Fehlerquellen zerlegt: Coverage, Ziehung, Nonresponse, Messung.
+            button.survey-btn.primary.siegel-btn(@click="surveyStore.revealTruth()")
               b-icon(icon="eye", size="is-small")
               span Wahre Werte aufdecken
             span.reset-link(@click="relock") Wieder sperren
@@ -450,13 +458,9 @@ export default {
   }
   , data() {
     return {
-      step: 'editor'
-      , filtersOpen: true
+      filtersOpen: true
       , search: ''
       , techniques: TECHNIQUES
-      // Wahrheit-Tab: same instructor lock as the blob inspector (one unlock
-      // opens both — the key is shared deliberately).
-      , truthUnlocked: localStorage.getItem('blobtopia_inspector_unlocked') === 'true'
       , passwordAttempt: ''
       , passwordError: false
       , simB: 500
@@ -484,7 +488,16 @@ export default {
     }
   }
   , computed: {
-    panelConfig() {
+    // Arbeitsschritt + Dozenten-Schloss leben im Store (die Registratur-
+    // Mappe "Dozentenzimmer" springt darüber direkt zum Wahrheit-Blatt)
+    step: {
+      get() { return this.surveyStore.step }
+      , set(v) { this.surveyStore.SET_STEP(v) }
+    }
+    , truthUnlocked() {
+      return this.surveyStore.instructorUnlocked
+    }
+    , panelConfig() {
       return {
         storageKey: 'blobtopia_panel_survey'
         , minWidth: 380
@@ -886,20 +899,12 @@ export default {
     }
     // ── Wahrheit-Tab ──
     , tryUnlock() {
-      const correct = import.meta.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
-      if (this.passwordAttempt === correct) {
-        this.truthUnlocked = true
-        this.passwordError = false
-        this.passwordAttempt = ''
-        localStorage.setItem('blobtopia_inspector_unlocked', 'true')
-      } else {
-        this.passwordError = true
-        this.passwordAttempt = ''
-      }
+      const ok = this.surveyStore.unlockInstructor(this.passwordAttempt)
+      this.passwordError = !ok
+      this.passwordAttempt = ''
     }
     , relock() {
-      this.truthUnlocked = false
-      localStorage.removeItem('blobtopia_inspector_unlocked')
+      this.surveyStore.relockInstructor()
     }
     // The telescoping chain of six means — dots on the item's own scale.
     , chainRows(d) {
@@ -1670,6 +1675,78 @@ select.survey-input
   padding: 1rem 0.5rem
   .survey-input, .survey-btn
     max-width: 220px
+  .survey-btn.siegel-btn
+    max-width: 260px
+    border-color: #9c2f63
+    color: #9c2f63
+    box-shadow: 0 2px 0 rgba(156, 47, 99, 0.35)
+    &.primary
+      background: var(--inst-pink)
+      border-color: var(--inst-pink)
+      color: #fff
+
+// Versiegelter Umschlag (Kraftpapier + pinkes Siegel)
+.umschlag
+  position: relative
+  width: 250px
+  height: 158px
+  margin: 0.3rem auto 0.7rem
+  background: linear-gradient(160deg, #d3b285, #bf9c6c)
+  box-shadow: 0 8px 18px rgba(40, 28, 8, 0.35)
+
+  .klappe
+    position: absolute
+    left: 0
+    right: 0
+    top: 0
+    height: 58px
+    background: linear-gradient(170deg, #c8a87b, #b39059)
+    clip-path: polygon(0 0, 100% 0, 50% 100%)
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2)
+
+  .siegel
+    position: absolute
+    left: 50%
+    top: 40px
+    transform: translateX(-50%)
+    width: 44px
+    height: 44px
+    border-radius: 48% 52% 50% 50% / 52% 48% 52% 48%
+    background: radial-gradient(circle at 38% 32%, #ef8fc0, #c2417f 65%, #9c2f63)
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35), inset 0 -3px 6px rgba(0, 0, 0, 0.25)
+    display: flex
+    align-items: center
+    justify-content: center
+    color: #fff0f8
+    font-weight: 800
+    font-size: 18px
+    z-index: 2
+
+  .aufschrift
+    position: absolute
+    left: 0
+    right: 0
+    top: 96px
+    text-align: center
+
+  .geheim-stempel
+    display: inline-block
+    font-weight: 800
+    font-size: 0.6rem
+    letter-spacing: 1.5px
+    text-transform: uppercase
+    color: var(--inst-stempelrot)
+    border: 2px double var(--inst-stempelrot)
+    padding: 2px 9px
+    transform: rotate(-3deg)
+    opacity: 0.9
+
+  .zeile2
+    margin-top: 6px
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.58rem
+    letter-spacing: 1px
+    color: #5a431f
 
 .survey-input.has-error
   border-bottom-color: var(--inst-stempelrot)

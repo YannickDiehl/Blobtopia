@@ -96,6 +96,14 @@ function downloadText(text, filename, mime) {
 export const useSurveyStore = defineStore('survey', {
   state: () => ({
     isOpen: false
+    // Aktueller Arbeitsschritt der Studienmappe (Blattreiter) — im Store,
+    // damit die Dozentenzimmer-Mappe der Registratur direkt zum
+    // Wahrheit-Blatt springen kann
+    , step: 'editor'
+    // Dozenten-Schloss: EIN Unlock für Dozentenzimmer + Inspektor-Details
+    // (gleicher localStorage-Key wie bisher, bewusst geteilt)
+    , instructorUnlocked: typeof localStorage !== 'undefined'
+      && localStorage.getItem('blobtopia_inspector_unlocked') === 'true'
     , items: []
     , design: DEFAULT_DESIGN()
     , lastSample: null
@@ -193,6 +201,19 @@ export const useSurveyStore = defineStore('survey', {
     // Ehemalige Mutations (Call-Sites in survey-window.vue nutzen sie direkt)
     OPEN_SURVEY() { this.isOpen = true }
     , CLOSE_SURVEY() { this.isOpen = false }
+    , SET_STEP(step) { this.step = step }
+    // ── Dozenten-Schloss ──
+    , unlockInstructor(password) {
+      const correct = import.meta.env.VUE_APP_INSPECTOR_PASSWORD || 'blob123'
+      if (password !== correct) return false
+      this.instructorUnlocked = true
+      localStorage.setItem('blobtopia_inspector_unlocked', 'true')
+      return true
+    }
+    , relockInstructor() {
+      this.instructorUnlocked = false
+      localStorage.removeItem('blobtopia_inspector_unlocked')
+    }
     , SET_ITEMS(items) { this.items = items; this._persistDraft() }
     , SET_DESIGN(design) { this.design = design; this._persistDraft() }
     , SET_SAMPLE({ sample, dist }) { this.lastSample = sample; this.dist = dist }
