@@ -163,14 +163,9 @@ export const useSimulationStore = defineStore('simulation', {
     , newspapers: []
     , tweetPollingTimer: null
     , demographics: null
-    , dashboardCache: {
-      eventsImpact: null
-      , attitudes: null
-      , elections: null
-      , blobList: null
-      , latentTraits: null
-      , blobHistories: {}
-    }
+    // Wirkungsdaten für die Ereignis-Karte an der Timeline
+    // (stats/events-impact.json, lazy geladen)
+    , eventsImpact: null
   })
 
   , getters: {
@@ -181,12 +176,6 @@ export const useSimulationStore = defineStore('simulation', {
     , maxTick: state => state.timelineMeta ? state.timelineMeta.max_tick : 0
     , timelineEvents: state => state.timelineMeta ? state.timelineMeta.events : []
     , electionTicks: state => state.timelineMeta ? state.timelineMeta.election_ticks : []
-    , dashboardEventsImpact: state => state.dashboardCache.eventsImpact
-    , dashboardAttitudes: state => state.dashboardCache.attitudes
-    , dashboardElections: state => state.dashboardCache.elections
-    , dashboardBlobList: state => state.dashboardCache.blobList
-    , dashboardLatentTraits: state => state.dashboardCache.latentTraits
-    , dashboardBlobHistory: state => id => state.dashboardCache.blobHistories[id] || null
     , activeEra: state => getEraForTick(state.tick || 0)
   }
 
@@ -234,45 +223,15 @@ export const useSimulationStore = defineStore('simulation', {
       }
     }
 
-    // ── Dashboard Data (from static JSON files) ────────────────────────
-    // Generic stats-file fetch with per-key cache (stats/*.json is written
-    // by scripts/export-timeline.js and tracked in git)
-    , async fetchStatsJson({ key, file }) {
-      if (this.dashboardCache[key]) return this.dashboardCache[key]
+    // ── Ereignis-Wirkung (stats/events-impact.json, für die Event-Karte) ─
+    , async fetchEventsImpact() {
+      if (this.eventsImpact) return this.eventsImpact
       try {
-        const res = await fetch(`${DATA_BASE}/stats/${file}`)
+        const res = await fetch(`${DATA_BASE}/stats/events-impact.json`)
         const data = await res.json()
-        this.dashboardCache[key] = data
+        this.eventsImpact = data
         return data
-      } catch (e) { console.warn(`[Dashboard] ${file} fetch failed:`, e); return null }
-    }
-    , fetchDashboardEventsImpact() {
-      return this.fetchStatsJson({ key: 'eventsImpact', file: 'events-impact.json' })
-    }
-    , fetchDashboardAttitudes() {
-      return this.fetchStatsJson({ key: 'attitudes', file: 'attitudes.json' })
-    }
-    , fetchDashboardElections() {
-      return this.fetchStatsJson({ key: 'elections', file: 'elections.json' })
-    }
-    , fetchDashboardBlobList() {
-      return this.fetchStatsJson({ key: 'blobList', file: 'blob-list.json' })
-    }
-    , fetchDashboardLatentTraits() {
-      return this.fetchStatsJson({ key: 'latentTraits', file: 'latent-traits.json' })
-    }
-    // Per-blob history (public/data/timeline/blobs/<id>.json — only present
-    // on installs that keep the full per-blob export; fails soft otherwise)
-    , async fetchDashboardBlobHistory(blobId) {
-      if (this.dashboardCache.blobHistories[blobId]) return this.dashboardCache.blobHistories[blobId]
-      try {
-        const res = await fetch(`${DATA_BASE}/blobs/${blobId}.json`)
-        if (!res.ok) return null
-        const data = await res.json()
-        // Spread-Assign: auf Vue 2 sind NEUE Keys sonst nicht reaktiv
-        this.dashboardCache.blobHistories = { ...this.dashboardCache.blobHistories, [blobId]: data }
-        return data
-      } catch (e) { console.warn('[Dashboard] blob history fetch failed:', e); return null }
+      } catch (e) { console.warn('[Static] events-impact.json fetch failed:', e); return null }
     }
 
     // ── Demographics (no separate endpoint in static mode) ─────────────

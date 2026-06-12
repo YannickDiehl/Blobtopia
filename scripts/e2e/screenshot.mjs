@@ -8,7 +8,7 @@
  */
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { launch, gotoApp, finish, BASE_URL } from './lib.mjs'
+import { launch, gotoApp, finish } from './lib.mjs'
 
 const outDir = process.argv[2] || 'e2e-shots'
 mkdirSync(outDir, { recursive: true })
@@ -34,17 +34,6 @@ await page.waitForTimeout(800)
 await shot('04-survey-ergebnis')
 await page.locator('button[title="Befragungsinstitut (B)"]').click() // close
 await page.waitForTimeout(600)
-
-// Dashboard route (charts)
-await page.goto(BASE_URL + '/#/dashboard', { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(4000)
-for (const [tab, name] of [['Einstellungen', '07-dash-einstellungen'], ['Wahlen', '08-dash-wahlen'], ['Demografie', '09-dash-demografie']]) {
-  await page.locator(`text=${tab}`).first().click()
-  await page.waitForTimeout(2500)
-  await shot(name)
-}
-await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' })
-await page.waitForTimeout(5000)
 
 // Feed + newspaper overlays (TopBar toggles)
 await page.locator('button[title="BlobFeed ein-/ausblenden"]').click()

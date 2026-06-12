@@ -56,13 +56,6 @@ const router = createRouter({
       , component: CityEditor
     }
     , {
-      path: '/dashboard'
-      , name: 'dashboard'
-      // Lazy: das Analyse-Dashboard (inkl. Chart.js) bleibt aus dem
-      // Haupt-Bundle der 3D-Ansicht draußen
-      , component: () => import('@/pages/dashboard')
-    }
-    , {
       path: '/:pathMatch(.*)*'
       , redirect: { name: 'simulation', params: { generationIndex: '0' } }
     }

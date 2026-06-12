@@ -49,7 +49,7 @@ export default {
       return this.timelineEvents.find(e => Math.abs(e.tick - (this.tick || 0)) <= 3 && e.tick !== this.dismissedEventTick)
     }
     , currentEventImpact(){
-      const impact = this.simulationStore.dashboardCache.eventsImpact
+      const impact = this.simulationStore.eventsImpact
       if (!impact || !this.currentEvent) return null
       const events = impact.events || []
       return events.find(e => e.tick === this.currentEvent.tick) || null
@@ -64,6 +64,11 @@ export default {
       , timelineSummary: 'timelineSummary'
     })
     , ...mapStores(useSimulationStore)
+  }
+  , mounted(){
+    // Wirkungsdaten für die Ereignis-Karte (vorher lud das nur das
+    // entfernte Dashboard — jetzt holt die Timeline sie selbst)
+    this.simulationStore.fetchEventsImpact()
   }
   , watch: {
     tick(){
