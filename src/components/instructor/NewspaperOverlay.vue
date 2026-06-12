@@ -225,62 +225,63 @@ export default {
 </script>
 
 <style lang="sass" scoped>
+// Die Presse-Mappe liegt auf dem Schreibtisch: kein dunkles Modal mehr,
+// die Zeitung liegt direkt auf der Unterlage, die Werkzeuge sind ein
+// schmaler Papierstreifen (Ausgaben-Schieber).
 .newspaper-overlay
   position: fixed
-  top: 0
-  left: 0
-  right: 0
-  bottom: 0
-  background: rgba(0, 0, 0, 0.65)
-  z-index: 15
+  top: 56px
+  left: 240px
+  right: 24px
+  bottom: 90px
+  z-index: 7
   display: flex
   align-items: flex-start
   justify-content: center
-  padding-top: 52px
+  @media (max-width: 900px)
+    left: 84px
 
 .newspaper-chrome
   width: 880px
-  max-width: 95vw
-  max-height: calc(100vh - 60px)
+  max-width: 100%
+  max-height: 100%
   display: flex
   flex-direction: column
-  background: rgba(20, 20, 30, 0.95)
-  border: 1px solid rgba(255, 255, 255, 0.1)
-  border-radius: 8px
   overflow: hidden
 
-// ── Toolbar ──
+// ── Werkzeugstreifen (Papier) ──
 .newspaper-toolbar
   display: flex
   align-items: center
   gap: 0.75rem
-  padding: 0.5rem 0.75rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08)
+  padding: 0.45rem 0.75rem
+  background: var(--inst-papier)
+  box-shadow: 0 4px 10px rgba(40, 28, 8, 0.3)
   flex-shrink: 0
+  transform: rotate(-0.3deg)
+  margin-bottom: 6px
+  font-family: var(--inst-druck)
 
 .paper-tabs
   display: flex
-  gap: 2px
-  background: rgba(255, 255, 255, 0.05)
-  border-radius: 4px
-  padding: 2px
+  gap: 4px
 
 .paper-tab
-  padding: 0.3rem 0.75rem
-  background: transparent
+  padding: 0.25rem 0.7rem
+  background: var(--inst-karton)
   border: none
-  color: $grey
-  font-size: 0.8rem
-  font-weight: 600
+  color: #8a7c5e
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.74rem
   cursor: pointer
-  border-radius: 3px
+  border-radius: 4px
   transition: all 0.15s
   white-space: nowrap
   &:hover
-    color: $grey-lighter
+    background: #efe4c8
   &.active
-    background: rgba(255, 255, 255, 0.12)
-    color: $primary
+    background: var(--inst-stempelblau)
+    color: #fff
 
 .issue-nav
   display: flex
@@ -290,9 +291,9 @@ export default {
   justify-content: center
 
 .nav-btn
-  background: transparent
-  border: 1px solid rgba(255, 255, 255, 0.1)
-  color: $grey-lighter
+  background: rgba(255, 255, 255, 0.5)
+  border: 1.5px solid rgba(43, 58, 85, 0.3)
+  color: var(--inst-tinte)
   cursor: pointer
   border-radius: 3px
   padding: 0.15rem 0.25rem
@@ -300,7 +301,7 @@ export default {
   align-items: center
   transition: all 0.15s
   &:hover:not(:disabled)
-    background: rgba(255, 255, 255, 0.08)
+    border-color: var(--inst-stempelblau)
   &:disabled
     opacity: 0.3
     cursor: default
@@ -312,13 +313,14 @@ export default {
   min-width: 140px
 
 .event-name
-  font-size: 0.8rem
-  font-weight: 600
-  color: $grey-lighter
+  font-size: 0.76rem
+  font-weight: 700
+  color: var(--inst-tinte)
 
 .issue-date
-  font-size: 0.65rem
-  color: $grey
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.62rem
+  color: var(--inst-beschriftung)
 
 .toolbar-actions
   display: flex
@@ -326,9 +328,9 @@ export default {
   gap: 0.35rem
 
 .tool-btn
-  background: transparent
-  border: 1px solid rgba(255, 255, 255, 0.1)
-  color: $grey
+  background: rgba(255, 255, 255, 0.5)
+  border: 1.5px solid rgba(43, 58, 85, 0.3)
+  color: var(--inst-tinte-soft)
   cursor: pointer
   border-radius: 3px
   padding: 0.25rem 0.35rem
@@ -336,8 +338,8 @@ export default {
   align-items: center
   transition: all 0.15s
   &:hover
-    color: $grey-lighter
-    background: rgba(255, 255, 255, 0.08)
+    color: var(--inst-tinte)
+    border-color: var(--inst-stempelblau)
 
 // ── Download Menu ──
 .download-wrapper
@@ -348,38 +350,39 @@ export default {
   top: 100%
   right: 0
   margin-top: 4px
-  background: #1a1a2e
-  border: 1px solid rgba(255, 255, 255, 0.15)
-  border-radius: 6px
+  background: var(--inst-papier-hell)
+  border: 1.5px solid rgba(43, 58, 85, 0.25)
+  border-radius: 4px
   padding: 0.35rem 0
   min-width: 200px
   z-index: 20
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5)
+  box-shadow: 0 8px 24px rgba(40, 28, 8, 0.35)
 
 .download-item
   display: flex
   align-items: center
   gap: 0.5rem
   padding: 0.4rem 0.75rem
-  color: $grey-lighter
-  font-size: 0.8rem
+  color: var(--inst-tinte)
+  font-size: 0.78rem
   cursor: pointer
   transition: background 0.1s
   &:hover
-    background: rgba(255, 255, 255, 0.08)
+    background: rgba(51, 81, 142, 0.08)
 
 .download-sep
   height: 1px
-  background: rgba(255, 255, 255, 0.08)
+  background: rgba(43, 58, 85, 0.15)
   margin: 0.25rem 0
 
 // ── Issue Counter ──
 .issue-counter
   text-align: center
-  font-size: 0.65rem
-  color: $grey
-  padding: 0.25rem 0
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+  font-family: var(--inst-hand)
+  font-size: 0.85rem
+  color: rgba(255, 253, 252, 0.85)
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)
+  padding: 0.1rem 0 0.3rem
   flex-shrink: 0
 
 // ── Scroll Area ──
@@ -387,12 +390,14 @@ export default {
   flex: 1
   overflow-y: auto
   overflow-x: hidden
-  padding: 1.5rem
+  padding: 0.25rem 1rem 1.5rem
+  // Die Zeitung wirft selbst Schatten — die Mappe ist unsichtbar
 
 .empty-state
   text-align: center
   padding: 4rem 1rem
-  color: $grey
+  color: rgba(255, 253, 252, 0.8)
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5)
   p
     margin-top: 0.75rem
     font-size: 0.85rem

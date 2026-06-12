@@ -85,3 +85,11 @@
 	font-display: swap;
 	src: url('../assets/fonts/baloo2.woff2') format('woff2-variations');
 }
+
+@font-face {
+	font-family: 'UnifrakturMaguntia'; // NUR der Blobspiegel-Zeitungskopf
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../assets/fonts/unifraktur.woff2') format('woff2');
+}

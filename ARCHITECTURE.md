@@ -33,7 +33,9 @@ Vue-3-Frontend (statisch, Vercel)  ←→  api/chat.js  ←→  Anthropic
 | `crates/server` | alter Live-Server | **LEGACY**, aus Workspace ausgeschlossen, s. `crates/server/README.md` |
 | `scripts/export-timeline.js` | SQLite → kompaktes Tick-JSON | aktiv |
 | `scripts/*.py` + `scripts/validation/` | Artefakt-Generierung (Tweets, Zeitungen, Personas) + 7-Layer-Validierung; Deps: `requirements.txt` | aktiv (offline) |
-| `src/` | Vue-3-Frontend (Three.js-Stadt, Inspector, Chat, Befragungsinstitut, Feed, Zeitung) | aktiv |
+| `src/` | Vue-3-Frontend (Three.js-Stadt, Karteikarten, Protokoll, Befragungsinstitut, BlobPhone, Presse) | aktiv |
+| `src/styles/_institut.scss` | Designsystem „Das Institut" (Papier/Stempel-Tokens + Artefakt-Klassen, s. docs/ui-institut.md) | aktiv |
+| `src/components/desk/` | Schreibtisch-Raum (Registratur Studien/Presse/Dozentenzimmer); Raum-Zustand `room`/`deskSection` im Sim-Store — bewusst KEINE Route, die Welt bleibt gemountet | aktiv |
 | `src/city/` | Stadt-Rendering der Welt; `catalog.js` ist die EINE Asset-Quelle (Palette, Loader, Skalen, functional_types) | aktiv |
 | `src/editor/` + `src/pages/city-editor.vue` | Stadt-Editor (Authoring-Werkzeug der Stadt-Pipeline, s. eigener Abschnitt) | aktiv |
 | `api/chat.js` | Anthropic-Proxy (Rate-Limit, Prompt-Validierung, Leak-Filter) | aktiv (Produktion) |

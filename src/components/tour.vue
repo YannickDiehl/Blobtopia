@@ -21,36 +21,46 @@
   TourStep(:step="2")
     TypewriterTextTransition
       p.
-        Du siehst die Stadt von oben. Die farbigen Bereiche sind die fünf Distrikte.
-        Die kleinen Figuren sind Blobs — Bürger*innen mit eigenen Meinungen, Einstellungen und Emotionen.
+        Du blickst auf die Stadt — das ist dein Feld. Die farbigen Bereiche sind die
+        fünf Distrikte, die kleinen Figuren sind Blobs: Bürger*innen mit eigenen
+        Meinungen, Einstellungen und Emotionen.
   TourStep(:step="3")
     TypewriterTextTransition
       p.
-        Klicke auf einen Blob und wähle „Interview führen". Du kannst direkt mit den
-        Einwohner*innen sprechen — stelle Fragen zu ihrem Leben, ihrer Meinung und ihren Sorgen.
+        Tippe einen Blob an: Du bekommst seine Karteikarte mit deiner Feldnotiz.
+        „Interview führen" startet ein Gespräch — das Protokoll läuft mit,
+        wie bei echter Feldforschung.
   TourStep(:step="4")
     TypewriterTextTransition
       p.
-        Einzelinterviews reichen dir nicht? Im Befragungsinstitut (Taste B) führst du
-        ganze Studien durch: eigenen Fragebogen entwerfen, Stichprobe ziehen,
-        Feldarbeit planen — und den Datensatz als CSV mitnehmen.
+        Oben hängen zwei Reiter: In der Stadt beobachtest und befragst du —
+        am Schreibtisch wertest du aus. Dort liegt die Registratur mit deinen
+        Studien, der Presse und dem verschlossenen Dozentenzimmer.
   TourStep(:step="5")
     TypewriterTextTransition
       p.
-        Im Feed rechts siehst du, was die Blobs tweeten. Ihre Tweets spiegeln aktuelle
-        Stimmungen und Reaktionen auf Ereignisse wider.
+        Im Befragungsinstitut (Taste B) führst du ganze Studien durch: Fragebogen
+        auf Formblatt S-3 entwerfen, Ziehungsplan ausfüllen, Feldarbeit planen —
+        und die Datenlieferung als CSV mitnehmen.
   TourStep(:step="6")
     TypewriterTextTransition
       p.
-        Nutze die Zeitleiste unten, um durch 22 Jahre Blobtopia-Geschichte zu reisen.
-        Beobachte, wie Events — Wahlen, Krisen, Skandale — die Gesellschaft verändern.
+        Auf dem BlobPhone siehst du, was die Blobs blubbern. Ihre Blubs spiegeln
+        aktuelle Stimmungen und Reaktionen auf Ereignisse — Material für deine
+        Inhaltsanalyse.
   TourStep(:step="7")
     TypewriterTextTransition
       p.
-        Die inneren Werte der Blobs bleiben verborgen. Nutze Beobachtung, Interviews,
-        Tweets und Befragungen, um die Gesellschaft zu verstehen —
+        Die Filmrolle unten ist das Stadtarchiv: 22 Jahre Aufzeichnung. Spule durch
+        die Geschichte und beobachte, wie Wahlen, Krisen und Skandale die
+        Gesellschaft verändern.
+  TourStep(:step="8")
+    TypewriterTextTransition
+      p.
+        Die wahren Werte der Blobs liegen versiegelt im Dozentenzimmer. Nutze
+        Beobachtung, Interviews, Blubs und Befragungen, um sie zu schätzen —
         genau wie in der echten empirischen Sozialforschung.
-  TourStep(button-text="Blobtopia erforschen!", is-last, :step="8")
+  TourStep(button-text="Blobtopia erforschen!", is-last, :step="9")
     TypewriterTextTransition
       p Viel Spaß beim Erforschen von Blobtopia!
       p (Mehr Details auf der Info-Seite)

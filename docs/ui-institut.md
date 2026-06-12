@@ -83,19 +83,40 @@ stempeln.** Native Inputs bleiben darunter erhalten (a11y + Funktion).
 | Tour (8 Schritte) | Karteikarten-Stapel, Inhalte auf neue Räume umgeschrieben |
 | Dashboard | ENTFERNT |
 
-## Etappen (jede einzeln lauffähig + committet)
+## Etappen (jede einzeln lauffähig + committet) — UMGESETZT 2026-06-12
 
-- [ ] **E0** Tokens + Schriften (`_institut.scss`, `_fonts.scss`); Light-Theme
+- [x] **E0** Tokens + Schriften (`_institut.scss`, `_fonts.scss`); Light-Theme
       vorbereitet (`[data-theme="light"]` in Bulma-Bridge), Umschalten erst E2.
-- [ ] **E1** Dashboard-Rückbau (Route, Komponenten, Store-Actions/Cache,
-      chart.js-Dependency prüfen, e2e-Baselines `07/08/09-dash-*` entfernen).
-- [ ] **E2** Akten-Shell: TopBar→Reiter, Schreibtisch-Route (Registratur:
-      Studien/Presse/Dozentenzimmer), Filmstreifen-Timeline, Theme-Switch.
-- [ ] **E3** Studien-Werkstatt (S-3/Z-1/Datenlieferung) — Survey-UI-Umbau.
-- [ ] **E4** Dozentenzimmer (Schloss konsolidieren, Siegel-Ritual, Wahrheit).
-- [ ] **E5** Stadt-Feld (Karteikarte, Hausakte, Protokoll, BlobPhone, Suchzettel).
-- [ ] **E6** Feinschliff: Presse-Layouts, Tour, Mikroanimationen (Stempel-
-      Plop), e2e-Suiten anpassen + Baselines neu, README/ARCHITECTURE.
+- [x] **E1** Dashboard-Rückbau (Route, Komponenten, Store-Actions/Cache,
+      chart.js + vue-chartjs deinstalliert; TimelineBar lädt events-impact
+      jetzt selbst).
+- [x] **E2** Akten-Shell: TopBar→Reiter, Schreibtisch (Registratur:
+      Studien/Presse), Filmstreifen-Timeline, Theme-Switch.
+      **Abweichung vom Plan:** Raum-Zustand (`room`/`deskSection` im
+      Sim-Store) statt Route — die Welt bleibt gemountet (Three.js-Kontext
+      neu aufzubauen kostet Sekunden).
+- [x] **E3** Studien-Werkstatt (S-3/Z-1/Datenlieferung) — Survey-UI-Umbau;
+      alle e2e-Klassennamen erhalten, Text-Checks case-insensitiv
+      (text-transform ändert innerText).
+- [x] **E4** Dozentenzimmer: pinke Registratur-Mappe, EIN Schloss
+      (`instructorUnlocked` + `step` im Survey-Store), Siegel-Ritual.
+      Der Wahrheit-Tab der Studienmappe IST das Dozentenzimmer-Dokument
+      (kein Doppel-UI).
+- [x] **E5** Stadt-Feld: Karteikarte, Hausakte, Interview-Protokoll,
+      BlobPhone (+ Mini-Gerät in der Stadt-Ecke), Melderegister.
+- [x] **E6** Presse-Layouts (Fraktur/Kurier-Rot, Mappe statt Modal), Tour
+      (9 Karteikarten-Schritte), Baselines neu, README/ARCHITECTURE.
+      **Bewusst weggelassen:** Tilt-Shift über der Welt (backdrop-filter
+      über dem ständig zeichnenden WebGL-Canvas = iPad-Performance-Risiko).
+
+## Offene Ideen (bewusst nicht in v1)
+
+- Stempel-Animation (`inst-gestempelt`) an frisch erscheinende Vermerke
+  binden (Klasse existiert, wird noch nicht getriggert)
+- Plop-Animation für BlobPhone-Einträge beim Tick-Wechsel
+- Kamera-Flug zu Distrikten aus dem Melderegister (flyToDistrict ist Stub,
+  Vorbestand)
+- Responsive Feinschliff Schreibtisch < 700px (Hochkant-Telefon)
 
 ## Test-Strategie
 

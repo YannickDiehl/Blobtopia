@@ -1,6 +1,7 @@
 <template lang="pug">
-.newspaper-page(v-if="issue")
-  //- Masthead
+.newspaper-page(v-if="issue", :class="'paper-' + issue.newspaper")
+  //- Masthead (jedes Blatt trägt seine Blattlinie: Blobspiegel = Fraktur,
+  //- Kurier = rotes Sans-Logo)
   .masthead
     .paper-rule
     h1.paper-name {{ issue.newspaper_name }}
@@ -94,6 +95,27 @@ export default {
   text-transform: uppercase
   margin: 0.4rem 0 0.15rem
   line-height: 1.1
+
+// Der Blobspiegel: ehrwürdige Fraktur (FAZ-Erbe)
+.paper-blobspiegel .paper-name
+  font-family: 'UnifrakturMaguntia', serif
+  font-weight: 400
+  text-transform: none
+  letter-spacing: 0
+  font-size: 2.9rem
+
+// Der Kurier: rotes Sans-Logo, klein geschrieben (taz-Erbe)
+.paper-kurier
+  .paper-name
+    font-family: 'Archivo', sans-serif
+    font-weight: 800
+    text-transform: lowercase
+    letter-spacing: -1px
+    color: #c0392b
+  .paper-rule
+    background: #c0392b
+  .section-headline
+    font-family: 'Archivo', sans-serif
 
 .masthead-sub
   font-size: 0.8rem

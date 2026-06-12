@@ -324,11 +324,37 @@ Die Simulation enthält **27 Ereignisse über 22 Jahre** (8.030 Tage). Jedes Ere
 
 Studierende interviewen Blobs über ein Chat-Interface. Das System nutzt Claude Haiku mit einem umfassenden System-Prompt, der alle 21 Trait-Indikatoren, Einstellungen, Emotionen und die aktuelle Tagesaktivität des Blobs enthält. Sicherheitsmechanismen verhindern Prompt-Injection und System-Prompt-Leaks.
 
+## Die Akte: Stadt & Schreibtisch (UI-Konzept „Das Institut")
+
+Die Oberfläche besteht aus **physischen Forschungsartefakten** über der
+3D-Stadt (Designsystem: `docs/ui-institut.md`, `src/styles/_institut.scss`).
+Der Bildschirm ist eine Akte mit zwei Ordner-Reitern:
+
+- **Stadt** (Feld): Blob antippen → **Karteikarte** mit Polaroid-Porträt
+  (Gesicht = Emotionszustand) und Feldnotiz; „Interview führen" →
+  **Interview-Protokoll** mit laufender AUFNAHME; Gebäude → **Hausakte**;
+  der BlobFeed läuft auf dem **BlobPhone** (das Twitter der Blobs: „Blubs",
+  „weiterblubbern"; Mini-Gerät liegt in der Ecke); ⌘K öffnet das
+  **Einwohnermelderegister**. Die Timeline ist die **Filmrolle des
+  Stadtarchivs** („Aufzeichnung · 22 Jahre" — die Precomputed-Architektur
+  als Fiktion).
+- **Schreibtisch** (Auswertung): Hängeregistratur mit **Studien**
+  (Befragungsinstitut), **Presse** (Der Blobspiegel in Fraktur, der
+  blobtopia kurier mit rotem Sans-Logo) und dem verschlossenen
+  **Dozentenzimmer** (pink = Wahrheit): ein Schloss, dahinter der
+  versiegelte Umschlag mit den wahren Werten — der Wahrheit-Tab öffnet
+  sich nach dem Siegelbruch.
+
+Bedienkonventionen: Radio-Optionen werden mit **Rotstift eingekreist**,
+Checkboxen **angekreuzt**, Submit-Knöpfe **stempeln** (Druck-Animation),
+Dispositionscodes und `kA`/`wn` erscheinen als rote Stempel-Vermerke,
+Hinweise stehen in Bleistift-Handschrift.
+
 ### Befragungsinstitut (Survey-Feature)
 
 Statt Blobs einzeln zu interviewen, können Studierende automatisierte
-Befragungen in Auftrag geben (Fenster über den Umfrage-Button in der
-Top-Bar oder Taste `b`):
+Befragungen in Auftrag geben (Studienmappe am Schreibtisch, über den
+Umfrage-Knopf in der Akten-Leiste oder Taste `b`):
 
 1. **Fragebogen** — Fragen und Antwortskalen werden komplett frei formuliert
    (Codebook-Stil). Das System erkennt Skala, gemessenes Konstrukt und

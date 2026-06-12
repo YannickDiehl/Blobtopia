@@ -22,7 +22,7 @@ const shot = async name => {
 await gotoApp(page)
 await shot('01-world')
 
-// Survey window: all three tabs
+// Studienmappe am Schreibtisch: alle drei Blätter
 await page.locator('button[title="Befragungsinstitut (B)"]').click()
 await page.waitForTimeout(1200)
 await shot('02-survey-fragebogen')
@@ -32,16 +32,16 @@ await shot('03-survey-stichprobe')
 await page.locator('.step-tab:has-text("Ergebnis")').first().click()
 await page.waitForTimeout(800)
 await shot('04-survey-ergebnis')
-await page.locator('button[title="Befragungsinstitut (B)"]').click() // close
+await page.keyboard.press('Escape') // zurück in die Stadt
 await page.waitForTimeout(600)
 
-// Feed + newspaper overlays (TopBar toggles)
+// BlobPhone (Stadt) + Presse-Mappe (Schreibtisch)
 await page.locator('button[title="BlobFeed ein-/ausblenden"]').click()
 await page.waitForTimeout(1500)
 await shot('05-feed')
 await page.locator('button[title="BlobFeed ein-/ausblenden"]').click()
 await page.waitForTimeout(600)
-await page.locator('button[title="Zeitung ein-/ausblenden (N)"]').click()
+await page.locator('button[title="Presse lesen (N)"]').click()
 await page.waitForTimeout(2000)
 await shot('06-newspaper')
 

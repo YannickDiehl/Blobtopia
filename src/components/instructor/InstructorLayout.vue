@@ -81,6 +81,22 @@
   transition(name="slide-right")
     BlobFeed(v-if="showFeed && !onDesk", :tweets="tweets", @close="showFeed = false")
 
+  //- Mini-BlobPhone: liegt gesperrt in der Ecke, solange der Feed zu ist
+  transition(name="fade")
+    button.miniphone(
+      v-if="!showFeed && !onDesk && tweets && tweets.length"
+      , @click="showFeed = true"
+      , title="BlobFeed öffnen (T)"
+    )
+      .mscreen
+        .mzeit {{ phoneClock }}
+        .mkarte
+          .mk1
+            i.mlogo
+            | BlobFeed
+          .mk2 {{ tweets.length }} {{ tweets.length === 1 ? 'neuer Blub' : 'neue Blubs' }}
+      .mhome
+
   //- Presse-Mappe (Zeitungen) — liegt auf dem Schreibtisch
   transition(name="fade")
     NewspaperOverlay(
@@ -197,6 +213,10 @@ export default {
     }
     , onDesk(){
       return this.room === 'schreibtisch'
+    }
+    , phoneClock(){
+      const h = this.simulationStore.hour || 0
+      return String(h).padStart(2, '0') + ':00'
     }
   }
   , watch: {
@@ -562,6 +582,86 @@ export default {
   transition: opacity 0.2s ease
 .fade-enter, .fade-enter-from, .fade-leave-to
   opacity: 0
+
+// Mini-BlobPhone (gesperrt in der Stadt-Ecke, öffnet den Feed)
+.miniphone
+  position: absolute
+  left: 14px
+  bottom: 96px
+  width: 96px
+  height: 160px
+  z-index: 4
+  transform: rotate(-6deg)
+  border-radius: 20px
+  padding: 6px 6px 20px
+  background: linear-gradient(165deg, var(--inst-phone-gehaeuse-1), var(--inst-phone-gehaeuse-2))
+  border: 3px solid var(--inst-phone-rand)
+  box-shadow: 0 12px 22px rgba(15, 20, 45, 0.45)
+  cursor: pointer
+  transition: transform 0.15s ease
+  &:hover
+    transform: rotate(-3deg) scale(1.04)
+
+  .mscreen
+    width: 100%
+    height: 100%
+    border-radius: 13px
+    background: linear-gradient(170deg, #222c44, #161d30)
+    display: flex
+    flex-direction: column
+    align-items: center
+    justify-content: center
+    gap: 6px
+    padding: 6px
+    overflow: hidden
+
+  .mzeit
+    color: rgba(255, 255, 255, 0.75)
+    font-family: var(--inst-rund)
+    font-weight: 700
+    font-size: 13px
+
+  .mkarte
+    background: rgba(255, 255, 255, 0.96)
+    border-radius: 9px
+    padding: 6px 7px
+    width: 100%
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4)
+    text-align: left
+
+  .mk1
+    display: flex
+    align-items: center
+    gap: 4px
+    font-family: var(--inst-rund)
+    font-weight: 800
+    font-size: 10px
+    color: #28324e
+
+  .mlogo
+    display: inline-block
+    width: 13px
+    height: 12px
+    border-radius: 46% 54% 52% 48% / 58% 56% 44% 42%
+    background: linear-gradient(180deg, #6fc2f5, #3d9be8)
+
+  .mk2
+    font-family: var(--inst-rund)
+    font-size: 8.5px
+    color: #5b6884
+    font-weight: 700
+    margin-top: 1px
+
+  .mhome
+    position: absolute
+    bottom: 4px
+    left: 50%
+    transform: translateX(-50%)
+    width: 16px
+    height: 14px
+    border-radius: 46% 54% 52% 48% / 58% 56% 44% 42%
+    background: linear-gradient(180deg, #fff, #dbe2ef)
+    box-shadow: inset 0 -1.5px 3px rgba(80, 90, 120, 0.4)
 
 .slide-right-enter-active, .slide-right-leave-active
   transition: transform 0.3s ease
