@@ -122,5 +122,28 @@ await page.locator('.reset-link:has-text("Wieder sperren")').click()
 await page.waitForTimeout(300)
 report('relock restores the password gate', await page.locator('.truth-lock input[type="password"]').isVisible())
 
+// ── Längsschnitt (Trend): Wellen-Ausschöpfung, Wellen-Spalte, Wellen-Wahrheit ──
+await page.locator('.step-tab:has-text("Stichprobe")').first().click()
+await page.locator('.radio-row:has-text("Trend") input').check()
+await page.locator('button:has-text("Welle hinzufügen")').click()
+await page.waitForTimeout(300)
+await page.locator('.step-tab:has-text("Ergebnis")').first().click()
+await page.locator('button:has-text("Befragung durchführen")').click()
+await page.waitForFunction(() => /Welle 2/.test(document.body.innerText), { timeout: 60000 })
+await page.waitForTimeout(400)
+report('trend study reports per-wave response rates'
+  , /Welle 1/.test(await page.locator('.survey-section').innerText()))
+report('data matrix carries the wave column'
+  , /welle/.test(await page.locator('.data-table-wrap .data-table thead').innerText()))
+await page.locator('.step-tab.truth-tab').click()
+await page.locator('.truth-lock input[type="password"]').fill(process.env.E2E_INSPECTOR_PASSWORD || 'blob123')
+await page.keyboard.press('Enter')
+await page.waitForTimeout(300)
+await page.locator('button:has-text("Wahre Werte aufdecken")').click()
+await page.waitForTimeout(600)
+report('wave chips switch the decomposition', (await page.locator('.wave-chips .chip').count()) === 2)
+report('change card compares estimated vs true delta'
+  , /Δ wahr/.test(await page.locator('.change-card').first().innerText()))
+
 finish(errors)
 await browser.close()

@@ -21,6 +21,7 @@ import { snapshotTruth, decompose, simulateSamplingDistribution } from '@/lib/su
 import { buildDemographics } from '@/lib/survey-demographics'
 import { simulateParticipation, fieldReport, FIELD_MODES, DISPOSITION } from '@/lib/survey-fieldwork'
 import { postStratify, calibratedEstimate } from '@/lib/survey-weighting'
+import { runLongitudinalStudy, waveSummary } from '@/lib/survey-longitudinal'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
 import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
 import { CHAT_API } from '@/config/api'
@@ -47,6 +48,8 @@ const DEFAULT_DESIGN = () => ({
   // Erwünschtheit (Konstanten in survey-fieldwork.js)
   , fieldMode: 'personal'
   , contactAttempts: 2
+  // Längsschnitt: 'cross' | 'trend' | 'panel'; weitere Wellen als Sim-Jahre
+  , longitudinal: { type: 'cross', waveYears: [] }
 })
 
 // getCurrentGeneration is a function held in simulation state — call it.
@@ -107,6 +110,8 @@ export const useSurveyStore = defineStore('survey', {
     , simProgress: { done: 0, total: 0 }
     // Post-Stratifizierung (post-hoc, ohne neue Feldarbeit berechnet)
     , calib: { enabled: false, vars: ['district'] }
+    // Wahrheit-Tab: ausgewählte Welle bei Längsschnitt-Studien
+    , truthWave: 0
   })
   , getters: {
     // The eligible, filtered candidate frame for the manual picker + counts.
@@ -117,13 +122,31 @@ export const useSurveyStore = defineStore('survey', {
       }))
     }
     // Exact TSE decomposition per item (needs the truth snapshot in result.meta).
+    // Bei Längsschnitt-Studien: Zerlegung der ausgewählten Welle (truthWave).
     , decomposition(state) {
-      if (!state.result || !state.result.meta || !state.result.meta.truth) return null
+      if (!state.result || !state.result.meta) return null
+      const meta = state.result.meta
+      if (meta.waves && meta.waves.length) {
+        const w = Math.min(state.truthWave, meta.waves.length - 1)
+        const wm = meta.waves[w]
+        return decompose({
+          rows: state.result.rows.filter(r => (r.welle || 1) === w + 1)
+          , meta: { truth: wm.truth, technique: wm.technique, frameSize: wm.frameSize }
+        }, state.items)
+      }
+      if (!meta.truth) return null
       return decompose(state.result, state.items)
     }
+    // Veränderungs-Sicht (Trend/Panel): geschätzte vs. wahre Veränderung.
+    , waveChanges(state) {
+      if (!state.result || !state.result.meta || !state.result.meta.waves) return null
+      return waveSummary(state.result, state.items)
+    }
     // Kalibrierungsgewichte (Post-Stratifizierung) — post-hoc aus dem Ergebnis.
+    // Bei Längsschnitt deaktiviert (gepoolte Wellen wären methodisch falsch).
     , calibration(state) {
       if (!state.calib.enabled || !state.result || !state.result.meta.truth) return null
+      if (state.result.meta.waves && state.result.meta.waves.length > 1) return null
       return postStratify({ rows: state.result.rows, truth: state.result.meta.truth, vars: state.calib.vars })
     }
     // Deskriptive Schätzer pro Item (ungewichtet / design-gewichtet / kalibriert).
@@ -275,6 +298,29 @@ export const useSurveyStore = defineStore('survey', {
             , demographics: demographics
             , onProgress: (done, total) => { this.progress = { done, total } }
           })
+        } else if (design.longitudinal && design.longitudinal.type !== 'cross' && (design.longitudinal.waveYears || []).length) {
+          // Längsschnitt: Welle 1 = aktueller Tick, weitere Wellen aus den
+          // gewählten Sim-Jahren. Populationen werden pro Welle geladen.
+          const sim = useSimulationStore()
+          const tpy = (sim.timelineMeta && sim.timelineMeta.ticks_per_year) || 365
+          const maxTick = (sim.timelineMeta && sim.timelineMeta.max_tick) || 8030
+          const ticks = [sim.tick || 0].concat(
+            design.longitudinal.waveYears.map(y => Math.min(maxTick, Math.round(y * tpy)))
+          )
+          const waves = []
+          for (const t of ticks) {
+            this.progress = { done: waves.length, total: ticks.length }
+            waves.push({ tick: t, blobs: await sim.fetchPopulationAt(t) })
+          }
+          result = runLongitudinalStudy({
+            type: design.longitudinal.type, waves, design, items: this.items, demographics
+          })
+          // Kompatibilität: Welle-1-Wahrheit als Default (Dozenten-CSV etc.)
+          result.meta.truth = result.meta.waves[0].truth
+          result.meta.technique = design.technique
+          result.meta.frameSize = result.meta.waves[0].frameSize
+          this.truthWave = 0
+          this.progress = { done: result.rows.length, total: result.rows.length }
         } else {
           // Synthetic (free, instant): Brutto → Feldarbeit (Unit-Nonresponse,
           // modusabhängig) → Netto antwortet. Nichtteilnehmende bleiben als
@@ -305,9 +351,12 @@ export const useSurveyStore = defineStore('survey', {
         }
         // Freeze the ground truth at fieldwork time — the timeline keeps
         // playing, so a later recompute would compare against another tick.
-        result.meta.truth = snapshotTruth({ blobs, design, units: sample.units, items: this.items })
-        result.meta.technique = design.technique
-        result.meta.frameSize = sample.frameSize
+        // (Längsschnitt-Studien haben ihre Wahrheit bereits pro Welle.)
+        if (!result.meta.waves) {
+          result.meta.truth = snapshotTruth({ blobs, design, units: sample.units, items: this.items })
+          result.meta.technique = design.technique
+          result.meta.frameSize = sample.frameSize
+        }
         this.result = result
         this.SET_SAMPLE({ sample: sample, dist: realizedDistribution(sample.units, strataVar, design) })
       } catch (e) {
@@ -326,11 +375,27 @@ export const useSurveyStore = defineStore('survey', {
     // ── Wahrheit-Tab (god view) ──
     , revealTruth() { this.truthRevealed = true }
     , SET_CALIB(calib) { this.calib = Object.assign({}, this.calib, calib) }
+    , SET_TRUTH_WAVE(w) { this.truthWave = w }
 
     // Instructor-only export: the student dataset plus a `<item>_wahr` column.
+    // Längsschnitt: die Wahrheit gilt PRO WELLE — Zeilen werden dafür auf
+    // eindeutige IDs (blobId·W<welle>) gemappt.
     , exportInstructorCsv() {
       if (!this.result || !this.result.meta.truth) return
-      const csv = toCSV(this.result.rows, this.items, { truth: this.result.meta.truth })
+      let rows = this.result.rows
+      let truth = this.result.meta.truth
+      if (this.result.meta.waves && this.result.meta.waves.length > 1) {
+        const perUnit = {}
+        rows = this.result.rows.map(r => {
+          const w = r.welle || 1
+          const key = r.blobId + '·W' + w
+          const wave = this.result.meta.waves[w - 1]
+          if (wave.truth.perUnit[r.blobId]) perUnit[key] = wave.truth.perUnit[r.blobId]
+          return Object.assign({}, r, { blobId: key })
+        })
+        truth = { perUnit }
+      }
+      const csv = toCSV(rows, this.items, { truth })
       downloadText(csv, 'blobtopia-befragung-dozentenversion.csv', 'text/csv')
     }
 

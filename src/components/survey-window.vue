@@ -168,10 +168,33 @@
               input.survey-input.mini(type="number", min="1", max="4", v-model.number="design.contactAttempts")
               p.mini-hint Nicht alle machen mit: Erreichbarkeit und Kooperation sind selektiv. Mehr Versuche heben die Ausschöpfung — neutralisieren die Selektivität aber nicht.
 
-        //- ④ Auswahl / Realisierung
+        //- ④ Längsschnitt (Trend / Panel über die Timeline)
         .panel-block
           .block-head
-            span.block-title ④ {{ design.technique === 'manual' ? 'Blobs selbst auswählen' : 'Realisierte Stichprobe' }}
+            span.block-title ④ Längsschnitt
+            span.block-meta {{ longitudinalLabel }}
+          .block-body
+            label.radio-row(v-for="t in longTypes", :key="t.key", :class="{ active: design.longitudinal.type === t.key }")
+              input(type="radio", :value="t.key", v-model="design.longitudinal.type")
+              span {{ t.label }}
+            template(v-if="design.longitudinal.type !== 'cross'")
+              p.mini-hint Welle 1 = aktueller Zeitpunkt (Jahr {{ currentYear }}). Weitere Wellen:
+              .wave-row(v-for="(y, i) in design.longitudinal.waveYears", :key="i")
+                span.wave-label Welle {{ i + 2 }}
+                select.survey-input.mini(v-model.number="design.longitudinal.waveYears[i]")
+                  option(v-for="y2 in availableYears", :key="y2", :value="y2") Jahr {{ y2 }}
+                span.action-btn.del(@click="design.longitudinal.waveYears.splice(i, 1)")
+                  b-icon(icon="close", size="is-small")
+              button.survey-btn.mini-btn(v-if="design.longitudinal.waveYears.length < 3", @click="addWave")
+                b-icon(icon="plus", size="is-small")
+                span Welle hinzufügen
+              p.mini-hint(v-if="design.longitudinal.type === 'panel'") Panel: Die Netto-Stichprobe aus Welle 1 wird wiederbefragt — mit selektivem Ausfall (Attrition) und Abgängen aus der Population.
+              p.mini-hint(v-else) Trend: Jede Welle ist eine frische Ziehung mit demselben Design.
+
+        //- ⑤ Auswahl / Realisierung
+        .panel-block
+          .block-head
+            span.block-title ⑤ {{ design.technique === 'manual' ? 'Blobs selbst auswählen' : 'Realisierte Stichprobe' }}
             span.block-meta n = {{ sampleN }} / {{ frameBlobs.length }}
           .block-body
             .dist(v-if="dist && Object.keys(dist).length")
@@ -209,7 +232,11 @@
         .error-banner(v-if="error") {{ error }}
         template(v-if="result")
           .results-divider
-          template(v-if="result.meta.gross != null")
+          template(v-if="result.meta.waves && result.meta.waves.length")
+            .info-item(v-for="(w, wi) in result.meta.waves", :key="wi")
+              span.info-label Welle {{ wi + 1 }} (Jahr {{ yearOf(w.tick) }})
+              span.info-value n = {{ w.net }} / {{ w.gross }} · {{ Math.round(w.responseRate * 100) }} %
+          template(v-else-if="result.meta.gross != null")
             .info-item
               span.info-label Brutto-Stichprobe
               span.info-value {{ result.meta.gross }}
@@ -290,6 +317,8 @@
               span Wahre Werte aufdecken
             span.reset-link(@click="relock") Wieder sperren
         template(v-else)
+          .wave-chips(v-if="result.meta.waves && result.meta.waves.length > 1")
+            span.chip(v-for="(w, wi) in result.meta.waves", :key="wi", :class="{ active: truthWave === wi }", @click="surveyStore.SET_TRUTH_WAVE(wi)") Welle {{ wi + 1 }}
           .truth-item(v-for="d in decomposition", :key="d.id")
             .truth-head
               span.item-num {{ d.id }}
@@ -325,6 +354,28 @@
                   span B = {{ simResult.replications }}
                   span Mittel {{ fmt(simResult.perItem[d.id].mean) }}
                   span simulierter SE {{ fmt(simResult.perItem[d.id].sd) }}
+          //- Veränderung über die Wellen (Trend/Panel): geschätzt vs. wahr
+          .truth-item.change-card(v-if="waveChanges && result.meta.waves.length > 1", v-for="wc in waveChanges", :key="'wc-' + wc.id")
+            .truth-head
+              span.item-num {{ wc.id }}
+              span.truth-construct Veränderung über {{ wc.perWave.length }} Wellen
+            table.data-table.summary-table
+              thead
+                tr
+                  th Welle
+                  th Schätzer
+                  th Δ geschätzt
+                  th Δ wahr (Pop.)
+                  th(v-if="result.meta.type === 'panel'") Attrition-Bias
+              tbody
+                tr(v-for="(pw, wi) in wc.perWave", :key="wi")
+                  td W{{ pw.wave }} (J{{ yearOf(pw.tick) }})
+                  td {{ fmt(pw.estimate) }}
+                  td {{ wi === 0 ? '—' : signed(pw.estimate - wc.perWave[0].estimate) }}
+                  td {{ wi === 0 ? '—' : signed(pw.popMean - wc.perWave[0].popMean) }}
+                  td(v-if="result.meta.type === 'panel'") {{ wi === 0 || pw.respTrueMean == null || pw.baseTrueMean == null ? '—' : signed(pw.respTrueMean - pw.baseTrueMean) }}
+            p.mini-hint(v-if="result.meta.type === 'panel'") Attrition-Bias = wahre Werte der Verbleiber minus der gesamten Panel-Basis (jeweils am Wellen-Zustand).
+
           .results-divider
           .sim-controls
             label Stichprobenverteilung: komplette Befragung B-mal wiederholen (synthetisch, kostenlos)
@@ -344,6 +395,7 @@
 <script>
 import { mapState, mapStores } from 'pinia'
 import { useSurveyStore } from '@/stores/survey'
+import { useSimulationStore } from '@/stores/simulation'
 import draggablePanel from '@/mixins/draggable-panel'
 import { parseItem } from '@/lib/survey-parse'
 import { planSampleSize } from '@/lib/survey-sampling'
@@ -402,6 +454,7 @@ export default {
         , withinClusterN: null
         , fieldMode: 'personal'
         , contactAttempts: 2
+        , longitudinal: { type: 'cross', waveYears: [] }
       }
     }
   }
@@ -523,10 +576,36 @@ export default {
       const m = FIELD_MODES[this.design.fieldMode]
       return m ? m.label : ''
     }
-    , ...mapStores(useSurveyStore)
+    , longTypes() {
+      return [
+        { key: 'cross', label: 'Querschnitt (eine Welle)' }
+        , { key: 'trend', label: 'Trend (neue Ziehung pro Welle)' }
+        , { key: 'panel', label: 'Panel (gleiche Blobs wiederbefragt)' }
+      ]
+    }
+    , longitudinalLabel() {
+      const t = this.longTypes.find(t => t.key === this.design.longitudinal.type)
+      const extra = this.design.longitudinal.type !== 'cross' ? ' · ' + (this.design.longitudinal.waveYears.length + 1) + ' Wellen' : ''
+      return (t ? t.label.split(' (')[0] : '') + extra
+    }
+    , ticksPerYear() {
+      const m = this.simulationStore.timelineMeta
+      return (m && m.ticks_per_year) || 365
+    }
+    , currentYear() {
+      return Math.floor((this.simulationStore.tick || 0) / this.ticksPerYear)
+    }
+    , availableYears() {
+      const m = this.simulationStore.timelineMeta
+      const maxYear = Math.floor(((m && m.max_tick) || 8030) / this.ticksPerYear)
+      const out = []
+      for (let y = 0; y <= maxYear; y++) out.push(y)
+      return out
+    }
+    , ...mapStores(useSurveyStore, useSimulationStore)
     , ...mapState(useSurveyStore, ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'
       , 'truthRevealed', 'simResult', 'isSimulating', 'simProgress', 'decomposition'
-      , 'calib', 'calibration', 'itemSummary'])
+      , 'calib', 'calibration', 'itemSummary', 'waveChanges', 'truthWave'])
   }
   , created() {
     this.surveyStore.loadStudyDraft()
@@ -564,7 +643,20 @@ export default {
         this.design.quotas = d.quotas ? Object.assign({}, d.quotas) : {}
         this.design.fieldMode = d.fieldMode || 'personal'
         this.design.contactAttempts = d.contactAttempts != null ? d.contactAttempts : 2
+        this.design.longitudinal = d.longitudinal
+          ? { type: d.longitudinal.type || 'cross', waveYears: (d.longitudinal.waveYears || []).slice() }
+          : { type: 'cross', waveYears: [] }
       }
+    }
+    , addWave() {
+      const last = this.design.longitudinal.waveYears.length
+        ? this.design.longitudinal.waveYears[this.design.longitudinal.waveYears.length - 1]
+        : this.currentYear
+      const maxYear = this.availableYears[this.availableYears.length - 1]
+      this.design.longitudinal.waveYears.push(Math.min(maxYear, last + 4))
+    }
+    , yearOf(tick) {
+      return Math.floor((tick || 0) / this.ticksPerYear)
     }
     , calibHasVar(v) {
       return this.calib.vars.indexOf(v) >= 0
@@ -660,6 +752,10 @@ export default {
         , withinClusterN: Number(this.design.withinClusterN) || null
         , fieldMode: this.design.fieldMode || 'personal'
         , contactAttempts: Math.max(1, Math.min(4, Number(this.design.contactAttempts) || 2))
+        , longitudinal: {
+          type: this.design.longitudinal.type || 'cross'
+          , waveYears: this.design.longitudinal.waveYears.slice()
+        }
       }
     }
     , cleanFilter() {
@@ -1542,4 +1638,27 @@ export default {
   margin-top: 0.4rem
   .chips
     margin: 0.3rem 0
+
+.wave-row
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  margin-bottom: 0.25rem
+  .wave-label
+    font-size: 0.72rem
+    color: $grey-light
+  .action-btn.del
+    cursor: pointer
+    color: $grey
+    display: inline-flex
+    &:hover
+      color: #e74c3c
+
+.wave-chips
+  display: flex
+  gap: 0.3rem
+  margin-bottom: 0.5rem
+
+.change-card
+  border-color: rgba(78, 204, 163, 0.35)
 </style>

@@ -46,10 +46,15 @@ function getStaticMap() {
 // ── Tick Block Cache ────────────────────────────────────────────────────
 const tickBlockCache = {}
 const TICKS_PER_BLOCK = 100
+// Der letzte Block ist am max_tick gekappt (8000-8030.json) — wird beim
+// Meta-Load gesetzt, sonst 404t jeder Zugriff auf den letzten Block.
+let knownMaxTick = null
+export function setKnownMaxTick(t) { knownMaxTick = t }
 
 function blockKeyForTick(tick) {
   const start = Math.floor(tick / TICKS_PER_BLOCK) * TICKS_PER_BLOCK
-  const end = start + TICKS_PER_BLOCK - 1
+  let end = start + TICKS_PER_BLOCK - 1
+  if (knownMaxTick != null && end > knownMaxTick) end = knownMaxTick
   return String(start).padStart(4, '0') + '-' + String(end).padStart(4, '0')
 }
 
@@ -67,10 +72,36 @@ async function loadTickBlock(tick) {
 
 function prefetchNextBlock(tick) {
   const nextBlockStart = (Math.floor(tick / TICKS_PER_BLOCK) + 1) * TICKS_PER_BLOCK
+  if (knownMaxTick != null && nextBlockStart > knownMaxTick) return
   const key = blockKeyForTick(nextBlockStart)
   if (!tickBlockCache[key]) {
     loadTickBlock(nextBlockStart).catch(() => {})
   }
+}
+
+// ── Population zu einem fremden Tick (für Längsschnitt-Befragungen) ─────
+// Läuft NEBEN dem Playback: eigener Traits-Forward-Fill (der globale Cache
+// gehört dem aktuellen Tick), Block-Iteration ab dem Vorgängerblock, damit
+// die ~alle 7 Ticks geschriebenen latent_traits sicher gefüllt sind.
+const populationAtTickCache = {}
+async function loadPopulationAt(tick) {
+  if (populationAtTickCache[tick]) return populationAtTickCache[tick]
+  const blockStart = Math.floor(tick / TICKS_PER_BLOCK) * TICKS_PER_BLOCK
+  const fromTick = Math.max(0, blockStart - TICKS_PER_BLOCK)
+  const blocks = [await loadTickBlock(fromTick)]
+  if (blockStart !== fromTick) blocks.push(await loadTickBlock(blockStart))
+  const staticMap = getStaticMap()
+  const traits = {}
+  let snapshot = null
+  for (let t = fromTick; t <= tick; t++) {
+    const compact = blocks[Math.floor((t - fromTick) / TICKS_PER_BLOCK)][t]
+    if (!compact) continue
+    snapshot = expandTickSnapshot(compact, { blobIndex, staticMap, lastKnownTraits: traits })
+  }
+  if (!snapshot) throw new Error('Tick ' + tick + ' nicht in den Blöcken gefunden')
+  const generation = snapshotToGeneration(snapshot)
+  populationAtTickCache[tick] = generation.blobs
+  return generation.blobs
 }
 
 export const useSimulationStore = defineStore('simulation', {
@@ -270,6 +301,7 @@ export const useSimulationStore = defineStore('simulation', {
 
         if (meta.max_tick && meta.max_tick > 0) {
           this.timelineMeta = meta
+          setKnownMaxTick(meta.max_tick)
           this.timelineMode = true
           this.connectionStatus = 'connected'
           console.log(`[Static] Timeline loaded: ${meta.max_tick} ticks, ${meta.total_blobs} blobs, ${meta.events.length} events`)
@@ -310,6 +342,13 @@ export const useSimulationStore = defineStore('simulation', {
         console.warn('[Static] Failed to fetch tick', tick, e)
       }
       this.timelineLoading = false
+    }
+
+    // Population zu einem fremden Tick (Längsschnitt) — ohne Playback-Sprung.
+    , async fetchPopulationAt(tick) {
+      const current = typeof this.getCurrentGeneration === 'function' ? this.getCurrentGeneration() : this.getCurrentGeneration
+      if (tick === this.tick && current && current.blobs && current.blobs.length) return current.blobs
+      return loadPopulationAt(tick)
     }
 
     , async seekTick(tick) {
