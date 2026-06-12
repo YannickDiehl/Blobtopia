@@ -97,29 +97,55 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording, sdFactor
     const s = item.scale || {}
     if (s.min != null) v = Math.max(s.min, v)
     if (s.max != null) v = Math.min(s.max, v)
-    return { status: 'answered', value: v, verbatim: '' }
+    return {
+      status: 'answered', value: v, verbatim: ''
+      , fx: { acq: 0, fra: 0, sd: 0, val: 0, und: construct.underreport ? -construct.underreport * stored : 0 }
+    }
   }
 
-  // Modeled questionnaire effects from the wording (deterministic shifts).
-  let shifted = stored
+  // Mischmodell-Validität: unscharfe Items (λ < 1, aus analyzeValidity) ziehen
+  // zu (1−λ) aus dem Nachbarkonstrukt und rauschen stärker — eine schlecht
+  // formulierte Frage ist ein UNREINES Instrument, nicht einfach „falsch".
+  const val = item.validity
+  let vShift = 0
+  let effNoiseSd = noiseSd
+  if (val && val.lambda < 1 && val.crossKey) {
+    const crossC = CONSTRUCTS_BY_KEY[val.crossKey]
+    const cross = crossC && !crossC.raw ? trait(blob, val.crossKey) : null
+    if (cross != null) {
+      vShift = (1 - val.lambda) * (cross - stored)
+      effNoiseSd = noiseSd * (2 - val.lambda)
+    }
+  }
+
+  // Modeled questionnaire effects from the wording (deterministic shifts) —
+  // einzeln protokolliert für die Messfehler-Aufschlüsselung im Wahrheit-Tab.
+  let acqShift = 0, fraShift = 0, sdShift = 0
   if (wording) {
     const edu = blob.education_level != null ? blob.education_level : 1.5
     const eduNorm = Math.max(0, Math.min(1, edu / 3))
-    if (wording.agreeScale) shifted += ACQUIESCENCE * (1 - eduNorm) // acquiescence, stronger at low education
-    if (wording.loadedPositive) shifted += FRAMING
-    if (wording.loadedNegative) shifted -= FRAMING
+    if (wording.agreeScale) acqShift = ACQUIESCENCE * (1 - eduNorm) // acquiescence, stronger at low education
+    if (wording.loadedPositive) fraShift += FRAMING
+    if (wording.loadedNegative) fraShift -= FRAMING
     // Soziale Erwünschtheit hängt am Erhebungsmodus (sdFactor: persönlich 1.0,
     // Telefon 0.7, online 0.2 — siehe survey-fieldwork.js FIELD_MODES).
-    if (wording.socialDesirability) shifted += SOCIAL_DESIRABILITY * (sdFactor != null ? sdFactor : 1)
+    if (wording.socialDesirability) sdShift = SOCIAL_DESIRABILITY * (sdFactor != null ? sdFactor : 1)
   }
-  shifted = clamp(shifted, 0, 10)
+  const shifted = clamp(stored + vShift + acqShift + fraShift + sdShift, 0, 10)
 
-  const noisy = shifted + gaussian(rng) * noiseSd
+  const noisy = shifted + gaussian(rng) * effNoiseSd
   const format = (item.scale && item.scale.format) || 'numeric'
   if (format === 'binary') {
-    return { status: 'answered', value: noisy >= 5 ? 1 : 0, verbatim: '' }
+    return { status: 'answered', value: noisy >= 5 ? 1 : 0, verbatim: '', fx: null }
   }
-  return { status: 'answered', value: rescaleToItem(noisy, item), verbatim: '' }
+  // fx: systematische Anteile in Einheiten der ANTWORTSKALA; was die
+  // Aufschlüsselung nicht erklärt, ist Rauschen/Rundung/Klemmung (residual).
+  const s = item.scale || { min: 1, max: 10 }
+  const f = (s.max - s.min) / 10
+  return {
+    status: 'answered', value: rescaleToItem(noisy, item), verbatim: ''
+    , fx: { acq: acqShift * f, fra: fraShift * f, sd: sdShift * f, val: vShift * f, und: 0 }
+  }
 }
 
 /**

@@ -109,19 +109,53 @@ const SUGGEST_KEYWORDS = [
   , { re: /umverteilung|sozialstaat|soziale gerechtigkeit|eigenverantwortung|sozialleistung|arm und reich/i, key: 'policy_social' }
   , { re: /direkte demokratie|repr(ä|ae)sentativ|parlament.*entscheid|demokratieform|expertenregierung/i, key: 'policy_democracy' }
   , { re: /markt|regulierung|staat.*wirtschaft|steuern|wirtschaftspolitik|unternehmen.*freiheit/i, key: 'policy_economy' }
-  // ── Verhalten / Einstellungen (breite Muster zuletzt) ──
+  // ── Verhalten / Einstellungen (breite Muster zuletzt, geringeres Gewicht) ──
   , { re: /protest|demonstr|auf die stra(ß|ss)e/i, key: 'protest_readiness' }
-  , { re: /links|rechts|ideolog|konservativ|progressiv/i, key: 'ideology' }
-  , { re: /zufrieden/i, key: 'political_satisfaction' }
-  , { re: /\bw(ä|ae)hl/i, key: 'vote_importance' }
-  , { re: /vertrau/i, key: 'generalized_trust' }
+  , { re: /links|rechts|ideolog|konservativ|progressiv/i, key: 'ideology', w: 1 }
+  , { re: /zufrieden/i, key: 'political_satisfaction', w: 1 }
+  , { re: /\bw(ä|ae)hl/i, key: 'vote_importance', w: 1 }
+  , { re: /vertrau/i, key: 'generalized_trust', w: 1 }
 ]
+
+/** Score ALL constructs against the text (pattern weight; specific=2, generic=1). */
+export function scoreConstructs(text) {
+  if (!text) return []
+  const scores = {}
+  const firstIdx = {}
+  for (let i = 0; i < SUGGEST_KEYWORDS.length; i++) {
+    const s = SUGGEST_KEYWORDS[i]
+    if (!s.re.test(text)) continue
+    scores[s.key] = (scores[s.key] || 0) + (s.w != null ? s.w : 2)
+    if (firstIdx[s.key] == null) firstIdx[s.key] = i
+  }
+  return Object.keys(scores)
+    .map(key => ({ key, score: scores[key] }))
+    .sort((a, b) => (b.score - a.score) || (firstIdx[a.key] - firstIdx[b.key]))
+}
 
 /** Suggest the nearest construct key for a free-text question, or null. */
 export function suggestConstruct(text) {
-  if (!text) return null
-  for (const s of SUGGEST_KEYWORDS) {
-    if (s.re.test(text)) return s.key
-  }
-  return null
+  const scored = scoreConstructs(text)
+  return scored.length ? scored[0].key : null
+}
+
+/**
+ * Item-Validität als Mischmodell: Eine Frage, die mehrere Konstrukte ähnlich
+ * stark anspricht, misst UNREIN — λ < 1 heißt, die Antwort zieht zu (1−λ)
+ * aus dem Nachbarkonstrukt, mit erhöhtem Rauschen. λ ist eine ehrliche
+ * MODELLENTSCHEIDUNG (keine Messung) und wird erst im Wahrheit-Tab gezeigt,
+ * damit die Entdeckung nicht gespoilert wird.
+ */
+export function analyzeValidity(text) {
+  const scored = scoreConstructs(text).filter(s => {
+    const c = CONSTRUCTS_BY_KEY[s.key]
+    return c && !c.raw // Demografie ist keine Einstellungs-Kreuzladung
+  })
+  if (scored.length < 2) return { lambda: 1, crossKey: null }
+  const target = CONSTRUCTS_BY_KEY[scoreConstructs(text)[0].key]
+  if (target && target.raw) return { lambda: 1, crossKey: null }
+  const r = scored[1].score / scored[0].score
+  if (r < 0.5) return { lambda: 1, crossKey: null }
+  const lambda = Math.max(0.7, Math.min(1, 1 - 0.3 * r))
+  return { lambda: Math.round(lambda * 100) / 100, crossKey: scored[1].key }
 }

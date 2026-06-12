@@ -339,6 +339,11 @@
                 .tse-delta.total
                   span.tse-delta-label Gesamt (Schätzer − Wahrheit)
                   span.tse-delta-val(:class="deltaClass(d.total)") {{ signed(d.total) }}
+              .tse-parts(v-if="d.measurementParts")
+                .tse-delta.part(v-for="p in measurementPartRows(d)", :key="p.label")
+                  span.tse-delta-label {{ p.label }}
+                  span.tse-delta-val(:class="deltaClass(p.value)") {{ signed(p.value) }}
+              p.mini-hint(v-if="d.lambda < 1") Item-Validität λ = {{ d.lambda }} — die Frage lädt auch auf „{{ d.crossLabel }}“ (Kreuzladung als Teil des Messfehlers).
               .info-item(v-if="calib.enabled && calibratedFor(d) != null")
                 span.info-label Kalibrierter Schätzer (Post-Strat.)
                 span.info-value {{ fmt(calibratedFor(d)) }} · Restfehler {{ signed(calibratedFor(d) - d.popMean) }}
@@ -354,6 +359,22 @@
                   span B = {{ simResult.replications }}
                   span Mittel {{ fmt(simResult.perItem[d.id].mean) }}
                   span simulierter SE {{ fmt(simResult.perItem[d.id].sd) }}
+          //- Reliabilität (≥2 Items pro Konstrukt)
+          .truth-item(v-if="reliability", v-for="rel in reliability", :key="'rel-' + rel.construct")
+            .truth-head
+              span.item-num α
+              span.truth-construct Skala „{{ rel.label }}“ ({{ rel.itemIds.join(', ') }})
+            .info-item
+              span.info-label Cronbachs α ({{ rel.n }} vollständige Fälle)
+              span.info-value {{ rel.alpha != null ? rel.alpha.toFixed(2) : 'zu wenige Fälle' }}
+            .info-item(v-if="rel.avgR != null")
+              span.info-label Mittlere Inter-Item-Korrelation
+              span.info-value {{ rel.avgR.toFixed(2) }}
+            .info-item(v-if="rel.trueReliability != null")
+              span.info-label Wahre Reliabilität (Var(τ)/Var(X))
+              span.info-value {{ rel.trueReliability.toFixed(2) }}
+            p.mini-hint Achtung: Akquieszenz erzeugt korrelierte Fehler — α kann die Reliabilität überschätzen.
+
           //- Veränderung über die Wellen (Trend/Panel): geschätzt vs. wahr
           .truth-item.change-card(v-if="waveChanges && result.meta.waves.length > 1", v-for="wc in waveChanges", :key="'wc-' + wc.id")
             .truth-head
@@ -605,7 +626,7 @@ export default {
     , ...mapStores(useSurveyStore, useSimulationStore)
     , ...mapState(useSurveyStore, ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'
       , 'truthRevealed', 'simResult', 'isSimulating', 'simProgress', 'decomposition'
-      , 'calib', 'calibration', 'itemSummary', 'waveChanges', 'truthWave'])
+      , 'calib', 'calibration', 'itemSummary', 'waveChanges', 'truthWave', 'reliability'])
   }
   , created() {
     this.surveyStore.loadStudyDraft()
@@ -921,6 +942,23 @@ export default {
     }
     , ciCoversTruth(d) {
       return d.ci95 && d.popMean >= d.ci95[0] && d.popMean <= d.ci95[1]
+    }
+    // Aufschlüsselung von ④: nur nennenswerte Anteile + immer der Rest.
+    , measurementPartRows(d) {
+      const labels = {
+        acquiescence: '· davon Akquieszenz'
+        , framing: '· davon Framing'
+        , socialDesirability: '· davon Soziale Erwünschtheit'
+        , validity: '· davon Validität (Kreuzladung)'
+        , underreporting: '· davon Underreporting'
+        , residual: '· davon Rauschen/Rundung'
+      }
+      const out = []
+      for (const k of Object.keys(labels)) {
+        const v = d.measurementParts[k]
+        if (k === 'residual' || Math.abs(v) >= 0.005) out.push({ label: labels[k], value: v })
+      }
+      return out
     }
     // ── Simulator-Histogramm ──
     , histRange(d) {
@@ -1542,6 +1580,12 @@ export default {
   border-top: 1px dashed rgba(255, 255, 255, 0.12)
   padding-top: 0.35rem
   margin-bottom: 0.3rem
+
+.tse-parts
+  margin: 0 0 0.3rem 0.8rem
+  opacity: 0.85
+  .tse-delta
+    font-size: 0.66rem
 
 .tse-delta
   display: flex

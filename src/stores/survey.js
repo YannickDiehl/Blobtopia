@@ -22,6 +22,7 @@ import { buildDemographics } from '@/lib/survey-demographics'
 import { simulateParticipation, fieldReport, FIELD_MODES, DISPOSITION } from '@/lib/survey-fieldwork'
 import { postStratify, calibratedEstimate } from '@/lib/survey-weighting'
 import { runLongitudinalStudy, waveSummary } from '@/lib/survey-longitudinal'
+import { reliabilityReport } from '@/lib/survey-reliability'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
 import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
 import { CHAT_API } from '@/config/api'
@@ -136,6 +137,21 @@ export const useSurveyStore = defineStore('survey', {
       }
       if (!meta.truth) return null
       return decompose(state.result, state.items)
+    }
+    // Reliabilität, wenn ≥2 Items dasselbe Konstrukt messen (wave-aware).
+    , reliability(state) {
+      if (!state.result || !state.result.meta) return null
+      const meta = state.result.meta
+      let rows = state.result.rows
+      let truth = meta.truth
+      if (meta.waves && meta.waves.length) {
+        const w = Math.min(state.truthWave, meta.waves.length - 1)
+        rows = rows.filter(r => (r.welle || 1) === w + 1)
+        truth = meta.waves[w].truth
+      }
+      if (!truth) return null
+      const rep = reliabilityReport(rows, state.items, truth)
+      return rep.length ? rep : null
     }
     // Veränderungs-Sicht (Trend/Panel): geschätzte vs. wahre Veränderung.
     , waveChanges(state) {

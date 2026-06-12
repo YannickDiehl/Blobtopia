@@ -264,6 +264,29 @@ export function decompose(result, items) {
     entry.measurement = estimate - respTrueMean
     entry.total = estimate - t.popMean
 
+    // Messfehler-Aufschlüsselung: deterministische Anteile (Engine-fx) vs.
+    // Rest = Rauschen/Rundung/Klemmung. Summe der Teile ≡ ④ (per Konstruktion).
+    const parts = { acquiescence: 0, framing: 0, socialDesirability: 0, validity: 0, underreporting: 0 }
+    let pw = 0
+    for (const r of answered) {
+      const fx = r.answers[id].fx
+      const w = r.weight != null ? r.weight : 1
+      pw += w
+      if (!fx) continue
+      parts.acquiescence += w * (fx.acq || 0)
+      parts.framing += w * (fx.fra || 0)
+      parts.socialDesirability += w * (fx.sd || 0)
+      parts.validity += w * (fx.val || 0)
+      parts.underreporting += w * (fx.und || 0)
+    }
+    if (pw > 0) for (const k in parts) parts[k] /= pw
+    parts.residual = entry.measurement
+      - (parts.acquiescence + parts.framing + parts.socialDesirability + parts.validity + parts.underreporting)
+    entry.measurementParts = parts
+    entry.lambda = item.validity && item.validity.lambda != null ? item.validity.lambda : 1
+    entry.crossLabel = item.validity && item.validity.crossKey && CONSTRUCTS_BY_KEY[item.validity.crossKey]
+      ? CONSTRUCTS_BY_KEY[item.validity.crossKey].label : null
+
     const seInfo = standardError(technique, answered, id, result.meta.frameSize || truth.frameN)
     entry.se = seInfo.se
     entry.seNote = seInfo.note

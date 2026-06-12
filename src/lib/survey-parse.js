@@ -12,7 +12,7 @@
  * matters: two phrasings of the same construct yield different detected
  * features and therefore different (synthetic) answers.
  */
-import { suggestConstruct, CONSTRUCTS_BY_KEY } from './survey-constructs.js'
+import { suggestConstruct, analyzeValidity, CONSTRUCTS_BY_KEY } from './survey-constructs.js'
 
 function endpointLabel(text, num) {
   const re = new RegExp(num + '\\s*(?:=|steht f(?:ü|ue)r|bedeutet)\\s*[„"„]?([^,;.")\\n]+)', 'i')
@@ -64,6 +64,7 @@ export function detectWording(text) {
 export function parseItem(text) {
   const construct = suggestConstruct(text)
   const wording = detectWording(text)
+  const validity = analyzeValidity(text)
   const c = construct ? CONSTRUCTS_BY_KEY[construct] : null
 
   // Demografische Selbstauskünfte (raw) sind offene Zahlenfragen — es sei
@@ -75,10 +76,10 @@ export function parseItem(text) {
       let min = parseInt(m[1], 10)
       let max = parseInt(m[2], 10)
       if (max < min) { const tmp = min; min = max; max = tmp }
-      return { scale: { min, max, minLabel: '', maxLabel: '', format: 'numeric' }, construct, wording }
+      return { scale: { min, max, minLabel: '', maxLabel: '', format: 'numeric' }, construct, wording, validity }
     }
-    return { scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open' }, construct, wording }
+    return { scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open' }, construct, wording, validity }
   }
 
-  return { scale: parseScale(text), construct, wording }
+  return { scale: parseScale(text), construct, wording, validity }
 }
