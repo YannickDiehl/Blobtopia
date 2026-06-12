@@ -93,10 +93,24 @@ export function toCodebook(items) {
   return items.map((it, qi) => ({
     variable: itemId(it, qi)
     , question: it.text || ''
-    , type: it.type
-    , scale: it.scale ? (it.scale.min + '-' + it.scale.max)
-      : (it.choices ? it.choices.join(' / ') : 'offen')
+    , type: it.type || (it.scale ? it.scale.format : 'offen')
+    , scale: it.scale && it.scale.min != null ? (it.scale.min + '-' + it.scale.max)
+      : (it.choices ? it.choices.join(' / ') : 'offene Zahl')
   }))
+}
+
+/** Codebook als CSV (gleiche deutsche Excel-Konventionen wie toCSV). */
+export function codebookToCSV(items, constructLabels, opts) {
+  opts = opts || {}
+  const delim = opts.delimiter || ';'
+  const rows = toCodebook(items)
+  const lines = [['variable', 'frage', 'format', 'skala', 'misst'].join(delim)]
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i]
+    const label = constructLabels && items[i].construct ? (constructLabels[items[i].construct] || items[i].construct) : ''
+    lines.push([r.variable, csvCell(r.question, delim), r.type, r.scale, csvCell(label, delim)].join(delim))
+  }
+  return '﻿' + lines.join('\r\n')
 }
 
 /** Response-rate summary per item (answered / dontknow / refused / unparsed / error). */

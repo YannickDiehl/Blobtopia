@@ -19,9 +19,22 @@ export const SAMPLING = Object.freeze({
   SRS: 'srs'              // simple random sample (equal-probability, no replacement)
   , STRATIFIED: 'stratified' // split into strata, draw within each
   , CLUSTER: 'cluster'    // sample whole clusters (e.g. districts)
+  , SYSTEMATIC: 'systematic' // every k-th unit from the (ordered) frame, random start
   , QUOTA: 'quota'        // non-probability: fill target counts per cell
   , MANUAL: 'manual'      // self-selected: the sample IS the hand-picked blobs
 })
+
+/**
+ * Stichprobenumfangs-Planer: benötigtes n für ±e (95 %-KI) bei Streuung sigma,
+ * mit Endlichkeitskorrektur. Bewusst OHNE Gott-Wissen: sigma kommt konservativ
+ * aus der Skalenbreite (≈ Spannweite/4), nicht aus der wahren Varianz.
+ */
+export function planSampleSize({ e, sigma, N, z = 1.96 }) {
+  if (!e || e <= 0 || !sigma || sigma <= 0) return null
+  const n0 = Math.pow((z * sigma) / e, 2)
+  const n = N && N > 0 ? n0 / (1 + (n0 - 1) / N) : n0
+  return Math.max(2, Math.ceil(n))
+}
 
 // Deterministic PRNG (mulberry32). Same seed -> same stream.
 export function makeRng(seed) {
@@ -152,6 +165,18 @@ function stratified(frame, n, vars, allocation, rng, design) {
   return out
 }
 
+// ── Systematic sample (every k-th unit, seeded random start) ────────────────
+function systematic(frame, n, rng) {
+  const N = frame.length
+  if (!N || !n) return []
+  const k = Math.max(1, Math.floor(N / Math.min(n, N)))
+  const start = Math.floor(rng() * k)
+  const picked = []
+  for (let i = start; i < N && picked.length < n; i += k) picked.push(frame[i])
+  const w = picked.length ? N / picked.length : 0
+  return picked.map(b => ({ blob: b, weight: w, stratum: null }))
+}
+
 // ── Cluster sample (one-stage; optional within-cluster subsample) ───────────
 function cluster(frame, design, rng) {
   const v = design.clusterVar || 'district'
@@ -210,6 +235,9 @@ export function drawSample(blobs, design) {
       break
     case SAMPLING.CLUSTER:
       units = cluster(frame, design, rng)
+      break
+    case SAMPLING.SYSTEMATIC:
+      units = systematic(frame, design.n || 0, rng)
       break
     case SAMPLING.QUOTA:
       units = quota(frame, design, rng)

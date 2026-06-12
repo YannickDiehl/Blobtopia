@@ -21,6 +21,14 @@
     .survey-body
       //- ═══════════ FRAGEBOGEN ═══════════
       .survey-section(v-if="step === 'editor'")
+        .study-actions
+          button.survey-btn.mini-btn(@click="surveyStore.exportStudy()", title="Design + Seed + Feld-Tick als Datei — Import reproduziert die Daten exakt")
+            b-icon(icon="content-save", size="is-small")
+            span Studie speichern
+          button.survey-btn.mini-btn(@click="$refs.studyFile.click()")
+            b-icon(icon="folder-open", size="is-small")
+            span Studie laden
+          input(type="file", ref="studyFile", accept=".json,application/json", style="display:none", @change="onStudyFile")
         p.hint Formuliere eigene Fragen und Antwortskalen selbst (wie im Codebook) — die Wortwahl wirkt sich aus.
         .item-card(v-for="(it, i) in localItems", :key="i")
           .item-head
@@ -112,19 +120,36 @@
                 option(value="education_level") Bildung
               label Anzahl Klumpen
               input.survey-input(type="number", min="1", v-model.number="design.numClusters")
+              label Pro Klumpen ziehen (leer = alle, zweistufig)
+              input.survey-input(type="number", min="1", v-model.number="design.withinClusterN", placeholder="alle")
+            .params(v-else-if="design.technique === 'systematic'")
+              p.mini-hint Jede k-te Einheit aus dem geordneten Rahmen, zufälliger Start.
+              label Stichprobengröße (n)
+              input.survey-input(type="number", min="1", v-model.number="design.n")
             .params(v-else-if="design.technique === 'quota'")
-              p.mini-hint Quoten werden gleichmäßig über die Schichtungsvariable verteilt.
               label Schichtungsvariable
-              select.survey-input(v-model="design.strataVar")
+              select.survey-input(v-model="design.strataVar", @change="fillQuotasProportional")
                 option(value="district") Distrikt
                 option(value="education_level") Bildung
+              label Soll-Zellen (editierbar)
+              .quota-row(v-for="c in quotaCells", :key="c.key")
+                span.quota-label {{ c.label }} ({{ c.count }})
+                input.survey-input.mini(type="number", min="0", :value="quotaValue(c.key)", @input="setQuota(c.key, $event)")
+              span.reset-link(@click="fillQuotasProportional") proportional zu den Randverteilungen befüllen
               label Gesamtgröße (n)
-              input.survey-input(type="number", min="1", v-model.number="design.n")
+              input.survey-input(type="number", min="1", v-model.number="design.n", @change="fillQuotasProportional")
             .params(v-else-if="design.technique === 'manual'")
               p.mini-hint Wähle die Blobs unten von Hand aus — beobachte, wie deine Auswahl von der Grundgesamtheit abweicht.
             .params(v-if="design.technique !== 'manual'")
               label Seed (Reproduzierbarkeit)
               input.survey-input(type="number", v-model.number="design.seed")
+            .planner(v-if="['srs', 'stratified', 'systematic'].includes(design.technique)")
+              label Planung: n für gewünschte Präzision (±e, 95 %)
+              .planner-row
+                span ±
+                input.survey-input.mini(type="number", step="0.1", min="0.1", v-model.number="planE")
+                span.planner-result → n ≥ {{ plannedN != null ? plannedN : '—' }}
+              p.mini-hint konservative Annahme σ ≈ Skalenbreite/4 = {{ planSigma }} · Rahmen N = {{ frameBlobs.length }}
             button.survey-btn(v-if="design.technique !== 'manual'", @click="onPreview")
               b-icon(icon="account-search", size="is-small")
               span Stichprobe ziehen
@@ -191,6 +216,9 @@
           button.survey-btn.primary(@click="onExport")
             b-icon(icon="download", size="is-small")
             span Als CSV exportieren
+          button.survey-btn(@click="surveyStore.exportCodebook()")
+            b-icon(icon="book-open-variant", size="is-small")
+            span Codebook exportieren
 
       //- ═══════════ WAHRHEIT (Gott-Perspektive, hinter dem Dozenten-Schloss) ═══════════
       .survey-section(v-else-if="step === 'truth'")
@@ -265,6 +293,7 @@ import { mapState, mapStores } from 'pinia'
 import { useSurveyStore } from '@/stores/survey'
 import draggablePanel from '@/mixins/draggable-panel'
 import { parseItem } from '@/lib/survey-parse'
+import { planSampleSize } from '@/lib/survey-sampling'
 import { datasetColumns } from '@/lib/survey-dataset'
 import { CONSTRUCTS } from '@/lib/survey-constructs'
 import { DEMOGRAPHICS, DEMOGRAPHICS_BY_KEY } from '@/lib/survey-demographics'
@@ -276,6 +305,7 @@ const TECHNIQUES = [
   { key: 'srs', label: 'Einfache Zufallsstichprobe' }
   , { key: 'stratified', label: 'Geschichtete Stichprobe' }
   , { key: 'cluster', label: 'Klumpenstichprobe' }
+  , { key: 'systematic', label: 'Systematische Auswahl' }
   , { key: 'quota', label: 'Quotenstichprobe' }
   , { key: 'manual', label: 'Manuell selbst auswählen' }
 ]
@@ -298,6 +328,7 @@ export default {
       , passwordAttempt: ''
       , passwordError: false
       , simB: 500
+      , planE: 0.5
       , localItems: []
       , design: {
         technique: 'srs'
@@ -312,6 +343,8 @@ export default {
         , manualInclude: []
         , manualExclude: []
         , demographics: ['name']
+        , quotas: {}
+        , withinClusterN: null
       }
     }
   }
@@ -371,6 +404,28 @@ export default {
     , demographicsCatalog() {
       return DEMOGRAPHICS
     }
+    , quotaCells() {
+      const v = this.design.strataVar || 'district'
+      const acc = b => (v === 'district' ? b.district : b.education_level)
+      const counts = {}
+      for (const b of this.frameBlobs) {
+        const k = String(acc(b))
+        counts[k] = (counts[k] || 0) + 1
+      }
+      return Object.keys(counts).sort().map(k => ({ key: k, label: this.distLabel(k), count: counts[k] }))
+    }
+    , planSigma() {
+      let range = 0
+      for (const it of this.localItems) {
+        const s = it.scale || {}
+        if (s.min != null && s.max != null) range = Math.max(range, s.max - s.min)
+      }
+      if (!range) range = 9 // Default-1–10-Skala
+      return Math.round((range / 4) * 100) / 100
+    }
+    , plannedN() {
+      return planSampleSize({ e: this.planE, sigma: this.planSigma, N: this.frameBlobs.length })
+    }
     , constructGroups() {
       const groups = []
       const byName = {}
@@ -409,23 +464,8 @@ export default {
       , 'truthRevealed', 'simResult', 'isSimulating', 'simProgress', 'decomposition'])
   }
   , created() {
-    const storedItems = this.surveyStore.items
-    this.localItems = (storedItems && storedItems.length) ? clone(storedItems) : [this.blankItem(1)]
-    const d = this.surveyStore.design
-    if (d) {
-      this.design.technique = d.technique || 'srs'
-      this.design.n = d.n != null ? d.n : 40
-      this.design.seed = d.seed != null ? d.seed : 12345
-      this.design.strataVar = (d.strataVars && d.strataVars[0]) || 'district'
-      this.design.allocation = d.allocation || 'proportional'
-      this.design.clusterVar = d.clusterVar || 'district'
-      this.design.numClusters = d.numClusters || 2
-      this.design.excludeMinors = !(d.eligibility && d.eligibility.excludeMinors === false)
-      if (d.filter) this.design.filter = Object.assign(this.design.filter, d.filter)
-      this.design.manualInclude = (d.manualInclude || []).slice()
-      this.design.manualExclude = (d.manualExclude || []).slice()
-      this.design.demographics = (d.demographics || ['name']).slice()
-    }
+    this.surveyStore.loadStudyDraft()
+    this.initFromStore()
   }
   , watch: {
     localItems: {
@@ -438,7 +478,57 @@ export default {
     }
   }
   , methods: {
-    blankItem(i) {
+    initFromStore() {
+      const storedItems = this.surveyStore.items
+      this.localItems = (storedItems && storedItems.length) ? clone(storedItems) : [this.blankItem(1)]
+      const d = this.surveyStore.design
+      if (d) {
+        this.design.technique = d.technique || 'srs'
+        this.design.n = d.n != null ? d.n : 40
+        this.design.seed = d.seed != null ? d.seed : 12345
+        this.design.strataVar = (d.strataVars && d.strataVars[0]) || 'district'
+        this.design.allocation = d.allocation || 'proportional'
+        this.design.clusterVar = d.clusterVar || 'district'
+        this.design.numClusters = d.numClusters || 2
+        this.design.withinClusterN = d.withinClusterN || null
+        this.design.excludeMinors = !(d.eligibility && d.eligibility.excludeMinors === false)
+        if (d.filter) this.design.filter = Object.assign(this.design.filter, d.filter)
+        this.design.manualInclude = (d.manualInclude || []).slice()
+        this.design.manualExclude = (d.manualExclude || []).slice()
+        this.design.demographics = (d.demographics || ['name']).slice()
+        this.design.quotas = d.quotas ? Object.assign({}, d.quotas) : {}
+      }
+    }
+    , onStudyFile(e) {
+      const file = e.target.files && e.target.files[0]
+      e.target.value = ''
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (this.surveyStore.importStudy(String(reader.result))) {
+          this.initFromStore()
+          this.step = 'editor'
+        }
+      }
+      reader.readAsText(file)
+    }
+    // ── Quoten ──
+    , quotaValue(key) {
+      return this.design.quotas[key] != null ? this.design.quotas[key] : 0
+    }
+    , setQuota(key, e) {
+      const v = parseInt(e.target.value, 10)
+      this.design.quotas[key] = isNaN(v) ? 0 : Math.max(0, v)
+    }
+    , fillQuotasProportional() {
+      const total = Number(this.design.n) || 0
+      const cells = this.quotaCells
+      const frameN = Math.max(1, this.frameBlobs.length)
+      const q = {}
+      for (const c of cells) q[c.key] = Math.round(total * c.count / frameN)
+      this.design.quotas = q
+    }
+    , blankItem(i) {
       return {
         id: 'q' + i
         , text: ''
@@ -486,6 +576,8 @@ export default {
         , manualInclude: this.design.manualInclude.slice()
         , manualExclude: this.design.manualExclude.slice()
         , demographics: this.design.demographics.slice()
+        , quotas: Object.keys(this.design.quotas || {}).length ? Object.assign({}, this.design.quotas) : null
+        , withinClusterN: Number(this.design.withinClusterN) || null
       }
     }
     , cleanFilter() {
@@ -829,6 +921,39 @@ export default {
 
 .item-text
   resize: vertical
+
+.study-actions
+  display: flex
+  gap: 0.4rem
+  margin-bottom: 0.5rem
+  .survey-btn.mini-btn
+    margin-top: 0
+    padding: 0.3rem
+    font-size: 0.7rem
+
+.quota-row
+  display: flex
+  align-items: center
+  gap: 0.4rem
+  margin-bottom: 0.25rem
+  .quota-label
+    flex: 1
+    font-size: 0.7rem
+    color: $grey-light
+
+.planner
+  margin-top: 0.6rem
+  padding-top: 0.5rem
+  border-top: 1px dashed rgba(255, 255, 255, 0.12)
+  .planner-row
+    display: flex
+    align-items: center
+    gap: 0.35rem
+    font-size: 0.75rem
+    color: $grey-light
+  .planner-result
+    font-weight: 600
+    color: $grey-lighter
 
 .item-meta
   display: flex

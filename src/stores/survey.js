@@ -12,7 +12,9 @@ import { defineStore } from 'pinia'
 import {
   SAMPLING, drawSample, eligibleFrame, realizedDistribution, ACCESSORS
 } from '@/lib/survey-sampling'
-import { toCSV } from '@/lib/survey-dataset'
+import { toCSV, codebookToCSV } from '@/lib/survey-dataset'
+import { serializeStudy, parseStudy, saveDraft, loadDraft } from '@/lib/survey-persist'
+import { CONSTRUCTS } from '@/lib/survey-constructs'
 import { runSurvey, makeChatSender } from '@/lib/survey-engine'
 import { runSyntheticSurvey } from '@/lib/survey-synthetic'
 import { snapshotTruth, decompose, simulateSamplingDistribution } from '@/lib/survey-truth'
@@ -37,6 +39,8 @@ const DEFAULT_DESIGN = () => ({
   // Hintergrundmerkmale: nothing is recorded automatically — students pick
   // them in the Fragebogen step (keys from survey-demographics.js).
   , demographics: ['name']
+  , quotas: null            // quota targets per cell; null = proportional default
+  , withinClusterN: null    // two-stage cluster: subsample size per cluster
 })
 
 // getCurrentGeneration is a function held in simulation state — call it.
@@ -46,19 +50,20 @@ function currentBlobs() {
   return gen && gen.blobs ? gen.blobs : []
 }
 
-// For quota designs, auto-build equal cell targets across the first strata var.
+// For quota designs without explicit targets, default to PROPORTIONAL quotas
+// (realistic quota practice: cells mirror the population margins).
 function buildDrawDesign(design, blobs) {
   const d = Object.assign({}, design)
-  if (d.technique === SAMPLING.QUOTA) {
+  if (d.technique === SAMPLING.QUOTA && !(d.quotas && Object.keys(d.quotas).length)) {
     const v = (d.strataVars && d.strataVars[0]) || 'district'
     const acc = ACCESSORS[v] || (b => b[v])
-    const frame = eligibleFrame(blobs, d.eligibility)
-    const cats = {}
-    for (const b of frame) cats[acc(b)] = true
-    const keys = Object.keys(cats)
-    const per = keys.length ? Math.floor((d.n || 0) / keys.length) : 0
+    const frame = eligibleFrame(blobs, Object.assign({}, d.eligibility, { filter: d.filter, manualExclude: d.manualExclude }))
+    const counts = {}
+    for (const b of frame) { const k = String(acc(b)); counts[k] = (counts[k] || 0) + 1 }
     const quotas = {}
-    for (const k of keys) quotas[k] = per
+    for (const k of Object.keys(counts)) {
+      quotas[k] = Math.round((d.n || 0) * counts[k] / Math.max(1, frame.length))
+    }
     d.quotas = quotas
   }
   return d
@@ -113,9 +118,55 @@ export const useSurveyStore = defineStore('survey', {
     // Ehemalige Mutations (Call-Sites in survey-window.vue nutzen sie direkt)
     OPEN_SURVEY() { this.isOpen = true }
     , CLOSE_SURVEY() { this.isOpen = false }
-    , SET_ITEMS(items) { this.items = items }
-    , SET_DESIGN(design) { this.design = design }
+    , SET_ITEMS(items) { this.items = items; this._persistDraft() }
+    , SET_DESIGN(design) { this.design = design; this._persistDraft() }
     , SET_SAMPLE({ sample, dist }) { this.lastSample = sample; this.dist = dist }
+
+    // ── Studien-Persistenz (Autosave + Datei-Export/-Import) ──
+    , _persistDraft() {
+      const sim = useSimulationStore()
+      saveDraft({ items: this.items, design: this.design, tick: sim.tick || 0 })
+    }
+    // Reload-Schutz: den Autosave-Entwurf übernehmen, bevor die UI initialisiert.
+    , loadStudyDraft() {
+      if (this.items.length) return // Session-Stand gewinnt über den Draft
+      const draft = loadDraft()
+      if (!draft) return
+      if (draft.items.length) this.items = draft.items
+      if (draft.design) this.design = Object.assign(DEFAULT_DESIGN(), draft.design)
+    }
+    , exportStudy() {
+      const sim = useSimulationStore()
+      downloadText(
+        serializeStudy({ items: this.items, design: this.design, tick: sim.tick || 0 })
+        , 'blobtopia-studie.json', 'application/json'
+      )
+    }
+    // Import + Replay: gleiche Studie + gleicher Seed + gleicher Tick ⇒
+    // byte-identischer Datensatz. Springt dafür zum gespeicherten Feld-Tick.
+    , importStudy(text) {
+      this.error = null
+      try {
+        const study = parseStudy(text)
+        this.items = study.items
+        this.design = Object.assign(DEFAULT_DESIGN(), study.design)
+        this.result = null
+        this.simResult = null
+        this.truthRevealed = false
+        this._persistDraft()
+        const sim = useSimulationStore()
+        if (study.tick != null && study.tick !== sim.tick) sim.seekTick(study.tick)
+        return true
+      } catch (e) {
+        this.error = e && e.message ? e.message : String(e)
+        return false
+      }
+    }
+    , exportCodebook() {
+      if (!this.items.length) return
+      const labels = CONSTRUCTS.reduce((m, c) => { m[c.key] = c.label; return m }, {})
+      downloadText(codebookToCSV(this.items, labels), 'blobtopia-codebook.csv', 'text/csv')
+    }
 
     // Draw a sample over the current population and tally its distribution.
     , previewSample() {
