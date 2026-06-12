@@ -39,6 +39,36 @@
   --bulma-family-monospace: latin-modern-mono, monospace;
 }
 
+// Institut-Theme (hell, Papier): aktiviert per data-theme="light" in
+// index.html (Umschalten erfolgt in Etappe E2 der UI-Rekonzeption,
+// s. docs/ui-institut.md). Bulma-Hue/Saturation der Marken bleiben,
+// nur Schema + Tinte wechseln.
+[data-theme="light"] {
+  // $primary → Stempelblau #33518e ≈ hsl(220, 47%, 38%)
+  --bulma-primary-h: 220deg;
+  --bulma-primary-s: 47%;
+  --bulma-primary-l: 38%;
+  --bulma-link-h: 220deg;
+  --bulma-link-s: 47%;
+  --bulma-link-l: 38%;
+  // $danger → Stempelrot #c0392b ≈ hsl(6, 63%, 46%)
+  --bulma-danger-h: 6deg;
+  --bulma-danger-s: 63%;
+  --bulma-danger-l: 46%;
+
+  // Helles Schema: Papier statt Schwarz, Tinte statt Ivory
+  --bulma-scheme-h: 43;
+  --bulma-scheme-s: 56%;
+  --bulma-scheme-main-l: 95%;     // ≈ Papier #fbf7ec
+  --bulma-scheme-main-bis-l: 92%;
+  --bulma-scheme-main-ter-l: 88%;
+  --bulma-scheme-invert-l: 25%;
+  --bulma-body-color: #2b3a55;    // Tinte
+
+  --bulma-family-primary: 'Archivo', BlinkMacSystemFont, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+  --bulma-family-monospace: 'Special Elite', latin-modern-mono, monospace;
+}
+
 // $body-size war 18px (Bulma 0.7 setzte das als html font-size)
 html {
   font-size: 18px;

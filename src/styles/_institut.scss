@@ -1,0 +1,385 @@
+// =============================================================================
+// „Das Institut“ — Designsystem-Tokens + Artefakt-Vokabular
+// Zielbild: design-prototyp/komplett.html · Plan: docs/ui-institut.md
+//
+// Zwei Materialwelten:
+//   Papier  = was die Forschung produziert (Formblätter, Karteikarten, Stempel)
+//   Digital = was die Blobs produzieren (BlobPhone/BlobFeed)
+// Selektions-Pattern: Radio = einkreisen · Checkbox = ankreuzen · Submit = stempeln
+// =============================================================================
+
+:root {
+  // --- Papier & Tinte ---
+  --inst-papier: #f6efdf;        // Standard-Papier (Akte, Reiter)
+  --inst-papier-hell: #fbf7ec;   // Formblätter, Karteikarten
+  --inst-karton: #e8dcc0;        // Mappen, inaktive Reiter
+  --inst-kraft: #cdab7a;         // Umschläge
+  --inst-tinte: #2b3a55;         // Dokumententinte (Text)
+  --inst-tinte-soft: #3c4a66;    // Sekundärtext auf Papier
+  --inst-graphit: #6b6f76;       // Bleistift-Anmerkungen
+  --inst-beschriftung: #8d7f63;  // gedruckte Formular-Labels (Kapitälchen)
+  --inst-linie: rgba(43, 58, 85, 0.45);          // gepunktete Ausfülllinien
+  --inst-kartei-linie: rgba(70, 110, 160, 0.22); // blaue Karteikarten-Linien
+  --inst-randlinie: rgba(196, 55, 42, 0.4);      // rote Karteikarten-Randlinie
+
+  // --- Stempel ---
+  --inst-stempelrot: #c0392b;
+  --inst-stempelblau: #33518e;
+  --inst-handrot: #c4372a;
+
+  // --- Distrikt-Akzente (NUR UI: Flaggen, Fähnchen, Farbreiter, Charts) ---
+  --inst-gruen: #4caf6d;     // Grüntal
+  --inst-gelb: #eebc2f;      // Sonnenberg
+  --inst-blau: #4596d8;      // Hafenviertel
+  --inst-orange: #e8893a;    // Mittelfeld
+  --inst-schiefer: #8a93a6;  // Industriezone (Welt bleibt grau!)
+  --inst-pink: #e0699f;      // Wahrheit/Dozent (Logo-Blob ohne Distrikt)
+
+  // --- Schreibtisch & Film ---
+  --inst-holz-1: #7a5a3c;
+  --inst-holz-2: #5f4530;
+  --inst-unterlage-1: #4e6e5d; // grüne Schreibunterlage
+  --inst-unterlage-2: #42604f;
+  --inst-unterlage-dozent-1: #5d4a62; // im Dozentenzimmer
+  --inst-unterlage-dozent-2: #4e3d53;
+  --inst-film: #23232c;
+  --inst-film-frame-1: #3a3a47;
+  --inst-film-frame-2: #31313d;
+  --inst-messing-1: #d8b569;
+  --inst-messing-2: #b08a3e;
+  --inst-messing-text: #4a3613;
+
+  // --- BlobPhone (Digitalwelt der Blobs) ---
+  --inst-phone-gehaeuse-1: #fdfdfd;
+  --inst-phone-gehaeuse-2: #e6ebf4;
+  --inst-phone-rand: #d2d9e8;
+  --inst-phone-tinte: #28324e;
+  --inst-phone-grau: #8d97ad;
+  --inst-phone-trenner: #eef1f8;
+  --inst-phone-link: #3d9be8;
+
+  // --- Schriften ---
+  --inst-schreibmaschine: 'Special Elite', 'Courier New', monospace;
+  --inst-hand: 'Caveat', cursive;
+  --inst-druck: 'Archivo', BlinkMacSystemFont, -apple-system, sans-serif;
+  --inst-rund: 'Baloo 2', 'Arial Rounded MT Bold', sans-serif;
+
+  // --- Schatten ---
+  --inst-schatten-blatt: 0 2px 0 rgba(120, 90, 40, 0.25), 0 12px 26px rgba(50, 35, 10, 0.35);
+  --inst-schatten-zettel: 0 6px 14px rgba(40, 30, 10, 0.3);
+  --inst-schatten-schwer: 0 14px 30px rgba(40, 30, 10, 0.35);
+}
+
+// Papierkorn als wiederverwendbares Overlay (SVG-Noise, sehr dezent)
+$inst-korn-uri: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E";
+
+// =============================================================================
+// Artefakt-Klassen
+// =============================================================================
+
+// --- Papierflächen ---
+.inst-papier {
+  background-color: var(--inst-papier-hell);
+  background-image: url($inst-korn-uri);
+  box-shadow: var(--inst-schatten-blatt);
+  color: var(--inst-tinte);
+  font-family: var(--inst-druck);
+}
+
+.inst-karteikarte {
+  @extend .inst-papier;
+
+  background-image:
+    repeating-linear-gradient(180deg, transparent 0 27px, var(--inst-kartei-linie) 27px 28px),
+    url($inst-korn-uri);
+}
+
+// Zettel (kleine Beiblätter, Zusatzblätter)
+.inst-zettel {
+  background-color: var(--inst-papier);
+  background-image: url($inst-korn-uri);
+  box-shadow: var(--inst-schatten-zettel);
+  color: var(--inst-tinte);
+  font-family: var(--inst-druck);
+}
+
+// --- Stempel (statisch) ---
+.inst-stempel {
+  display: inline-block;
+  font-family: var(--inst-druck);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--inst-stempelrot);
+  border: 3px double var(--inst-stempelrot);
+  padding: 4px 12px;
+  opacity: 0.85;
+  mix-blend-mode: multiply;
+
+  &.ist-blau {
+    color: var(--inst-stempelblau);
+    border-color: var(--inst-stempelblau);
+  }
+}
+
+// roter Mini-Stempel in Tabellenzellen (Dispositionscodes, kA/wn)
+.inst-vermerk {
+  display: inline-block;
+  color: var(--inst-stempelrot);
+  border: 1.5px solid var(--inst-stempelrot);
+  border-radius: 3px;
+  padding: 0 5px;
+  font-family: var(--inst-druck);
+  font-size: 0.62em;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+// --- Stempel-Button (klickbar, „stempeln“ als Submit-Geste) ---
+.inst-knopf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: var(--inst-druck);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--inst-stempelblau);
+  border: 2.5px solid var(--inst-stempelblau);
+  border-radius: 4px;
+  padding: 7px 14px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 0 rgba(51, 81, 142, 0.35);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+
+  &:hover { background: rgba(255, 255, 255, 0.8); }
+  &:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 rgba(51, 81, 142, 0.35);
+  }
+  &.ist-rot {
+    color: var(--inst-stempelrot);
+    border-color: var(--inst-stempelrot);
+    box-shadow: 0 2px 0 rgba(192, 57, 43, 0.3);
+    &:active { box-shadow: 0 0 0 rgba(192, 57, 43, 0.3); }
+  }
+  &:disabled,
+  &.ist-gesperrt {
+    opacity: 0.45;
+    cursor: not-allowed;
+    &:active { transform: none; box-shadow: 0 2px 0 rgba(51, 81, 142, 0.35); }
+  }
+}
+
+// --- Handschrift ---
+.inst-hand-rot {
+  font-family: var(--inst-hand);
+  color: var(--inst-handrot);
+  font-weight: 600;
+  font-size: 1.15em;
+  line-height: 1.1;
+}
+
+.inst-hand-blei {
+  font-family: var(--inst-hand);
+  color: var(--inst-graphit);
+  font-weight: 500;
+  font-size: 1.12em;
+  line-height: 1.1;
+}
+
+// --- Auswahl-Pattern: einkreisen (Radio) ---
+// Anwendung: <label class="inst-wahl"><input type="radio" …><span>Text</span></label>
+.inst-wahl {
+  display: inline-block;
+  cursor: pointer;
+  font-family: var(--inst-schreibmaschine);
+  color: var(--inst-tinte);
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  > span {
+    display: inline-block;
+    border: 2.5px solid transparent;
+    border-radius: 50%;
+    padding: 1px 11px 2px;
+    transform: rotate(-2deg);
+    transition: border-color 0.1s ease;
+  }
+
+  &:hover > span { border-color: rgba(196, 55, 42, 0.25); }
+
+  input:checked + span { border-color: var(--inst-handrot); }
+  input:focus-visible + span { outline: 2px dashed var(--inst-stempelblau); outline-offset: 2px; }
+}
+
+// --- Auswahl-Pattern: ankreuzen (Checkbox) ---
+// Anwendung: <label class="inst-kreuz"><input type="checkbox" …><i></i><span>Text</span></label>
+.inst-kreuz {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  cursor: pointer;
+  font-family: var(--inst-schreibmaschine);
+  color: var(--inst-tinte);
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  > i {
+    flex: none;
+    display: inline-block;
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--inst-linie);
+    border-radius: 3px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.4);
+    align-self: center;
+  }
+
+  input:checked + i::after {
+    content: '✗';
+    position: absolute;
+    left: 1px;
+    top: -6px;
+    font-family: var(--inst-hand);
+    font-size: 22px;
+    color: var(--inst-handrot);
+  }
+  input:focus-visible + i { outline: 2px dashed var(--inst-stempelblau); outline-offset: 2px; }
+}
+
+// --- Distrikt-Flagge ---
+.inst-flagge {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 5px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  background: var(--inst-schiefer);
+
+  &.d-0 { background: var(--inst-gruen); }    // Grüntal
+  &.d-1 { background: var(--inst-gelb); }     // Sonnenberg
+  &.d-2 { background: var(--inst-blau); }     // Hafenviertel
+  &.d-3 { background: var(--inst-orange); }   // Mittelfeld
+  &.d-4 { background: var(--inst-schiefer); } // Industriezone
+}
+
+// --- Formular-Bausteine ---
+.inst-formlabel {
+  font-family: var(--inst-druck);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--inst-beschriftung);
+  text-transform: uppercase;
+}
+
+.inst-formwert {
+  font-family: var(--inst-schreibmaschine);
+  color: var(--inst-tinte);
+  border-bottom: 1.5px dotted var(--inst-linie);
+  padding-bottom: 1px;
+}
+
+.inst-abschnitt {
+  font-family: var(--inst-druck);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--inst-beschriftung);
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(141, 127, 99, 0.4);
+  padding-bottom: 3px;
+}
+
+// Schreibmaschinen-Eingabefelder (echte inputs/textareas im Formular-Look)
+.inst-eingabe {
+  font-family: var(--inst-schreibmaschine);
+  font-size: inherit;
+  color: var(--inst-tinte);
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px dotted var(--inst-linie);
+  border-radius: 0;
+  padding: 0 0 1px;
+  outline: none;
+  width: 100%;
+
+  &:focus { border-bottom: 2px solid var(--inst-stempelblau); }
+  &::placeholder { color: var(--inst-beschriftung); opacity: 0.8; }
+}
+
+// --- Dekor ---
+.inst-tape {
+  position: absolute;
+  width: 92px;
+  height: 25px;
+  background: rgba(120, 190, 170, 0.5);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  clip-path: polygon(3% 0, 97% 4%, 100% 100%, 0 96%);
+  pointer-events: none;
+
+  &.ist-gelb { background: rgba(238, 188, 47, 0.45); }
+  &.ist-pink { background: rgba(224, 105, 159, 0.4); }
+}
+
+.inst-heftstreifen {
+  position: absolute;
+  width: 26px;
+  height: 150px;
+  background: linear-gradient(90deg, #9db6d6, #7e9cc4);
+  border-radius: 13px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 8px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--inst-unterlage-2);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  &::before { top: 18px; }
+  &::after { bottom: 18px; }
+}
+
+// --- Animationen ---
+// Stempel knallt aufs Papier (für frisch erscheinende Stempel/Vermerke)
+@keyframes inst-stempeln {
+  0% { transform: scale(1.7) rotate(-7deg); opacity: 0; }
+  55% { transform: scale(0.94) rotate(-2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-2deg); opacity: 0.85; }
+}
+
+.inst-gestempelt { animation: inst-stempeln 0.28s cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }
+
+// Blob-Plop (für BlobPhone-Elemente, Avatare)
+@keyframes inst-plop {
+  0% { transform: scale(0.6); opacity: 0; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.inst-plop { animation: inst-plop 0.22s ease-out both; }

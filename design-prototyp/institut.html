@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Blobtopia — „Das Institut“ Prototyp</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@500;600;700&family=Archivo:wght@500;600;700;800&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --papier:   #f6efdf;
+    --papier-2: #fbf7ec;
+    --karton:   #e8dcc0;
+    --kraft:    #cdab7a;
+    --tinte:    #2b3a55;   /* Dokumenten-Tinte */
+    --stempelrot:#c0392b;
+    --stempelblau:#33518e;
+    --bleistift:#6b6f76;
+    /* Distrikt-Fähnchen (Logo-Candy nur als Akzent!) */
+    --gruen:#4caf6d; --gelb:#eebc2f; --blau:#4596d8; --orange:#e8893a; --schiefer:#8a93a6; --pink:#e0699f;
+    --schreibmaschine: 'Special Elite', 'Courier New', monospace;
+    --hand: 'Caveat', cursive;
+    --druck: 'Archivo', sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; }
+  html,body { width:1440px; height:900px; overflow:hidden; font-family:var(--druck); color:var(--tinte); }
+  .stage { width:1440px; height:900px; position:relative; overflow:hidden; }
+
+  /* Papierkorn-Textur als Overlay für alle Papier-Elemente */
+  .papier {
+    background-color: var(--papier);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    box-shadow: 0 2px 0 rgba(120,90,40,.25), 0 10px 24px rgba(60,40,10,.3);
+  }
+
+  /* ===== Ordner-Reiter als Modus-Wechsel (der Bildschirm ist eine Akte) ===== */
+  .reiter-leiste { position:absolute; top:0; left:120px; display:flex; gap:6px; z-index:9; }
+  .reiter {
+    font-family:var(--schreibmaschine); font-size:16.5px; letter-spacing:1px;
+    padding:10px 30px 13px; border-radius:0 0 14px 14px; position:relative;
+    color:#7a6c4e; background:#d9cba8; box-shadow: inset 0 -6px 8px rgba(90,70,30,.18);
+  }
+  .reiter.aktiv {
+    background:var(--papier); color:var(--tinte); z-index:2;
+    box-shadow: 0 6px 12px rgba(60,40,10,.35);
+  }
+  .reiter.aktiv::after { /* Lochverstärkung im aktiven Reiter */
+    content:''; position:absolute; right:12px; top:10px; width:9px; height:9px;
+    border-radius:50%; background:rgba(0,0,0,.12); box-shadow: inset 0 1px 2px rgba(0,0,0,.3);
+  }
+
+  /* Logo-Sticker */
+  .logo-sticker {
+    position:absolute; top:10px; left:14px; z-index:9; width:96px; height:96px;
+    background:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    transform:rotate(-7deg); box-shadow: 0 4px 10px rgba(0,0,0,.3);
+    border:3px dashed rgba(43,58,85,.15);
+  }
+  .logo-sticker img { width:78px; }
+
+  /* Datums-Stempel oben rechts */
+  .datum-stempel {
+    position:absolute; top:18px; right:22px; z-index:9; transform:rotate(2.5deg);
+    font-family:var(--schreibmaschine); color:var(--stempelrot); text-align:center;
+    border:2.5px solid var(--stempelrot); border-radius:7px; padding:6px 14px 5px;
+    opacity:.88; mix-blend-mode:multiply; background:rgba(255,255,255,.25);
+    font-size:14.5px; line-height:1.35; letter-spacing:1.5px;
+  }
+  .datum-stempel .gross { font-size:18px; font-weight:bold; }
+
+  /* ===== Stempel allgemein ===== */
+  .stempel-rot, .stempel-blau {
+    display:inline-block; font-family:var(--druck); font-weight:800; text-transform:uppercase;
+    letter-spacing:2.5px; opacity:.82; mix-blend-mode:multiply;
+  }
+  .stempel-rot { color:var(--stempelrot); border:3px double var(--stempelrot); padding:5px 13px; }
+  .stempel-blau { color:var(--stempelblau); border:3px double var(--stempelblau); padding:5px 13px; }
+  .rund-stempel {
+    width:128px; height:128px; border-radius:50%; border:3px solid var(--stempelblau);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+    color:var(--stempelblau); opacity:.75; mix-blend-mode:multiply; position:relative;
+  }
+  .rund-stempel::before { content:''; position:absolute; inset:7px; border:1.5px solid var(--stempelblau); border-radius:50%; }
+  .rund-stempel .oben { font-size:10px; font-weight:800; letter-spacing:2px; text-transform:uppercase; width:80%; }
+  .rund-stempel .mitte { font-family:var(--schreibmaschine); font-size:21px; margin:3px 0; }
+
+  /* ===== Washi-Tape & Büroklammer ===== */
+  .tape {
+    position:absolute; width:96px; height:26px; background:rgba(120,190,170,.5);
+    box-shadow:0 1px 3px rgba(0,0,0,.12);
+    clip-path:polygon(3% 0,97% 4%,100% 100%,0 96%);
+  }
+  .tape.gelb { background:rgba(238,188,47,.45); }
+  .tape.pink { background:rgba(224,105,159,.4); }
+
+  /* ===== Handschrift-Anmerkungen (Dozenten-Rotstift / Bleistift) ===== */
+  .hand-rot  { font-family:var(--hand); color:#c4372a; font-size:21px; font-weight:600; }
+  .hand-blei { font-family:var(--hand); color:var(--bleistift); font-size:20px; font-weight:500; }
+
+  /* ============================================================ */
+  /* ===== FILMSTREIFEN-TIMELINE (Stadtarchiv: 22 Jahre Aufzeichnung) ===== */
+  .filmstreifen {
+    position:absolute; left:0; right:0; bottom:0; height:78px; background:#23232c; z-index:8;
+    box-shadow:0 -6px 18px rgba(0,0,0,.4); display:flex; align-items:stretch;
+  }
+  .film-plakette {
+    flex:none; width:218px; margin:14px 12px; border-radius:6px;
+    background:linear-gradient(160deg,#d8b569,#b08a3e 60%,#caa55a);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -2px 4px rgba(0,0,0,.35), 0 2px 5px rgba(0,0,0,.5);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#4a3613; text-shadow:0 1px 0 rgba(255,240,200,.5);
+  }
+  .film-plakette .z1 { font-size:10.5px; font-weight:800; letter-spacing:2.5px; }
+  .film-plakette .z2 { font-family:var(--schreibmaschine); font-size:13.5px; margin-top:1px; }
+  .film-band { flex:1; position:relative; margin:0 8px; }
+  .film-loecher { position:absolute; left:0; right:0; height:12px;
+    background-image:radial-gradient(circle at 9px 6px, rgba(245,240,220,.85) 3.2px, transparent 4px);
+    background-size:22px 12px; }
+  .film-loecher.oben { top:5px; } .film-loecher.unten { bottom:5px; }
+  .film-frames { position:absolute; left:0; right:0; top:20px; bottom:20px;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 2px, transparent 2px 64px),
+      linear-gradient(180deg,#3a3a47,#31313d);
+    border-radius:3px; }
+  .film-fortschritt { position:absolute; left:0; top:20px; bottom:20px; width:54%;
+    background:linear-gradient(180deg, rgba(238,188,47,.25), rgba(238,188,47,.12));
+    border-right:3px solid var(--gelb); border-radius:3px 0 0 3px;
+    box-shadow: 4px 0 14px rgba(238,188,47,.55); }
+  .jahr-marke { position:absolute; top:50%; transform:translateY(-50%); color:rgba(245,240,220,.55);
+    font-family:var(--schreibmaschine); font-size:11.5px; letter-spacing:1px; }
+  /* Ereignis-Fähnchen ragen aus dem Filmstreifen */
+  .faehnchen { position:absolute; bottom:74px; width:3px; height:26px; background:#9a9484; z-index:8; }
+  .faehnchen .fahne {
+    position:absolute; top:-3px; left:3px; padding:2px 8px 2px 6px; font-size:10.5px; font-weight:800;
+    color:#fff; letter-spacing:.5px; clip-path:polygon(0 0,100% 0,88% 50%,100% 100%,0 100%);
+    text-transform:uppercase; font-family:var(--druck); white-space:nowrap;
+  }
+  .film-knopf {
+    flex:none; align-self:center; margin:0 16px; width:48px; height:48px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f3e3b9, #caa55a 70%);
+    box-shadow: inset 0 -3px 6px rgba(0,0,0,.35), 0 3px 6px rgba(0,0,0,.5);
+    display:flex; align-items:center; justify-content:center; color:#4a3613; font-size:17px;
+  }
+
+  /* ============================================================ */
+  /* ===== ANSICHT: STADT ===== */
+  body.stadt .schreibtisch-view { display:none; }
+  .welt { position:absolute; inset:0; }
+  .welt img { width:1440px; height:900px; object-fit:cover; filter:saturate(1.12) brightness(1.07) contrast(1.02); }
+  /* Tilt-Shift: Diorama-Gefühl */
+  .tilt { position:absolute; left:0; right:0; height:200px; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+  .tilt.oben { top:0; mask-image:linear-gradient(180deg,#000 10%,transparent); -webkit-mask-image:linear-gradient(180deg,#000 10%,transparent); }
+  .tilt.unten { bottom:0; mask-image:linear-gradient(0deg,#000 10%,transparent); -webkit-mask-image:linear-gradient(0deg,#000 10%,transparent); }
+
+  /* Karteikarte (Blob-Auswahl) */
+  .karteikarte {
+    position:absolute; right:30px; bottom:120px; width:392px; z-index:7;
+    transform:rotate(-1.6deg); padding:18px 22px 20px;
+    background-color:var(--papier-2);
+    background-image:
+      repeating-linear-gradient(180deg, transparent 0 27px, rgba(70,110,160,.22) 27px 28px),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    box-shadow: 0 2px 0 rgba(120,90,40,.2), 0 14px 30px rgba(40,30,10,.35);
+  }
+  .karteikarte::before { /* rote Randlinie */
+    content:''; position:absolute; top:0; bottom:0; left:104px; width:1.5px; background:rgba(196,55,42,.4);
+  }
+  .karteikarte .tape { top:-13px; left:140px; transform:rotate(-3deg); }
+  .kk-kopf { font-family:var(--schreibmaschine); font-size:12px; letter-spacing:2px; color:#8d7f63;
+    border-bottom:2px solid rgba(43,58,85,.5); padding-bottom:4px; display:flex; justify-content:space-between; }
+  .kk-name { font-family:var(--schreibmaschine); font-size:27px; margin:13px 0 0 116px; }
+  .kk-zeile { font-family:var(--schreibmaschine); font-size:15px; margin-left:116px; margin-top:8px; color:#3c4a66; }
+  .kk-zeile .feld { color:#8d7f63; font-size:12.5px; letter-spacing:1px; }
+  .distrikt-flagge { display:inline-block; width:11px; height:11px; border-radius:2px; background:var(--gruen);
+    vertical-align:middle; margin-right:5px; box-shadow:0 1px 1px rgba(0,0,0,.25); }
+
+  /* Polaroid mit Blob-Porträt */
+  .polaroid {
+    position:absolute; left:-26px; top:34px; width:108px; padding:7px 7px 26px; background:#fff;
+    box-shadow:0 6px 14px rgba(0,0,0,.35); transform:rotate(-5deg);
+  }
+  .polaroid .foto { width:94px; height:88px; background:linear-gradient(180deg,#bfe3f7 0 62%, #9fd3a0 62%); position:relative; overflow:hidden; }
+  .polaroid .blob { position:absolute; left:50%; bottom:6px; transform:translateX(-50%); width:60px; height:54px;
+    background:linear-gradient(180deg,#84d995,#46a85c); border-radius:46% 54% 52% 48% / 60% 58% 42% 40%; }
+  .polaroid .blob::before { content:''; position:absolute; left:16%; top:10%; width:36%; height:24%; background:rgba(255,255,255,.55); border-radius:50%; transform:rotate(-14deg); }
+  .polaroid .auge { position:absolute; width:7px; height:9px; background:#1d2b3a; border-radius:50%; top:20px; }
+  .polaroid .auge::after { content:''; position:absolute; right:1px; top:1px; width:2.5px; height:3px; background:#fff; border-radius:50%; }
+  .polaroid .mund { position:absolute; width:13px; height:7px; border-top:2.5px solid #1d2b3a; border-radius:50%; top:34px; left:50%; transform:translateX(-50%); }
+  .polaroid .unterschrift { position:absolute; bottom:2px; left:0; right:0; text-align:center; }
+  .kk-anmerkung { position:absolute; right:14px; top:58px; transform:rotate(4deg); }
+  .kk-aktionen { margin:16px 0 0 116px; display:flex; align-items:center; gap:16px; }
+  .knopf-stempel {
+    font-family:var(--druck); font-weight:800; font-size:13.5px; letter-spacing:2px; text-transform:uppercase;
+    color:var(--stempelblau); border:2.5px solid var(--stempelblau); padding:7px 14px; border-radius:4px;
+    background:rgba(255,255,255,.45); box-shadow:0 2px 0 rgba(51,81,142,.35); transform:rotate(-.5deg);
+  }
+  .kk-fuss { margin:14px 0 0 116px; font-size:11.5px; color:#8d7f63; font-family:var(--schreibmaschine); letter-spacing:.5px; }
+
+  /* Pinnzettel BlobFeed */
+  .pinnzettel {
+    position:absolute; left:26px; bottom:130px; width:172px; padding:14px 14px 16px; z-index:7;
+    background:#fdf3b3; transform:rotate(2.4deg);
+    box-shadow:0 8px 18px rgba(40,30,10,.35);
+    font-family:var(--hand); font-size:20px; color:#5d5325; line-height:1.15;
+  }
+  .pinnzettel::before { /* Pinnnadel */
+    content:''; position:absolute; top:-7px; left:50%; transform:translateX(-50%);
+    width:15px; height:15px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #f0827d, #b03a32 70%);
+    box-shadow:0 3px 4px rgba(0,0,0,.4);
+  }
+  .pinnzettel .anzahl { font-family:var(--druck); font-weight:800; font-size:12px; color:#fff;
+    background:var(--stempelrot); border-radius:99px; padding:2px 9px; display:inline-block; transform:rotate(-2deg); }
+
+  /* ============================================================ */
+  /* ===== ANSICHT: SCHREIBTISCH ===== */
+  body.schreibtisch .stadt-view { display:none; }
+  .schreibtisch-bg { position:absolute; inset:0;
+    background:
+      radial-gradient(1200px 700px at 50% 30%, rgba(255,250,230,.16), transparent 70%),
+      repeating-linear-gradient(94deg, rgba(70,45,20,.09) 0 3px, transparent 3px 90px),
+      repeating-linear-gradient(2deg, rgba(255,230,180,.05) 0 2px, transparent 2px 56px),
+      linear-gradient(170deg, #7a5a3c, #5f4530 55%, #6d5037);
+  }
+  .schreibunterlage { position:absolute; left:200px; right:200px; top:90px; bottom:110px;
+    background:linear-gradient(180deg,#4e6e5d,#42604f); border-radius:10px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.12); }
+
+  /* Register links: Hängeregistratur */
+  .register { position:absolute; left:0px; top:120px; width:200px; z-index:6; }
+  .register .mappe {
+    position:relative; height:74px; margin-bottom:10px; border-radius:0 12px 12px 0;
+    background:linear-gradient(180deg,#e9dec2,#dccfae); box-shadow:0 5px 12px rgba(0,0,0,.35);
+    display:flex; align-items:center; padding-left:22px;
+    font-family:var(--schreibmaschine); font-size:17px; color:#5a4c30;
+  }
+  .register .mappe.aktiv { background:linear-gradient(180deg,#fbf6e8,#f1e8d0); width:216px; color:var(--tinte); }
+  .register .mappe .farbreiter { position:absolute; right:-7px; top:14px; bottom:14px; width:14px; border-radius:0 5px 5px 0; }
+  .register .mappe.dozent { background:linear-gradient(180deg,#5c5468,#4c4556); color:#cfc7da; }
+  .register .mappe.dozent .schloss { margin-left:auto; margin-right:14px; font-size:19px; }
+  .register .beschriftung { font-size:11px; letter-spacing:2px; color:#bdaf8d; font-family:var(--druck);
+    font-weight:800; margin:0 0 8px 22px; text-transform:uppercase; }
+
+  /* Studienformular */
+  .formular {
+    position:absolute; left:262px; top:64px; width:520px; bottom:104px; z-index:5;
+    transform:rotate(.5deg); padding:26px 34px;
+    background-color:var(--papier-2);
+  }
+  .briefkopf { display:flex; align-items:center; gap:13px; border-bottom:2.5px solid var(--tinte); padding-bottom:10px; }
+  .briefkopf img { height:42px; }
+  .briefkopf .inst { flex:1; }
+  .briefkopf .inst .z1 { font-weight:800; letter-spacing:2.5px; font-size:14.5px; }
+  .briefkopf .inst .z2 { font-size:10px; letter-spacing:1px; color:#8d7f63; margin-top:2px; }
+  .briefkopf .formnr { font-family:var(--schreibmaschine); font-size:11px; color:#8d7f63; text-align:right; line-height:1.5; }
+  .form-zeile { display:flex; align-items:baseline; gap:10px; margin-top:15px; }
+  .form-zeile .label { font-size:10.5px; font-weight:800; letter-spacing:1.5px; color:#8d7f63; text-transform:uppercase; flex:none; }
+  .form-zeile .wert { font-family:var(--schreibmaschine); font-size:16.5px; color:#1f2c45;
+    border-bottom:1.5px dotted rgba(43,58,85,.45); flex:1; padding-bottom:1px; }
+  .form-frage { margin-top:17px; position:relative; }
+  .form-frage .nr { font-family:var(--schreibmaschine); font-weight:bold; }
+  .form-frage .text { font-family:var(--schreibmaschine); font-size:15px; line-height:1.5; color:#1f2c45; }
+  .form-frage .anmerkung { position:absolute; right:-10px; top:-13px; transform:rotate(-2deg); }
+  .skala-kaestchen { display:flex; gap:5px; margin-top:7px; margin-left:24px; }
+  .skala-kaestchen .k { width:21px; height:21px; border:1.5px solid rgba(43,58,85,.55); border-radius:3px;
+    font-family:var(--schreibmaschine); font-size:11px; display:flex; align-items:flex-end; justify-content:center; color:#8d7f63; }
+  .form-stempelzone { position:relative; margin-top:24px; height:120px; }
+  .form-stempelzone .rund-stempel { position:absolute; left:36px; top:-6px; transform:rotate(-9deg); }
+  .form-stempelzone .quer { position:absolute; right:10px; top:30px; transform:rotate(-5deg); font-size:15px; }
+  .heftstreifen { position:absolute; left:-13px; top:170px; width:26px; height:150px;
+    background:linear-gradient(90deg,#9db6d6,#7e9cc4); border-radius:13px; box-shadow:0 3px 8px rgba(0,0,0,.3); }
+  .heftstreifen::before, .heftstreifen::after { content:''; position:absolute; left:8px; width:10px; height:10px;
+    border-radius:50%; background:#42604f; box-shadow:inset 0 1px 2px rgba(0,0,0,.5); }
+  .heftstreifen::before { top:18px; } .heftstreifen::after { bottom:18px; }
+
+  /* Datenmatrix auf Endlospapier */
+  .endlospapier {
+    position:absolute; right:118px; top:96px; width:420px; bottom:170px; z-index:5; transform:rotate(-1.3deg);
+    background-color:#fbfbf6;
+    background-image:repeating-linear-gradient(180deg, rgba(110,170,120,.16) 0 26px, transparent 26px 52px);
+    box-shadow:0 14px 30px rgba(20,15,5,.45);
+    padding:18px 48px 22px;
+  }
+  .endlospapier::before, .endlospapier::after { /* Transportlochstreifen */
+    content:''; position:absolute; top:0; bottom:0; width:30px;
+    background-image:radial-gradient(circle at 15px 14px, #42604f 4.5px, transparent 5.5px);
+    background-size:30px 28px; border-right:1px dashed rgba(0,0,0,.15);
+  }
+  .endlospapier::before { left:0; }
+  .endlospapier::after { right:0; border-right:none; border-left:1px dashed rgba(0,0,0,.15); }
+  .endlospapier .kopf { font-family:var(--schreibmaschine); font-size:13px; letter-spacing:1.5px; color:#5d6e54;
+    border-bottom:2px solid rgba(60,90,60,.4); padding-bottom:5px; display:flex; justify-content:space-between; }
+  table.matrix { width:100%; border-collapse:collapse; font-family:var(--schreibmaschine); font-size:14.5px; margin-top:7px; color:#27332a; }
+  .matrix th { text-align:left; font-size:11px; letter-spacing:1.5px; color:#5d6e54; padding:4px 6px; font-weight:normal; text-transform:uppercase; }
+  .matrix td { padding:3.5px 6px; }
+  .matrix .vermerk { color:var(--stempelrot); font-size:11px; font-weight:800; font-family:var(--druck);
+    border:1.5px solid var(--stempelrot); padding:0 5px; border-radius:3px; letter-spacing:1px;
+    display:inline-block; transform:rotate(-2deg); opacity:.85; }
+  .endlospapier .riss { position:absolute; left:0; right:0; bottom:-1px; height:10px; background:#42604f;
+    clip-path:polygon(0 100%, 0 40%, 4% 70%, 9% 30%, 15% 65%, 21% 25%, 28% 60%, 34% 30%, 41% 70%, 48% 35%, 55% 65%, 62% 28%, 69% 62%, 76% 32%, 83% 68%, 90% 30%, 96% 60%, 100% 38%, 100% 100%); }
+  .bueroklammer { position:absolute; top:-12px; right:60px; width:22px; height:54px; z-index:6; }
+
+  /* Wahrheits-Umschlag + Schlüssel */
+  .umschlag {
+    position:absolute; right:24px; top:118px; width:300px; height:204px; z-index:6; transform:rotate(3.2deg);
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(160deg,#d3b285,#bf9c6c);
+    box-shadow:0 12px 26px rgba(20,15,5,.5);
+    padding:18px;
+  }
+  .umschlag .klappe { position:absolute; left:0; right:0; top:0; height:74px;
+    background:linear-gradient(170deg,#c8a87b,#b39059); clip-path:polygon(0 0,100% 0,50% 100%);
+    box-shadow:0 3px 6px rgba(0,0,0,.2); }
+  .umschlag .siegel { position:absolute; left:50%; top:52px; transform:translateX(-50%);
+    width:52px; height:52px; border-radius:48% 52% 50% 50%/52% 48% 52% 48%;
+    background:radial-gradient(circle at 38% 32%, #ef8fc0, #c2417f 65%, #9c2f63);
+    box-shadow:0 4px 8px rgba(0,0,0,.35), inset 0 -3px 6px rgba(0,0,0,.25);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff0f8; font-family:var(--druck); font-weight:800; font-size:21px; z-index:2; }
+  .umschlag .aufschrift { position:absolute; left:0; right:0; top:118px; text-align:center; }
+  .umschlag .aufschrift .stempel-rot { transform:rotate(-4deg); font-size:13.5px; }
+  .umschlag .zeile2 { margin-top:9px; font-family:var(--schreibmaschine); font-size:12.5px; color:#5a431f; letter-spacing:1px; }
+  .schluessel { position:absolute; right:80px; top:336px; transform:rotate(-18deg); z-index:6;
+    filter:drop-shadow(0 4px 5px rgba(0,0,0,.45)); }
+
+  /* Zeitungsecke (Presse lugt unter dem Formular hervor) */
+  .zeitungsecke {
+    position:absolute; left:204px; bottom:96px; width:330px; height:130px; z-index:4; transform:rotate(-7deg);
+    background:#f1ecdc; box-shadow:0 8px 18px rgba(20,15,5,.4); padding:12px 16px; overflow:hidden;
+  }
+  .zeitungsecke .masthead { font-family:'UnifrakturMaguntia', serif; font-size:30px; color:#1d242f; }
+  .zeitungsecke .unterzeile { font-size:9.5px; letter-spacing:2px; color:#6b6f76; border-top:1.5px solid #1d242f;
+    border-bottom:0.5px solid #1d242f; padding:2px 0; margin-top:3px; text-transform:uppercase; display:flex; justify-content:space-between; }
+  .zeitungsecke .schlagzeile { font-family:var(--druck); font-weight:800; font-size:17px; margin-top:8px; color:#222; }
+  .zeitungsecke .spalten { margin-top:5px; column-count:2; column-gap:10px; font-size:8px; color:#777; line-height:1.5; text-align:justify; }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- ============ STADT ============ -->
+  <div class="stadt-view">
+    <div class="welt"><img src="../e2e-shots/01-world.png" alt=""></div>
+    <div class="tilt oben"></div><div class="tilt unten"></div>
+
+    <div class="logo-sticker"><img src="../public/blobtopia-logo.png" alt="Blobtopia"></div>
+    <div class="reiter-leiste">
+      <div class="reiter aktiv">Stadt</div>
+      <div class="reiter">Schreibtisch</div>
+    </div>
+    <div class="datum-stempel">BLOBTOPIA-ARCHIV<br><span class="gross">JAHR 12 · TAG 88</span><br>14:00 UHR</div>
+
+    <!-- Karteikarte: angetippter Blob -->
+    <div class="karteikarte papier">
+      <div class="tape"></div>
+      <div class="kk-kopf"><span>KARTEIKARTE</span><span>BLOB № 217</span></div>
+      <div class="polaroid">
+        <div class="foto">
+          <div class="blob"></div>
+          <div class="auge" style="left:36px;"></div>
+          <div class="auge" style="left:52px;"></div>
+          <div class="mund"></div>
+        </div>
+        <div class="unterschrift hand-blei">Hilde</div>
+      </div>
+      <div class="kk-name">Hilde Mooswald</div>
+      <div class="kk-zeile"><span class="feld">DISTRIKT&ensp;</span><span class="distrikt-flagge"></span>Grüntal</div>
+      <div class="kk-zeile"><span class="feld">BEOBACHTET&ensp;</span>spaziert am Steinweg-Park</div>
+      <div class="kk-zeile"><span class="feld">ALTER&ensp;</span>~ 50 (geschätzt)</div>
+      <div class="kk-anmerkung hand-rot">wirkt besorgt!</div>
+      <div class="kk-aktionen">
+        <div class="knopf-stempel">Interview führen</div>
+        <div class="hand-blei" style="font-size:22px;">folgen ↝</div>
+      </div>
+      <div class="kk-fuss">wahre Werte: siehe versiegelter Umschlag (Dozentenzimmer)</div>
+    </div>
+
+    <!-- Pinnzettel: BlobFeed -->
+    <div class="pinnzettel">
+      BlobFeed —<br>neue Zettel an der Pinnwand&ensp;<span class="anzahl">3</span>
+    </div>
+
+    <!-- Filmstreifen-Timeline -->
+    <div class="faehnchen" style="left:412px;"><div class="fahne" style="background:var(--orange);">Wirtschaftskrise</div></div>
+    <div class="faehnchen" style="left:633px; height:34px;"><div class="fahne" style="background:var(--blau);">Wahl · Jahr 8</div></div>
+    <div class="faehnchen" style="left:872px;"><div class="fahne" style="background:var(--pink);">Skandal</div></div>
+    <div class="filmstreifen">
+      <div class="film-plakette">
+        <div class="z1">STADTARCHIV BLOBTOPIA</div>
+        <div class="z2">Aufzeichnung · 22 Jahre</div>
+      </div>
+      <div class="film-knopf">▶</div>
+      <div class="film-band">
+        <div class="film-loecher oben"></div>
+        <div class="film-frames"></div>
+        <div class="film-fortschritt"></div>
+        <div class="jahr-marke" style="left:18%;">Jahr 5</div>
+        <div class="jahr-marke" style="left:42%;">Jahr 10</div>
+        <div class="jahr-marke" style="left:65%;">Jahr 15</div>
+        <div class="jahr-marke" style="left:88%;">Jahr 20</div>
+        <div class="film-loecher unten"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCHREIBTISCH ============ -->
+  <div class="schreibtisch-view">
+    <div class="schreibtisch-bg"></div>
+    <div class="schreibunterlage"></div>
+
+    <div class="logo-sticker"><img src="../public/blobtopia-logo.png" alt="Blobtopia"></div>
+    <div class="reiter-leiste">
+      <div class="reiter">Stadt</div>
+      <div class="reiter aktiv">Schreibtisch</div>
+    </div>
+    <div class="datum-stempel">BLOBTOPIA-ARCHIV<br><span class="gross">JAHR 12 · TAG 88</span><br>14:00 UHR</div>
+
+    <!-- Hängeregistratur -->
+    <div class="register">
+      <div class="beschriftung">Registratur</div>
+      <div class="mappe aktiv">Studien<div class="farbreiter" style="background:var(--blau);"></div></div>
+      <div class="mappe">Presse<div class="farbreiter" style="background:var(--orange);"></div></div>
+      <div class="mappe dozent">Dozentenzimmer<span class="schloss">🔒</span><div class="farbreiter" style="background:var(--pink);"></div></div>
+    </div>
+
+    <!-- Studienformular -->
+    <div class="formular papier">
+      <div class="heftstreifen"></div>
+      <div class="briefkopf">
+        <img src="../public/blobtopia-logo.png" alt="">
+        <div class="inst">
+          <div class="z1">BEFRAGUNGSINSTITUT BLOBTOPIA</div>
+          <div class="z2">Rathausplatz 1 · 00001 Blobtopia · Abt. Empirische Blobforschung</div>
+        </div>
+        <div class="formnr">Formblatt S-3<br>Studien-Nr. 12/088</div>
+      </div>
+      <div class="form-zeile"><span class="label">Studie</span><span class="wert">Vertrauen im Längsschnitt</span></div>
+      <div class="form-zeile">
+        <span class="label">Verfahren</span><span class="wert">geschichtete Zufallsauswahl</span>
+        <span class="label">Umfang</span><span class="wert" style="flex:0 0 90px;">n = 160</span>
+      </div>
+      <div class="form-zeile">
+        <span class="label">Welle</span><span class="wert" style="flex:0 0 70px;">3 von 4</span>
+        <span class="label">Panel</span><span class="wert" style="flex:0 0 40px;">ja</span>
+        <span class="label">Seed</span><span class="wert">4711</span>
+      </div>
+
+      <div class="form-frage">
+        <div class="text"><span class="nr">F1.</span> Wie sehr vertrauen Sie den Institutionen Blobtopias?</div>
+        <div class="skala-kaestchen">
+          <div class="k">1</div><div class="k">2</div><div class="k">3</div><div class="k">4</div><div class="k">5</div>
+          <div class="k">6</div><div class="k">7</div><div class="k">8</div><div class="k">9</div><div class="k">10</div>
+        </div>
+        <div class="anmerkung hand-rot">misst: Institutionenvertrauen ✓</div>
+      </div>
+      <div class="form-frage">
+        <div class="text"><span class="nr">F2.</span> Wie alt sind Sie? &nbsp;<span style="color:#8d7f63;">________ Jahre</span></div>
+        <div class="anmerkung hand-rot" style="top:-8px;">offene Zahl — Selbstauskunft!</div>
+      </div>
+
+      <div class="form-stempelzone">
+        <div class="rund-stempel">
+          <div class="oben">Befragungsinstitut Blobtopia</div>
+          <div class="mitte">ERFASST</div>
+          <div class="oben">Feldarbeit · Welle 3</div>
+        </div>
+        <div class="stempel-rot quer">Ausschöpfung 63 % — 142 von 160</div>
+      </div>
+    </div>
+
+    <!-- Datenmatrix auf Endlospapier -->
+    <div class="endlospapier">
+      <svg class="bueroklammer" viewBox="0 0 22 54"><path d="M6 14 v26 a5 5 0 0 0 10 0 V10 a8 8 0 0 0 -16 0 v32 a12 12 0 0 0 22 0" fill="none" stroke="#7e8ba0" stroke-width="2.6" stroke-linecap="round" transform="scale(.8) translate(3,3)"/></svg>
+      <div class="kopf"><span>DATENLIEFERUNG · WELLE 3</span><span>BLATT 1/6</span></div>
+      <table class="matrix">
+        <tr><th>lfd</th><th>vertrauen</th><th>alter</th><th>vermerk</th></tr>
+        <tr><td>031</td><td>6</td><td>44</td><td></td></tr>
+        <tr><td>058</td><td>3</td><td>61</td><td></td></tr>
+        <tr><td>094</td><td>·</td><td>37</td><td><span class="vermerk">VERWEIGERT</span></td></tr>
+        <tr><td>112</td><td>8</td><td>52</td><td></td></tr>
+        <tr><td>145</td><td>·</td><td>29</td><td><span class="vermerk">WEISS NICHT</span></td></tr>
+        <tr><td>167</td><td>5</td><td>48</td><td></td></tr>
+        <tr><td>203</td><td>7</td><td>55</td><td></td></tr>
+        <tr><td>219</td><td>4</td><td>33</td><td></td></tr>
+      </table>
+      <div class="riss"></div>
+    </div>
+
+    <!-- Wahrheits-Umschlag -->
+    <div class="umschlag">
+      <div class="klappe"></div>
+      <div class="siegel">B</div>
+      <div class="aufschrift">
+        <div class="stempel-rot">Nur für Dozent:innen</div>
+        <div class="zeile2">WAHRE WERTE · STUDIE 12/088</div>
+      </div>
+    </div>
+    <svg class="schluessel" width="92" height="40" viewBox="0 0 92 40">
+      <circle cx="16" cy="20" r="11" fill="none" stroke="#caa55a" stroke-width="6"/>
+      <rect x="26" y="17" width="58" height="6" rx="3" fill="#caa55a"/>
+      <rect x="68" y="21" width="6" height="11" fill="#caa55a"/>
+      <rect x="78" y="21" width="6" height="14" fill="#caa55a"/>
+    </svg>
+
+    <!-- Zeitungsecke -->
+    <div class="zeitungsecke">
+      <div class="masthead">Der Blobspiegel</div>
+      <div class="unterzeile"><span>Unabhängig · Ordoliberal</span><span>Jahr 12 · 2 Kullern</span></div>
+      <div class="schlagzeile">Skandal erschüttert das Rathaus</div>
+      <div class="spalten">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.</div>
+    </div>
+
+    <!-- Filmstreifen-Timeline -->
+    <div class="filmstreifen">
+      <div class="film-plakette">
+        <div class="z1">STADTARCHIV BLOBTOPIA</div>
+        <div class="z2">Aufzeichnung · 22 Jahre</div>
+      </div>
+      <div class="film-knopf">▶</div>
+      <div class="film-band">
+        <div class="film-loecher oben"></div>
+        <div class="film-frames"></div>
+        <div class="film-fortschritt"></div>
+        <div class="jahr-marke" style="left:18%;">Jahr 5</div>
+        <div class="jahr-marke" style="left:42%;">Jahr 10</div>
+        <div class="jahr-marke" style="left:65%;">Jahr 15</div>
+        <div class="jahr-marke" style="left:88%;">Jahr 20</div>
+        <div class="film-loecher unten"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const view = new URLSearchParams(location.search).get('view') || 'stadt'
+  document.body.className = view
+</script>
+</body>
+</html>

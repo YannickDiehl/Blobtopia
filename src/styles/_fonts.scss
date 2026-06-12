@@ -48,3 +48,40 @@
 // @include font-face("pt-sans", "~@/assets/PT-Sans/ptsans_regular_macroman/PTS55F-webfont", normal, normal, eot woff ttf svg);
 // @include font-face("pt-sans", "~@/assets/PT-Sans/ptsans_bold_macroman/PTS75F-webfont", 700, normal, eot woff ttf svg);
 // @include font-face("pt-sans", "~@/assets/PT-Sans/ptsans_italic_macroman/PTS56F-webfont", normal, italic, eot woff ttf svg);
+
+// =============================================================================
+// Institut-Schriften (self-hosted, OFL/Apache — s. docs/ui-institut.md)
+// Caveat/Archivo/Baloo 2 sind Variable Fonts (ein woff2, Gewichtsbereich).
+// =============================================================================
+
+@font-face {
+	font-family: 'Special Elite'; // Schreibmaschine
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../assets/fonts/special-elite.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Caveat'; // Handschrift (Dozenten-Rotstift, Bleistift)
+	font-style: normal;
+	font-weight: 400 700;
+	font-display: swap;
+	src: url('../assets/fonts/caveat.woff2') format('woff2-variations');
+}
+
+@font-face {
+	font-family: 'Archivo'; // Druck (Formular-Labels, Stempel)
+	font-style: normal;
+	font-weight: 400 800;
+	font-display: swap;
+	src: url('../assets/fonts/archivo.woff2') format('woff2-variations');
+}
+
+@font-face {
+	font-family: 'Baloo 2'; // Rund (NUR BlobPhone/Digitalwelt)
+	font-style: normal;
+	font-weight: 400 800;
+	font-display: swap;
+	src: url('../assets/fonts/baloo2.woff2') format('woff2-variations');
+}

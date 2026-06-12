@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Blobtopia UI-Prototyp</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Candy-Palette aus dem Logo */
+    --blau:    #4aa8f0;  /* Hafenviertel */
+    --gelb:    #f8c733;  /* Sonnenberg */
+    --gruen:   #56c46c;  /* Grüntal */
+    --orange:  #f5973f;  /* Mittelfeld */
+    --schiefer:#7d8ca3;  /* Industriezone (UI-Ton) */
+    --pink:    #f06eb4;  /* Dozentenzimmer / Wahrheit */
+    --ink:     #2a3550;
+    --ink-soft:#5b6884;
+    --sky:     #eaf4fd;
+    --paper:   #faf4ea;
+    --display: 'Baloo 2','Arial Rounded MT Bold',sans-serif;
+    --body:    'Nunito','Avenir Next',sans-serif;
+    --mono:    ui-monospace,Menlo,'Courier New',monospace;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html,body { width:1440px; height:900px; overflow:hidden; font-family:var(--body); color:var(--ink); }
+  .stage { width:1440px; height:900px; position:relative; overflow:hidden; }
+
+  /* ===== gemeinsame Bausteine ===== */
+  .glass {
+    background: rgba(255,255,255,.84);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-radius: 22px;
+    box-shadow: 0 10px 30px rgba(42,70,120,.18), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .topbar {
+    position:absolute; top:16px; left:16px; right:16px; height:66px;
+    display:flex; align-items:center; gap:18px; padding:0 18px; z-index:5;
+  }
+  .topbar img.logo { height:44px; }
+  .seg {
+    display:flex; background:rgba(42,70,120,.08); border-radius:999px; padding:4px; gap:4px;
+    font-family:var(--display); font-weight:700; font-size:16px;
+  }
+  .seg .opt { padding:7px 20px; border-radius:999px; color:var(--ink-soft); }
+  .seg .opt.active-blau { background:linear-gradient(180deg,#5fb6f7,#3d9be8); color:#fff; box-shadow:0 4px 10px rgba(61,155,232,.45); }
+  .seg .opt.active-orange { background:linear-gradient(180deg,#f9a955,#ef8c2c); color:#fff; box-shadow:0 4px 10px rgba(239,140,44,.45); }
+  .spacer { flex:1; }
+  .chip {
+    display:inline-flex; align-items:center; gap:6px;
+    border-radius:999px; padding:5px 13px; font-size:13.5px; font-weight:700;
+  }
+  .chip.time { background:rgba(42,70,120,.07); color:var(--ink-soft); font-weight:800; }
+  .search {
+    display:flex; align-items:center; gap:8px; background:rgba(42,70,120,.07);
+    border-radius:999px; padding:9px 16px; color:var(--ink-soft); font-size:14px; font-weight:600; min-width:260px;
+  }
+  .kbd { background:#fff; border-radius:6px; padding:1px 7px; font-size:11.5px; box-shadow:0 1px 0 rgba(42,70,120,.25); }
+
+  .timeline {
+    position:absolute; bottom:16px; left:16px; right:16px; height:64px;
+    display:flex; align-items:center; gap:16px; padding:0 16px; z-index:5;
+  }
+  .play {
+    width:42px; height:42px; border-radius:50%; flex:none;
+    background:linear-gradient(180deg,#5fb6f7,#3d9be8); box-shadow:0 5px 12px rgba(61,155,232,.5);
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px;
+  }
+  .track { flex:1; height:12px; border-radius:999px; background:rgba(42,70,120,.1); position:relative; }
+  .track .fill { position:absolute; left:0; top:0; bottom:0; width:54%; border-radius:999px;
+    background:linear-gradient(90deg,#7ec8ff,#4aa8f0); }
+  .track .knob { position:absolute; left:54%; top:50%; transform:translate(-50%,-50%);
+    width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--blau);
+    box-shadow:0 3px 8px rgba(42,70,120,.3); }
+  .track .dot { position:absolute; top:50%; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%;
+    box-shadow:0 0 0 2.5px #fff; }
+  .pill-btn {
+    font-family:var(--display); font-weight:700; border-radius:999px; padding:10px 20px; font-size:15px;
+    display:inline-flex; align-items:center; gap:8px; border:0;
+  }
+  .pill-btn.primary { background:linear-gradient(180deg,#5fb6f7,#3d9be8); color:#fff; box-shadow:0 5px 12px rgba(61,155,232,.45); }
+  .pill-btn.ghost { background:rgba(42,70,120,.08); color:var(--ink); }
+
+  /* Blob-Avatar mit Gesicht */
+  .blob-avatar { position:relative; flex:none; }
+  .blob-avatar .body {
+    border-radius: 46% 54% 52% 48% / 58% 56% 44% 42%;
+    position:relative; overflow:hidden;
+  }
+  .blob-avatar .body::before { /* Glanzlicht */
+    content:''; position:absolute; left:14%; top:8%; width:42%; height:30%;
+    background:rgba(255,255,255,.55); border-radius:50%; filter:blur(1px); transform:rotate(-15deg);
+  }
+  .blob-avatar .eye { position:absolute; width:13%; height:16%; background:#21304a; border-radius:50%; }
+  .blob-avatar .eye::after { content:''; position:absolute; right:12%; top:10%; width:45%; height:40%;
+    background:#fff; border-radius:50%; }
+  .blob-avatar .mouth-worried { position:absolute; border-top:3px solid #21304a; border-radius:50%; }
+  .blob-avatar .mouth-happy { position:absolute; border-bottom:3.5px solid #21304a; border-radius:50%; }
+
+  /* ============================================================ */
+  /* ===== ANSICHT 1: IN DER STADT ===== */
+  body.stadt .schreibtisch-view { display:none; }
+  .world-bg { position:absolute; inset:0; }
+  .world-bg img { width:1440px; height:900px; object-fit:cover; filter:saturate(1.08) brightness(1.1); }
+  .world-bg::after { content:''; position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(214,238,255,.35) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 78%, rgba(214,238,255,.4) 100%); }
+
+  .notizkarte {
+    position:absolute; right:16px; top:98px; width:336px; z-index:4; padding:20px;
+  }
+  .notizkarte .kopf { display:flex; gap:14px; align-items:center; }
+  .notizkarte h2 { font-family:var(--display); font-size:21px; font-weight:800; letter-spacing:.2px; }
+  .notizkarte .untertitel { font-size:13px; color:var(--ink-soft); font-weight:700; margin-top:1px; }
+  .chips-row { display:flex; gap:7px; margin-top:14px; flex-wrap:wrap; }
+  .chip.gruen { background:rgba(86,196,108,.16); color:#2c7d40; }
+  .chip.emotion { background:rgba(248,199,51,.22); color:#8d6a08; }
+  .fakten { margin-top:14px; border-top:2px dashed rgba(42,70,120,.12); padding-top:13px;
+    display:flex; flex-direction:column; gap:9px; font-size:14px; }
+  .fakten .zeile { display:flex; justify-content:space-between; }
+  .fakten .label { color:var(--ink-soft); font-weight:700; }
+  .fakten .wert { font-weight:800; }
+  .notizkarte .aktionen { display:flex; gap:9px; margin-top:17px; }
+  .notizkarte .hinweis { margin-top:13px; font-size:12px; color:var(--ink-soft); display:flex; gap:6px; align-items:center; }
+
+  .feed-bubble {
+    position:absolute; right:16px; bottom:96px; z-index:4;
+    display:flex; align-items:center; gap:9px; padding:11px 18px;
+    font-family:var(--display); font-weight:700; font-size:15px;
+  }
+  .feed-bubble .badge { background:var(--pink); color:#fff; border-radius:999px; font-size:12px; padding:1px 8px; }
+
+  /* ============================================================ */
+  /* ===== ANSICHT 2: AM SCHREIBTISCH ===== */
+  body.schreibtisch .stadt-view { display:none; }
+  body.schreibtisch { background:var(--paper); }
+  .paper-bg { position:absolute; inset:0; background:
+    radial-gradient(1100px 500px at 75% -10%, #fff7e8 0%, rgba(255,247,232,0) 60%),
+    radial-gradient(900px 500px at 8% 110%, #fdeedd 0%, rgba(253,238,221,0) 55%),
+    var(--paper); }
+  .paper-bg .bubble { position:absolute; border-radius:50%; background:rgba(74,168,240,.07); }
+
+  .card { background:#fff; border-radius:22px; box-shadow:0 8px 24px rgba(150,120,60,.13); }
+  .nav {
+    position:absolute; left:16px; top:98px; bottom:96px; width:236px; padding:16px;
+    display:flex; flex-direction:column; gap:9px;
+  }
+  .nav .eintrag {
+    display:flex; align-items:center; gap:11px; padding:12px 15px; border-radius:15px;
+    font-family:var(--display); font-weight:700; font-size:16px; color:var(--ink-soft);
+  }
+  .nav .eintrag.aktiv { background:linear-gradient(180deg,#5fb6f7,#3d9be8); color:#fff; box-shadow:0 5px 12px rgba(61,155,232,.4); }
+  .nav .tuer {
+    margin-top:auto; border:2.5px dashed rgba(240,110,180,.55); border-radius:17px; padding:14px 15px;
+    color:#c2418c; background:rgba(240,110,180,.06);
+  }
+  .nav .tuer .titel { font-family:var(--display); font-weight:800; font-size:16px; display:flex; gap:9px; align-items:center; }
+  .nav .tuer .sub { font-size:12.5px; font-weight:700; margin-top:3px; opacity:.75; }
+
+  .dokument {
+    position:absolute; left:272px; right:392px; top:98px; bottom:96px; padding:30px 36px; overflow:hidden;
+  }
+  .briefkopf { text-align:center; color:var(--ink-soft); font-weight:800; font-size:12.5px;
+    letter-spacing:3.5px; text-transform:uppercase; }
+  .briefkopf .linie { height:2.5px; width:64%; margin:12px auto 0;
+    background:linear-gradient(90deg, transparent, rgba(42,70,120,.18), transparent); }
+  .dokument h1 { font-family:var(--display); font-weight:800; font-size:27px; text-align:center; margin-top:16px; }
+  .meta-row { display:flex; justify-content:center; gap:8px; margin-top:9px; }
+  .chip.neutral { background:rgba(42,70,120,.07); color:var(--ink-soft); }
+  .chip.welle { background:rgba(245,151,63,.16); color:#a9621b; }
+  .schritte { display:flex; justify-content:center; gap:7px; margin-top:20px;
+    font-family:var(--display); font-weight:700; font-size:15px; }
+  .schritte .s { padding:8px 19px; border-radius:999px; background:rgba(42,70,120,.06); color:var(--ink-soft); }
+  .schritte .s.aktiv { background:linear-gradient(180deg,#f9a955,#ef8c2c); color:#fff; box-shadow:0 4px 10px rgba(239,140,44,.4); }
+
+  .item { margin-top:18px; background:#fdfbf6; border:1.5px solid #f0e8d8; border-radius:16px; padding:16px 19px; }
+  .item .frage { font-size:15.5px; font-weight:700; line-height:1.45; }
+  .item .chips-row { margin-top:11px; }
+  .chip.ok { background:rgba(86,196,108,.16); color:#2c7d40; }
+  .chip.misst { background:rgba(74,168,240,.15); color:#1f6dad; }
+  .add-frage { margin-top:18px; text-align:center; border:2.5px dashed rgba(42,70,120,.18); border-radius:16px;
+    padding:13px; color:var(--ink-soft); font-family:var(--display); font-weight:700; font-size:15px; }
+
+  .daten {
+    position:absolute; right:16px; top:98px; width:360px; bottom:96px; padding:22px; display:flex; flex-direction:column;
+  }
+  .daten h3 { font-family:var(--display); font-weight:800; font-size:18px; }
+  .daten .sub { font-size:13px; color:var(--ink-soft); font-weight:700; margin-top:2px; }
+  table.matrix { width:100%; margin-top:15px; border-collapse:collapse; font-family:var(--mono); font-size:12.8px; }
+  .matrix th { text-align:left; color:var(--ink-soft); font-weight:700; padding:7px 8px;
+    border-bottom:2.5px solid #efe7d7; }
+  .matrix td { padding:7.5px 8px; border-bottom:1.5px solid #f6f0e4; font-weight:600; }
+  .matrix tr:nth-child(even) td { background:#fcf9f2; }
+  .matrix .na { color:#c2418c; font-style:italic; }
+  .daten .exporte { margin-top:auto; display:flex; gap:9px; }
+  .pill-btn.export { background:rgba(86,196,108,.16); color:#2c7d40; font-size:14px; padding:9px 17px; }
+  .pill-btn.export.cb { background:rgba(42,70,120,.07); color:var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- ===================== IN DER STADT ===================== -->
+  <div class="stadt-view">
+    <div class="world-bg"><img src="../e2e-shots/01-world.png" alt=""></div>
+
+    <div class="topbar glass">
+      <img class="logo" src="../public/blobtopia-logo.png" alt="Blobtopia">
+      <div class="seg">
+        <div class="opt active-blau" id="seg-stadt">🌆&ensp;In der Stadt</div>
+        <div class="opt" id="seg-desk">🗂&ensp;Am Schreibtisch</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="search">🔍&ensp;Blob oder Ort suchen … <span class="spacer"></span><span class="kbd">⌘K</span></div>
+    </div>
+
+    <div class="notizkarte glass">
+      <div class="kopf">
+        <div class="blob-avatar" style="width:66px;height:62px;">
+          <div class="body" style="width:66px;height:62px;background:linear-gradient(180deg,#7fdc8f,#48b35e);"></div>
+          <div class="eye" style="left:26%;top:38%;"></div>
+          <div class="eye" style="right:26%;top:38%;"></div>
+          <div class="mouth-worried" style="left:39%;top:66%;width:15px;height:8px;"></div>
+        </div>
+        <div>
+          <h2>Hilde Mooswald</h2>
+          <div class="untertitel">Feldnotiz · Blob Nr. 217</div>
+        </div>
+      </div>
+      <div class="chips-row">
+        <span class="chip gruen">● Grüntal</span>
+        <span class="chip emotion">besorgt</span>
+      </div>
+      <div class="fakten">
+        <div class="zeile"><span class="label">Beobachtet</span><span class="wert">spaziert am Steinweg-Park</span></div>
+        <div class="zeile"><span class="label">Alter (geschätzt)</span><span class="wert">~ 50–55</span></div>
+        <div class="zeile"><span class="label">Arbeitsplatz</span><span class="wert">Schreinerei Grüntal</span></div>
+      </div>
+      <div class="aktionen">
+        <button class="pill-btn primary">💬&ensp;Interview führen</button>
+        <button class="pill-btn ghost">👁&ensp;Folgen</button>
+      </div>
+      <div class="hinweis">🔒 Wahre Werte liegen im Dozentenzimmer</div>
+    </div>
+
+    <div class="feed-bubble glass">📱 BlobFeed <span class="badge">3 neu</span></div>
+
+    <div class="timeline glass">
+      <div class="play">▶</div>
+      <div class="track">
+        <div class="fill"></div>
+        <div class="dot" style="left:9%;  background:var(--orange);"></div>
+        <div class="dot" style="left:18%; background:var(--blau);"></div>
+        <div class="dot" style="left:31%; background:var(--gelb);"></div>
+        <div class="dot" style="left:46%; background:var(--gruen);"></div>
+        <div class="dot" style="left:66%; background:var(--schiefer);"></div>
+        <div class="dot" style="left:83%; background:var(--pink);"></div>
+        <div class="knob"></div>
+      </div>
+      <span class="chip time">1×</span>
+      <span class="chip time">Jahr 12 · Tag 88 · 14:00</span>
+    </div>
+  </div>
+
+  <!-- ===================== AM SCHREIBTISCH ===================== -->
+  <div class="schreibtisch-view">
+    <div class="paper-bg">
+      <div class="bubble" style="width:200px;height:200px;right:420px;top:60px;"></div>
+      <div class="bubble" style="width:90px;height:90px;right:380px;top:280px;"></div>
+      <div class="bubble" style="width:130px;height:130px;left:200px;bottom:40px;"></div>
+    </div>
+
+    <div class="topbar glass">
+      <img class="logo" src="../public/blobtopia-logo.png" alt="Blobtopia">
+      <div class="seg">
+        <div class="opt">🌆&ensp;In der Stadt</div>
+        <div class="opt active-orange">🗂&ensp;Am Schreibtisch</div>
+      </div>
+      <div class="spacer"></div>
+      <span class="chip time">Jahr 12 · Tag 88 · 14:00</span>
+    </div>
+
+    <div class="nav card">
+      <div class="eintrag aktiv">📋&ensp;Studien</div>
+      <div class="eintrag">📰&ensp;Presse</div>
+      <div class="tuer">
+        <div class="titel">🔑&ensp;Dozentenzimmer</div>
+        <div class="sub">verschlossen — hier wohnt die Wahrheit</div>
+      </div>
+    </div>
+
+    <div class="dokument card">
+      <div class="briefkopf">✦&ensp;Befragungsinstitut Blobtopia&ensp;✦<div class="linie"></div></div>
+      <h1>Studie „Vertrauen im Längsschnitt“</h1>
+      <div class="meta-row">
+        <span class="chip welle">Panel · Welle 3 von 4</span>
+        <span class="chip neutral">n = 160 brutto</span>
+        <span class="chip neutral">Seed 4711</span>
+      </div>
+      <div class="schritte">
+        <div class="s aktiv">Fragebogen</div>
+        <div class="s">Stichprobe</div>
+        <div class="s">Ergebnis</div>
+      </div>
+
+      <div class="item">
+        <div class="frage">F1&ensp;„Wie sehr vertrauen Sie den Institutionen Blobtopias? — Skala von 1 (gar nicht) bis 10 (voll und ganz)“</div>
+        <div class="chips-row">
+          <span class="chip ok">✓ beantwortbar · Skala 1–10</span>
+          <span class="chip misst">misst: Institutionenvertrauen</span>
+        </div>
+      </div>
+      <div class="item">
+        <div class="frage">F2&ensp;„Wie alt sind Sie?“</div>
+        <div class="chips-row">
+          <span class="chip ok">✓ beantwortbar · offene Zahl</span>
+          <span class="chip misst">misst: Alter (Selbstauskunft)</span>
+        </div>
+      </div>
+      <div class="add-frage">+&ensp;Frage hinzufügen</div>
+    </div>
+
+    <div class="daten card">
+      <h3>Datenmatrix</h3>
+      <div class="sub">Welle 3 · netto n = 142 · Ausschöpfung 63 %</div>
+      <table class="matrix">
+        <tr><th>id</th><th>vertrauen</th><th>alter</th><th>status</th></tr>
+        <tr><td>B-031</td><td>6</td><td>44</td><td>✓</td></tr>
+        <tr><td>B-058</td><td>3</td><td>61</td><td>✓</td></tr>
+        <tr><td>B-094</td><td class="na">kA</td><td>37</td><td>verweigert</td></tr>
+        <tr><td>B-112</td><td>8</td><td>52</td><td>✓</td></tr>
+        <tr><td>B-145</td><td class="na">wn</td><td>29</td><td>weiß nicht</td></tr>
+        <tr><td>B-167</td><td>5</td><td>48</td><td>✓</td></tr>
+        <tr><td>B-203</td><td>7</td><td>55</td><td>✓</td></tr>
+      </table>
+      <div class="exporte">
+        <button class="pill-btn export">⬇&ensp;CSV</button>
+        <button class="pill-btn export cb">⬇&ensp;Codebook</button>
+      </div>
+    </div>
+
+    <div class="timeline glass">
+      <div class="play">▶</div>
+      <div class="track">
+        <div class="fill"></div>
+        <div class="dot" style="left:9%;  background:var(--orange);"></div>
+        <div class="dot" style="left:18%; background:var(--blau);"></div>
+        <div class="dot" style="left:31%; background:var(--gelb);"></div>
+        <div class="dot" style="left:46%; background:var(--gruen);"></div>
+        <div class="dot" style="left:66%; background:var(--schiefer);"></div>
+        <div class="dot" style="left:83%; background:var(--pink);"></div>
+        <div class="knob"></div>
+      </div>
+      <span class="chip time">Jahr 12 · Tag 88 · 14:00</span>
+    </div>
+  </div>
+</div>
+<script>
+  const view = new URLSearchParams(location.search).get('view') || 'stadt'
+  document.body.className = view
+</script>
+</body>
+</html>

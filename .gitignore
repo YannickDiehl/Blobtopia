@@ -74,3 +74,6 @@ e2e-shots/
 # das hat schon mehrfach Duplikate und Wiedergänger gelöschter Dateien erzeugt
 * 2.*
 * 2/
+
+# Design-Prototyp: Renderings sind aus HTML reproduzierbar
+design-prototyp/*.png
