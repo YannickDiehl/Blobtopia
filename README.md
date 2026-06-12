@@ -341,10 +341,20 @@ Top-Bar oder Taste `b`):
    landen nur im Datensatz, wenn sie explizit zur Erhebung ausgewählt werden
    (`src/lib/survey-demographics.js`) — wie im echten Fragebogen.
 2. **Stichprobe** — kalibrierbares Ziehungsdesign mit Grundgesamtheits-Filtern
-   (Distrikt, Bildung, Partei, Alter, Einkommen) und fünf Verfahren:
-   Zufallsauswahl, geschichtet, Klumpen, Quote, manuell (Selektionsbias
-   erlebbar). Seeded und reproduzierbar, inkl. Designgewichten
-   (`src/lib/survey-sampling.js`).
+   (Distrikt, Bildung, Partei, Alter, Einkommen) und sechs Verfahren:
+   Zufallsauswahl, geschichtet, Klumpen (ein- und zweistufig), systematisch,
+   Quote (editierbare Soll-Zellen, proportionaler Default), manuell
+   (Selektionsbias erlebbar). Seeded und reproduzierbar, inkl. Designgewichten
+   und Stichprobenumfangs-Planer (`src/lib/survey-sampling.js`). Dazu die
+   **Feldarbeit**: Erhebungsmodus (persönlich/Telefon/online) und
+   Kontaktversuche steuern selektiven Unit-Nonresponse — Brutto ≠ Netto,
+   mit Ausschöpfungsquote und Dispositionscodes im Datensatz
+   (`src/lib/survey-fieldwork.js`). **Längsschnitt**: Trend- und Panel-Designs
+   über die Timeline (bis 4 Wellen, Panel mit selektiver Attrition,
+   `src/lib/survey-longitudinal.js`). Studien sind als JSON-Datei
+   exportierbar — Import + Durchführen repliziert den Datensatz
+   byte-identisch (`src/lib/survey-persist.js`), der Arbeitsstand wird
+   automatisch gesichert.
 3. **Ergebnis** — die synthetische Antwort-Engine (`src/lib/survey-synthetic.js`)
    beantwortet Items aus den gespeicherten Blob-Werten plus kalibriertem
    Messfehler und **modellierten Fragebogeneffekten** (Akquieszenz —
@@ -355,14 +365,20 @@ Top-Bar oder Taste `b`):
 4. **Wahrheit** (hinter dem Dozenten-Schloss, Passwort wie beim
    Blob-Inspektor) — weil die Simulation die wahren Werte kennt, wird jeder
    Schätzer **exakt** in die Total-Survey-Error-Komponenten zerlegt
-   (`src/lib/survey-truth.js`): Coverage (Rahmen-Einschränkung) + Ziehung/
-   Auswahl + Nonresponse + Messung ≡ Schätzer − Wahrheit. Die Wahrheit wird
-   beim Feldlauf eingefroren (die Timeline läuft weiter). Dazu: designehrliche
-   Standardfehler (bei Quote/manuell gibt es bewusst keinen), ein
-   **Replikations-Simulator** (Stichprobenverteilung über B synthetische
-   Wiederholungen — Bias überlebt, Rauschen mittelt sich heraus) und ein
-   **Dozenten-CSV** mit `<item>_wahr`-Spalten für Schätzer-vs-Wahrheit-Übungen
-   in R. Das Studierenden-CSV bleibt wahrheitsfrei.
+   (`src/lib/survey-truth.js`): Coverage + Ziehung + Unit-Nonresponse +
+   Item-Nonresponse + Messung ≡ Schätzer − Wahrheit, der Messfehler weiter
+   aufgeschlüsselt in Akquieszenz/Framing/Erwünschtheit/Kreuzladung/Rauschen.
+   Unscharfe Fragen messen **unrein** (Mischmodell, λ < 1) — sichtbar erst
+   nach dem Aufdecken. Dazu: designehrliche Standardfehler, ein
+   **Replikations-Simulator** (Stichprobenverteilung inkl. Feldarbeit — Bias
+   überlebt, Rauschen mittelt sich heraus), **Post-Stratifizierung** an die
+   wahren Randverteilungen (repariert Nonresponse-Bias, nie Messfehler),
+   **Reliabilität** (Cronbachs α vs. wahre Reliabilität bei Item-Batterien),
+   bei Längsschnitt-Studien die **Veränderungs-Sicht** (Δ geschätzt vs. Δ
+   wahr, Panel-Attrition-Bias) und ein **Dozenten-CSV** mit
+   `<item>_wahr`-Spalten. Das Studierenden-CSV bleibt wahrheitsfrei. Die
+   synthetische Engine ist gegen die echte LLM-Engine kalibriert
+   (`scripts/experiments/compare-synthetic-llm.mjs`).
 
 Eine LLM-basierte Feld-Engine (`src/lib/survey-engine.js`) existiert
 vollständig, ist aber aus Kostengründen nicht in der UI exponiert.

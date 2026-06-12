@@ -26,7 +26,13 @@ const ACQUIESCENCE = 0.8   // agree/disagree scales pull toward agreement
 const FRAMING = 1.0        // loaded positive/negative wording
 const SOCIAL_DESIRABILITY = 0.7
 
-const DEFAULT_NOISE_SD = 1.3
+// Empirisch nachkalibriert (scripts/experiments/compare-synthetic-llm.mjs,
+// 2026-06-12, n=25×6 Items, Tick 4015): Haiku weicht im Mittel nur ~0,4–0,75
+// Skalenpunkte von der Wahrheit ab — die alten 1,3 rauschten doppelt so
+// stark wie das echte LLM. Ehrlicher Befund daneben: das LLM widersteht
+// negativem Framing weitgehend (+0,04 vs. modelliert −0,83) — die
+// Wording-Effekte hier sind bewusst DIDAKTISCH gesetzt, nicht LLM-getreu.
+const DEFAULT_NOISE_SD = 0.9
 
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)) }
 
