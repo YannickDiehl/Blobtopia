@@ -9,11 +9,11 @@
         .level-left
           b-field(v-if="!isLast")
             p.control
-              b-button.is-info(@click="skip") skip
+              b-button.is-text(@click="skip") Überspringen
         .level-right
           b-field(position="is-right")
             p.control(v-if="step !== 1")
-              b-button.btn-dark(@click="back") back
+              b-button.btn-dark(@click="back") Zurück
             p.control
               b-button.is-primary(@click="next") {{ buttonText }}
 </template>
@@ -24,7 +24,7 @@ export default {
   name: 'TourStep'
   , props: {
     buttonText: {
-      default: 'tell me more'
+      default: 'Weiter'
     }
     , step: Number
     , isLast: Boolean

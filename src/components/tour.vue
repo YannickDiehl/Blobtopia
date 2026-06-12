@@ -31,20 +31,26 @@
   TourStep(:step="4")
     TypewriterTextTransition
       p.
+        Einzelinterviews reichen dir nicht? Im Befragungsinstitut (Taste B) führst du
+        ganze Studien durch: eigenen Fragebogen entwerfen, Stichprobe ziehen,
+        Feldarbeit planen — und den Datensatz als CSV mitnehmen.
+  TourStep(:step="5")
+    TypewriterTextTransition
+      p.
         Im Feed rechts siehst du, was die Blobs tweeten. Ihre Tweets spiegeln aktuelle
         Stimmungen und Reaktionen auf Ereignisse wider.
-  TourStep(:step="5")
+  TourStep(:step="6")
     TypewriterTextTransition
       p.
         Nutze die Zeitleiste unten, um durch 22 Jahre Blobtopia-Geschichte zu reisen.
         Beobachte, wie Events — Wahlen, Krisen, Skandale — die Gesellschaft verändern.
-  TourStep(:step="6")
+  TourStep(:step="7")
     TypewriterTextTransition
       p.
-        Du kannst die inneren Werte der Blobs nicht direkt sehen.
-        Nutze Interviews, Tweets und Beobachtung, um die Gesellschaft zu verstehen —
+        Die inneren Werte der Blobs bleiben verborgen. Nutze Beobachtung, Interviews,
+        Tweets und Befragungen, um die Gesellschaft zu verstehen —
         genau wie in der echten empirischen Sozialforschung.
-  TourStep(button-text="Blobtopia erforschen!", is-last, :step="7")
+  TourStep(button-text="Blobtopia erforschen!", is-last, :step="8")
     TypewriterTextTransition
       p Viel Spaß beim Erforschen von Blobtopia!
       p (Mehr Details auf der Info-Seite)

@@ -67,6 +67,20 @@ Copilot.Player = function({ manager, totalTime = 1 } = {}) {
       (this._listeners[event] || []).forEach(fn => fn())
     }
 
+    // Original-API: off(event, fn) entfernt einen Listener, off(true) alle.
+    // Fehlte im Stub — typewriter-text.transition.vue ruft off(true) nach
+    // jeder Animation und warf damit bei jedem Tour-Schritt eine Exception.
+    ,off(event, fn) {
+      if (event === true || event == null) {
+        this._listeners = {}
+        return
+      }
+      if (!this._listeners[event]) return
+      this._listeners[event] = fn
+        ? this._listeners[event].filter(l => l !== fn)
+        : []
+    }
+
     ,togglePause(p) {
       this.paused = p !== undefined ? p : !this.paused
       this.emit('togglePause')
