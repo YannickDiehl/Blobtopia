@@ -53,14 +53,18 @@ await page.waitForTimeout(600)
 await page.locator('.step-tab:has-text("Ergebnis")').first().click()
 await page.locator('button:has-text("Befragung durchführen")').click()
 await page.waitForTimeout(1500)
-report('fieldwork produced a dataset', /Datensätze/.test(await page.locator('.survey-section').innerText()))
+const resultText = await page.locator('.survey-section').innerText()
+report('fieldwork produced a dataset', /Items/.test(resultText))
+report('response rate (Ausschöpfung) reported', /Ausschöpfungsquote/.test(resultText) && /Brutto/.test(resultText))
+report('disposition codes appear in the data', /verweigert|nicht erreicht/.test(resultText))
+report('per-item estimates table shown', (await page.locator('.summary-table tbody tr').count()) === 2)
 
 // ── Ergebnis-Datentabelle: echte Antworten sichtbar, Name default, Rest opt-in ──
-report('data matrix shows the collected answers', (await page.locator('.data-table tbody tr').count()) > 0)
-const tableHead = await page.locator('.data-table thead').innerText()
+report('data matrix shows the collected answers', (await page.locator('.data-table-wrap .data-table tbody tr').count()) > 0)
+const tableHead = await page.locator('.data-table-wrap .data-table thead').innerText()
 report('respondent names collected by default', /Name/.test(tableHead))
 report('sociodemographics are NOT collected automatically', !/Alter|Bildung|Partei/.test(tableHead))
-const firstAnswer = await page.locator('.data-table tbody tr').first().innerText()
+const firstAnswer = await page.locator('.data-table-wrap .data-table tbody tr').first().innerText()
 report('answer cells are populated', /\d|kA|wn/.test(firstAnswer))
 // Alter dazuwählen → neue Erhebung trägt die Spalte
 await page.locator('.step-tab:has-text("Fragebogen")').first().click()
@@ -69,7 +73,7 @@ await page.locator('.step-tab:has-text("Ergebnis")').first().click()
 await page.locator('button:has-text("Befragung durchführen")').click()
 await page.waitForTimeout(1200)
 report('opting in adds the column on the next run'
-  , /Alter/.test(await page.locator('.data-table thead').innerText()))
+  , /Alter/.test(await page.locator('.data-table-wrap .data-table thead').innerText()))
 
 // ── Schloss ──
 await page.locator('.step-tab.truth-tab').click()
@@ -90,11 +94,12 @@ report('unlock shows the reveal moment (truth still hidden)', await reveal.isVis
 await reveal.click()
 await page.waitForTimeout(600)
 report('decomposition cards rendered for both items', (await page.locator('.truth-item').count()) === 2)
-report('telescoping chains show all five means each', (await page.locator('.tse-row').count()) === 10)
-report('four error components + total listed per item', (await page.locator('.tse-delta').count()) === 10)
+report('telescoping chains show all six means each', (await page.locator('.tse-row').count()) === 12)
+report('five error components + total listed per item', (await page.locator('.tse-delta').count()) === 12)
+report('unit nonresponse is a separate component', /③a Unit-Nonresponse/.test(await page.locator('.truth-item').first().innerText()))
 report('construct was detected from wording'
-  , /Zufriedenheit/.test(await page.locator('.truth-construct').innerText()))
-const ciOrNote = await page.locator('.truth-item').innerText()
+  , /Zufriedenheit/.test(await page.locator('.truth-construct').first().innerText()))
+const ciOrNote = await page.locator('.truth-item').first().innerText()
 report('CI or design-honest SE note present', /95-%-KI|Standardfehler/.test(ciOrNote))
 
 // ── Replikations-Simulator ──
@@ -103,8 +108,8 @@ await page.locator('.sim-row button:has-text("Simulieren")').click()
 await page.waitForSelector('.hist-bars', { timeout: 30000 })
 await page.waitForTimeout(400)
 report('simulator histograms rendered (24 bins × 2 items)', (await page.locator('.hist-bar').count()) === 48)
-report('truth marker overlays the histogram', await page.locator('.hist-truth').isVisible())
-report('empirical SE reported', /simulierter SE/.test(await page.locator('.hist-meta').innerText()))
+report('truth marker overlays the histogram', await page.locator('.hist-truth').first().isVisible())
+report('empirical SE reported', /simulierter SE/.test(await page.locator('.hist-meta').first().innerText()))
 
 // ── Dozenten-CSV ──
 const dlPromise = page.waitForEvent('download', { timeout: 15000 })

@@ -19,6 +19,8 @@ import { runSurvey, makeChatSender } from '@/lib/survey-engine'
 import { runSyntheticSurvey } from '@/lib/survey-synthetic'
 import { snapshotTruth, decompose, simulateSamplingDistribution } from '@/lib/survey-truth'
 import { buildDemographics } from '@/lib/survey-demographics'
+import { simulateParticipation, fieldReport, FIELD_MODES, DISPOSITION } from '@/lib/survey-fieldwork'
+import { postStratify, calibratedEstimate } from '@/lib/survey-weighting'
 import { buildSystemPrompt } from '@/lib/build-system-prompt'
 import { getBlobStatic, getChangeSummary, resolveActivity } from '@/lib/blob-prompt'
 import { CHAT_API } from '@/config/api'
@@ -41,6 +43,10 @@ const DEFAULT_DESIGN = () => ({
   , demographics: ['name']
   , quotas: null            // quota targets per cell; null = proportional default
   , withinClusterN: null    // two-stage cluster: subsample size per cluster
+  // Feldarbeit: Modus + Kontaktversuche steuern Unit-Nonresponse + soziale
+  // Erwünschtheit (Konstanten in survey-fieldwork.js)
+  , fieldMode: 'personal'
+  , contactAttempts: 2
 })
 
 // getCurrentGeneration is a function held in simulation state — call it.
@@ -99,6 +105,8 @@ export const useSurveyStore = defineStore('survey', {
     , simResult: null
     , isSimulating: false
     , simProgress: { done: 0, total: 0 }
+    // Post-Stratifizierung (post-hoc, ohne neue Feldarbeit berechnet)
+    , calib: { enabled: false, vars: ['district'] }
   })
   , getters: {
     // The eligible, filtered candidate frame for the manual picker + counts.
@@ -112,6 +120,34 @@ export const useSurveyStore = defineStore('survey', {
     , decomposition(state) {
       if (!state.result || !state.result.meta || !state.result.meta.truth) return null
       return decompose(state.result, state.items)
+    }
+    // Kalibrierungsgewichte (Post-Stratifizierung) — post-hoc aus dem Ergebnis.
+    , calibration(state) {
+      if (!state.calib.enabled || !state.result || !state.result.meta.truth) return null
+      return postStratify({ rows: state.result.rows, truth: state.result.meta.truth, vars: state.calib.vars })
+    }
+    // Deskriptive Schätzer pro Item (ungewichtet / design-gewichtet / kalibriert).
+    , itemSummary(state) {
+      if (!state.result) return []
+      const cal = this.calibration
+      return state.items.map(it => {
+        const id = it.id
+        let n = 0, sum = 0, sw = 0, swv = 0
+        for (const r of state.result.rows) {
+          const a = r.answers && r.answers[id]
+          if (!a || a.status !== 'answered' || a.value == null) continue
+          n++; sum += a.value
+          const w = r.weight != null ? r.weight : 1
+          sw += w; swv += w * a.value
+        }
+        return {
+          id: id
+          , n: n
+          , mean: n > 0 ? sum / n : null
+          , meanWeighted: sw > 0 ? swv / sw : null
+          , meanCalibrated: cal ? calibratedEstimate(state.result.rows, id, cal.weights) : null
+        }
+      })
     }
   }
   , actions: {
@@ -240,12 +276,32 @@ export const useSurveyStore = defineStore('survey', {
             , onProgress: (done, total) => { this.progress = { done, total } }
           })
         } else {
-          // Synthetic (free, instant): answers from stored values + noise.
-          result = runSyntheticSurvey(sample.units, this.items, {
+          // Synthetic (free, instant): Brutto → Feldarbeit (Unit-Nonresponse,
+          // modusabhängig) → Netto antwortet. Nichtteilnehmende bleiben als
+          // Dispositionszeilen im Datensatz — wie in echten Felddaten.
+          const mode = FIELD_MODES[design.fieldMode] ? design.fieldMode : 'personal'
+          const participation = simulateParticipation(sample.units, {
+            mode: mode, attempts: design.contactAttempts, seed: design.seed
+          })
+          const respondents = participation.filter(p => p.disposition === DISPOSITION.RESPONDENT)
+          const net = runSyntheticSurvey(respondents, this.items, {
             seed: this.design.seed
             , demographics: demographics
+            , sdFactor: FIELD_MODES[mode].sdFactor
           })
-          this.progress = { done: result.rows.length, total: result.rows.length }
+          const netById = {}
+          for (const r of net.rows) netById[r.blobId] = r
+          const rows = participation.map(p => {
+            const r = netById[p.blob.id]
+            if (r) return Object.assign({}, r, { disposition: p.disposition })
+            return Object.assign(
+              { blobId: p.blob.id, stratum: p.stratum, weight: p.weight }
+              , demographics(p.blob)
+              , { disposition: p.disposition, answers: {} }
+            )
+          })
+          result = { rows: rows, meta: Object.assign(net.meta, fieldReport(participation), { fieldMode: mode, contactAttempts: design.contactAttempts }) }
+          this.progress = { done: rows.length, total: rows.length }
         }
         // Freeze the ground truth at fieldwork time — the timeline keeps
         // playing, so a later recompute would compare against another tick.
@@ -269,6 +325,7 @@ export const useSurveyStore = defineStore('survey', {
 
     // ── Wahrheit-Tab (god view) ──
     , revealTruth() { this.truthRevealed = true }
+    , SET_CALIB(calib) { this.calib = Object.assign({}, this.calib, calib) }
 
     // Instructor-only export: the student dataset plus a `<item>_wahr` column.
     , exportInstructorCsv() {
@@ -290,6 +347,7 @@ export const useSurveyStore = defineStore('survey', {
       try {
         this.simResult = await simulateSamplingDistribution(blobs, design, this.items, {
           replications: B
+          , field: { mode: design.fieldMode || 'personal', attempts: design.contactAttempts || 2 }
           , onProgress: (done, total) => { this.simProgress = { done, total } }
         })
       } catch (e) {

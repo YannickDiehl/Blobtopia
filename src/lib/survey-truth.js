@@ -30,6 +30,12 @@
 import { drawSample, eligibleFrame } from './survey-sampling.js'
 import { runSyntheticSurvey } from './survey-synthetic.js'
 import { CONSTRUCTS_BY_KEY } from './survey-constructs.js'
+import { simulateParticipation, DISPOSITION, FIELD_MODES } from './survey-fieldwork.js'
+
+// Zeile zählt als Unit-Respondent (Zeilen ohne disposition = Altbestand).
+function isRespondentRow(r) {
+  return r.disposition == null || r.disposition === DISPOSITION.RESPONDENT
+}
 
 function clamp(n, min, max) { return Math.max(min, Math.min(max, n)) }
 
@@ -89,6 +95,7 @@ export function snapshotTruth({ blobs, design, units, items }) {
 
   const truthItems = {}
   const perUnit = {}
+  const perUnitCells = {}
   for (let qi = 0; qi < items.length; qi++) {
     const item = items[qi]
     const id = itemKey(item, qi)
@@ -103,7 +110,16 @@ export function snapshotTruth({ blobs, design, units, items }) {
       perUnit[u.blob.id][id] = t
     }
   }
-  return { popN: population.length, frameN: frame.length, items: truthItems, perUnit: perUnit }
+  // Zell-Zugehörigkeiten für die Post-Stratifizierung (survey-weighting.js):
+  // wahre Rahmen-Zusammensetzung + Zelle jeder gezogenen Einheit.
+  const frameCellList = frame.map(b => ({ district: b.district, education_level: b.education_level }))
+  for (const u of units) {
+    perUnitCells[u.blob.id] = { district: u.blob.district, education_level: u.blob.education_level }
+  }
+  return {
+    popN: population.length, frameN: frame.length, items: truthItems
+    , perUnit: perUnit, perUnitCells: perUnitCells, frameCellList: frameCellList
+  }
 }
 
 // Weighted mean over rows; pick(row) returns the value or null to skip.
@@ -196,7 +212,8 @@ export function decompose(result, items) {
 
     const trueOf = r => (truth.perUnit[r.blobId] ? truth.perUnit[r.blobId][id] : null)
     const rows = result.rows.filter(r => trueOf(r) != null)
-    const answered = rows.filter(r => { const a = r.answers[id]; return a && a.status === 'answered' && a.value != null })
+    const unitRows = rows.filter(isRespondentRow)
+    const answered = unitRows.filter(r => { const a = r.answers[id]; return a && a.status === 'answered' && a.value != null })
 
     const entry = {
       id: id
@@ -219,7 +236,11 @@ export function decompose(result, items) {
       continue
     }
 
+    // Teleskopkette, jetzt 6 Glieder: Population → Rahmen → Brutto (wahr) →
+    // Teilnehmende (wahr) → Item-Antwortende (wahr) → Schätzer. ③ spaltet
+    // sich in Unit- und Item-Nonresponse; `nonresponse` bleibt die Summe.
     const sampleTrueMean = weightedMean(rows, trueOf)
+    const unitTrueMean = weightedMean(unitRows, trueOf)
     const respTrueMean = weightedMean(answered, trueOf)
     const estimate = weightedMean(answered, r => r.answers[id].value)
 
@@ -227,15 +248,19 @@ export function decompose(result, items) {
     entry.nPop = truth.popN
     entry.nFrame = truth.frameN
     entry.nSample = rows.length
+    entry.nUnit = unitRows.length
     entry.nResp = answered.length
     entry.popMean = t.popMean
     entry.frameMean = t.frameMean
     entry.sampleTrueMean = sampleTrueMean
+    entry.unitTrueMean = unitTrueMean
     entry.respTrueMean = respTrueMean
     entry.estimate = estimate
     entry.coverage = t.frameMean - t.popMean
     entry.sampling = sampleTrueMean - t.frameMean
-    entry.nonresponse = respTrueMean - sampleTrueMean
+    entry.nonresponseUnit = unitTrueMean - sampleTrueMean
+    entry.nonresponseItem = respTrueMean - unitTrueMean
+    entry.nonresponse = entry.nonresponseUnit + entry.nonresponseItem
     entry.measurement = estimate - respTrueMean
     entry.total = estimate - t.popMean
 
@@ -261,7 +286,9 @@ export function decompose(result, items) {
  * @param {Array} blobs   full population (fieldwork-time snapshot)
  * @param {Object} design the SAME draw design used for the fieldwork
  * @param {Array} items   questionnaire items
- * @param {Object} [opts] { replications=500, chunkSize=50, onProgress }
+ * @param {Object} [opts] { replications=500, chunkSize=50, onProgress, field }
+ *   field = { mode, attempts } — wenn gesetzt, durchläuft jede Replikation
+ *   auch die Feldarbeit (Unit-Nonresponse), wie die echte Erhebung.
  * @returns {Promise<{ replications, perItem: Object }>}
  */
 export async function simulateSamplingDistribution(blobs, design, items, opts) {
@@ -270,6 +297,8 @@ export async function simulateSamplingDistribution(blobs, design, items, opts) {
   const chunkSize = opts.chunkSize != null ? opts.chunkSize : 50
   const onProgress = typeof opts.onProgress === 'function' ? opts.onProgress : null
   const baseSeed = design && design.seed != null ? design.seed : 12345
+  const field = opts.field || null
+  const sdFactor = field && FIELD_MODES[field.mode] ? FIELD_MODES[field.mode].sdFactor : 1
 
   const estimates = {}
   for (let qi = 0; qi < items.length; qi++) estimates[itemKey(items[qi], qi)] = []
@@ -277,7 +306,12 @@ export async function simulateSamplingDistribution(blobs, design, items, opts) {
   for (let b = 0; b < B; b++) {
     const d = Object.assign({}, design, { seed: baseSeed + 1 + b })
     const sample = drawSample(blobs, d)
-    const { rows } = runSyntheticSurvey(sample.units, items, { seed: baseSeed + 1 + b })
+    let units = sample.units
+    if (field) {
+      units = simulateParticipation(units, { mode: field.mode, attempts: field.attempts, seed: baseSeed + 1 + b })
+        .filter(p => p.disposition === DISPOSITION.RESPONDENT)
+    }
+    const { rows } = runSyntheticSurvey(units, items, { seed: baseSeed + 1 + b, sdFactor })
     for (let qi = 0; qi < items.length; qi++) {
       const id = itemKey(items[qi], qi)
       const est = weightedMean(

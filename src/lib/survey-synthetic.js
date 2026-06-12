@@ -63,7 +63,7 @@ function trait(blob, key) {
   return (v == null || isNaN(v)) ? null : v
 }
 
-function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording) {
+function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording, sdFactor) {
   // Synthetic answers need a construct binding (which stored value to draw from).
   const ck = item.construct
   if (!ck) return { status: 'unsupported', value: null, verbatim: '' }
@@ -108,7 +108,9 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording) {
     if (wording.agreeScale) shifted += ACQUIESCENCE * (1 - eduNorm) // acquiescence, stronger at low education
     if (wording.loadedPositive) shifted += FRAMING
     if (wording.loadedNegative) shifted -= FRAMING
-    if (wording.socialDesirability) shifted += SOCIAL_DESIRABILITY
+    // Soziale Erwünschtheit hängt am Erhebungsmodus (sdFactor: persönlich 1.0,
+    // Telefon 0.7, online 0.2 — siehe survey-fieldwork.js FIELD_MODES).
+    if (wording.socialDesirability) shifted += SOCIAL_DESIRABILITY * (sdFactor != null ? sdFactor : 1)
   }
   shifted = clamp(shifted, 0, 10)
 
@@ -124,13 +126,14 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording) {
  * Administer a questionnaire to a sample synthetically (no LLM).
  * @param {Array} units  [{ blob, weight, stratum }]
  * @param {Array} items  questionnaire items (those with a `construct` binding get answered)
- * @param {Object} [opts] { seed=12345, noiseSd=1.3, demographics }
+ * @param {Object} [opts] { seed=12345, noiseSd=1.3, demographics, sdFactor=1 }
  * @returns {{ rows: Array, meta: Object }}
  */
 export function runSyntheticSurvey(units, items, opts) {
   opts = opts || {}
   const runSeed = opts.seed != null ? opts.seed : 12345
   const noiseSd = opts.noiseSd != null ? opts.noiseSd : DEFAULT_NOISE_SD
+  const sdFactor = opts.sdFactor != null ? opts.sdFactor : 1
   const demographics = typeof opts.demographics === 'function' ? opts.demographics : () => ({})
 
   // Wording features per item drive the modeled questionnaire effects.
@@ -141,7 +144,7 @@ export function runSyntheticSurvey(units, items, opts) {
     for (let qi = 0; qi < items.length; qi++) {
       const item = items[qi]
       const id = item.id || ('item_' + qi)
-      answers[id] = syntheticAnswer(b, item, id, runSeed, noiseSd, wordingByItem[qi])
+      answers[id] = syntheticAnswer(b, item, id, runSeed, noiseSd, wordingByItem[qi], sdFactor)
     }
     return Object.assign(
       { blobId: b.id, stratum: u.stratum, weight: u.weight }

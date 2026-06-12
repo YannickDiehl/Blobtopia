@@ -154,10 +154,24 @@
               b-icon(icon="account-search", size="is-small")
               span Stichprobe ziehen
 
-        //- ③ Auswahl / Realisierung
+        //- ③ Feldarbeit (Modus + Kontaktversuche → Unit-Nonresponse)
         .panel-block
           .block-head
-            span.block-title ③ {{ design.technique === 'manual' ? 'Blobs selbst auswählen' : 'Realisierte Stichprobe' }}
+            span.block-title ③ Feldarbeit
+            span.block-meta {{ fieldModeLabel }}
+          .block-body
+            label.radio-row(v-for="m in fieldModes", :key="m.key", :class="{ active: design.fieldMode === m.key }")
+              input(type="radio", :value="m.key", v-model="design.fieldMode")
+              span {{ m.label }}
+            .params
+              label Kontaktversuche (1–4)
+              input.survey-input.mini(type="number", min="1", max="4", v-model.number="design.contactAttempts")
+              p.mini-hint Nicht alle machen mit: Erreichbarkeit und Kooperation sind selektiv. Mehr Versuche heben die Ausschöpfung — neutralisieren die Selektivität aber nicht.
+
+        //- ④ Auswahl / Realisierung
+        .panel-block
+          .block-head
+            span.block-title ④ {{ design.technique === 'manual' ? 'Blobs selbst auswählen' : 'Realisierte Stichprobe' }}
             span.block-meta n = {{ sampleN }} / {{ frameBlobs.length }}
           .block-body
             .dist(v-if="dist && Object.keys(dist).length")
@@ -195,12 +209,48 @@
         .error-banner(v-if="error") {{ error }}
         template(v-if="result")
           .results-divider
-          .info-item
+          template(v-if="result.meta.gross != null")
+            .info-item
+              span.info-label Brutto-Stichprobe
+              span.info-value {{ result.meta.gross }}
+            .info-item
+              span.info-label Netto (Teilnehmende)
+              span.info-value {{ result.meta.net }}
+            .info-item
+              span.info-label Ausschöpfungsquote
+              span.info-value {{ Math.round(result.meta.responseRate * 100) }} %
+            .dispo-row
+              span.dispo(v-for="(c, k) in result.meta.dispositions", :key="k") {{ k }}: {{ c }}
+          .info-item(v-else)
             span.info-label Datensätze
             span.info-value {{ result.rows.length }}
           .info-item
             span.info-label Items
             span.info-value {{ result.meta.items }}
+          //- Deskriptive Schätzer + Gewichtung
+          table.data-table.summary-table(v-if="itemSummary.length")
+            thead
+              tr
+                th Item
+                th n
+                th Mittel
+                th gewichtet
+                th(v-if="calib.enabled") kalibriert
+            tbody
+              tr(v-for="s in itemSummary", :key="s.id")
+                td {{ s.id }}
+                td {{ s.n }}
+                td {{ fmt(s.mean) }}
+                td {{ fmt(s.meanWeighted) }}
+                td(v-if="calib.enabled") {{ fmt(s.meanCalibrated) }}
+          .calib-row
+            label.radio-row(:class="{ active: calib.enabled }")
+              input(type="checkbox", :checked="calib.enabled", @change="surveyStore.SET_CALIB({ enabled: $event.target.checked })")
+              span Post-Stratifizierung (an wahre Randverteilungen)
+            .chips(v-if="calib.enabled")
+              span.chip(:class="{ active: calibHasVar('district') }", @click="toggleCalibVar('district')") Distrikt
+              span.chip(:class="{ active: calibHasVar('education_level') }", @click="toggleCalibVar('education_level')") Bildung
+            p.mini-hint(v-if="calib.enabled && calibration && calibration.uncovered > 0") Achtung: {{ calibration.uncovered }} Rahmen-Einheiten liegen in Zellen ohne Antwortende — Gewichtung kann leere Zellen nicht füllen.
           .data-table-wrap
             table.data-table
               thead
@@ -260,6 +310,9 @@
                 .tse-delta.total
                   span.tse-delta-label Gesamt (Schätzer − Wahrheit)
                   span.tse-delta-val(:class="deltaClass(d.total)") {{ signed(d.total) }}
+              .info-item(v-if="calib.enabled && calibratedFor(d) != null")
+                span.info-label Kalibrierter Schätzer (Post-Strat.)
+                span.info-value {{ fmt(calibratedFor(d)) }} · Restfehler {{ signed(calibratedFor(d) - d.popMean) }}
               .info-item(v-if="d.ci95")
                 span.info-label 95-%-KI des Schätzers
                 span.info-value {{ fmt(d.ci95[0]) }} bis {{ fmt(d.ci95[1]) }} · {{ ciCoversTruth(d) ? 'enthält die Wahrheit' : 'verfehlt die Wahrheit' }}
@@ -294,6 +347,8 @@ import { useSurveyStore } from '@/stores/survey'
 import draggablePanel from '@/mixins/draggable-panel'
 import { parseItem } from '@/lib/survey-parse'
 import { planSampleSize } from '@/lib/survey-sampling'
+import { FIELD_MODES } from '@/lib/survey-fieldwork'
+import { calibratedEstimate } from '@/lib/survey-weighting'
 import { datasetColumns } from '@/lib/survey-dataset'
 import { CONSTRUCTS } from '@/lib/survey-constructs'
 import { DEMOGRAPHICS, DEMOGRAPHICS_BY_KEY } from '@/lib/survey-demographics'
@@ -345,6 +400,8 @@ export default {
         , demographics: ['name']
         , quotas: {}
         , withinClusterN: null
+        , fieldMode: 'personal'
+        , contactAttempts: 2
       }
     }
   }
@@ -459,9 +516,17 @@ export default {
       }
       return cols
     }
+    , fieldModes() {
+      return Object.values(FIELD_MODES)
+    }
+    , fieldModeLabel() {
+      const m = FIELD_MODES[this.design.fieldMode]
+      return m ? m.label : ''
+    }
     , ...mapStores(useSurveyStore)
     , ...mapState(useSurveyStore, ['lastSample', 'dist', 'result', 'progress', 'isRunning', 'error'
-      , 'truthRevealed', 'simResult', 'isSimulating', 'simProgress', 'decomposition'])
+      , 'truthRevealed', 'simResult', 'isSimulating', 'simProgress', 'decomposition'
+      , 'calib', 'calibration', 'itemSummary'])
   }
   , created() {
     this.surveyStore.loadStudyDraft()
@@ -497,7 +562,22 @@ export default {
         this.design.manualExclude = (d.manualExclude || []).slice()
         this.design.demographics = (d.demographics || ['name']).slice()
         this.design.quotas = d.quotas ? Object.assign({}, d.quotas) : {}
+        this.design.fieldMode = d.fieldMode || 'personal'
+        this.design.contactAttempts = d.contactAttempts != null ? d.contactAttempts : 2
       }
+    }
+    , calibHasVar(v) {
+      return this.calib.vars.indexOf(v) >= 0
+    }
+    , toggleCalibVar(v) {
+      const vars = this.calib.vars.slice()
+      const i = vars.indexOf(v)
+      if (i >= 0) { if (vars.length > 1) vars.splice(i, 1) } else vars.push(v)
+      this.surveyStore.SET_CALIB({ vars })
+    }
+    , calibratedFor(d) {
+      if (!this.calibration || !this.result) return null
+      return calibratedEstimate(this.result.rows, d.id, this.calibration.weights)
     }
     , onStudyFile(e) {
       const file = e.target.files && e.target.files[0]
@@ -578,6 +658,8 @@ export default {
         , demographics: this.design.demographics.slice()
         , quotas: Object.keys(this.design.quotas || {}).length ? Object.assign({}, this.design.quotas) : null
         , withinClusterN: Number(this.design.withinClusterN) || null
+        , fieldMode: this.design.fieldMode || 'personal'
+        , contactAttempts: Math.max(1, Math.min(4, Number(this.design.contactAttempts) || 2))
       }
     }
     , cleanFilter() {
@@ -690,13 +772,14 @@ export default {
       this.truthUnlocked = false
       localStorage.removeItem('blobtopia_inspector_unlocked')
     }
-    // The telescoping chain of five means — dots on the item's own scale.
+    // The telescoping chain of six means — dots on the item's own scale.
     , chainRows(d) {
       return [
         { label: 'Population (wahr)', value: d.popMean, cls: 'truth' }
         , { label: 'Rahmen (wahr)', value: d.frameMean, cls: 'truth' }
-        , { label: 'Stichprobe (wahr)', value: d.sampleTrueMean, cls: 'truth' }
-        , { label: 'Antwortende (wahr)', value: d.respTrueMean, cls: 'truth' }
+        , { label: 'Brutto-Stichprobe (wahr)', value: d.sampleTrueMean, cls: 'truth' }
+        , { label: 'Teilnehmende (wahr)', value: d.unitTrueMean != null ? d.unitTrueMean : d.sampleTrueMean, cls: 'truth' }
+        , { label: 'Item-Antwortende (wahr)', value: d.respTrueMean, cls: 'truth' }
         , { label: 'Schätzer (beobachtet)', value: d.estimate, cls: 'est' }
       ]
     }
@@ -704,7 +787,8 @@ export default {
       return [
         { label: '① Coverage (Rahmen-Einschränkung)', value: d.coverage }
         , { label: '② Ziehung / Auswahl', value: d.sampling }
-        , { label: '③ Nonresponse', value: d.nonresponse }
+        , { label: '③a Unit-Nonresponse (Teilnahme)', value: d.nonresponseUnit != null ? d.nonresponseUnit : 0 }
+        , { label: '③b Item-Nonresponse (kA/wn)', value: d.nonresponseItem != null ? d.nonresponseItem : d.nonresponse }
         , { label: '④ Messung (Wording + Rauschen)', value: d.measurement }
       ]
     }
@@ -1438,4 +1522,24 @@ export default {
 .relock-row
   margin-top: 0.5rem
   text-align: center
+
+.dispo-row
+  display: flex
+  flex-wrap: wrap
+  gap: 0.5rem
+  margin: 0.25rem 0
+  .dispo
+    font-size: 0.68rem
+    color: $grey
+    border: 1px solid rgba(255, 255, 255, 0.15)
+    border-radius: 999px
+    padding: 0.05rem 0.45rem
+
+.summary-table
+  margin-top: 0.4rem
+
+.calib-row
+  margin-top: 0.4rem
+  .chips
+    margin: 0.3rem 0
 </style>
