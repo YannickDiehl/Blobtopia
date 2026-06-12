@@ -38,10 +38,10 @@ export async function gotoApp(page, { settleMs = 9000 } = {}) {
   }
 }
 
-/** Read the in-app clock ("Jahr X, MY, TZ, HH:00") from the TopBar. */
+/** Read the in-app clock ("Jahr X · Tag Y · HH:00") from the Datums-Stempel. */
 export async function readClock(page) {
   const text = await page.evaluate(() => document.body.innerText)
-  return text.match(/Jahr\s+\d+,\s*M\d+,\s*T\d+,\s*\d+:\d+/)?.[0] || null
+  return text.match(/Jahr\s+\d+\s*·\s*Tag\s+\d+\s*·\s*\d+:\d+/)?.[0] || null
 }
 
 /** CDP-based real touch gestures (pointer events derive from these). */

@@ -1,7 +1,13 @@
 <template lang="pug">
 .timeline-bar-v2(:class="{ expanded: timelineExpanded, minimal: uiMode === 'presentation' }")
-  //- Collapsed view: Transport + Scrubber
+  //- Lochstreifen der Filmrolle (rein dekorativ)
+  .film-loecher.oben(aria-hidden="true")
+
+  //- Collapsed view: Plakette + Transport + Scrubber
   .timeline-collapsed
+    .film-plakette(v-if="uiMode !== 'presentation'", title="Die Simulation ist eine fertige Aufzeichnung — 22 Jahre, 8.030 Tage")
+      .z1 STADTARCHIV BLOBTOPIA
+      .z2 Aufzeichnung · 22 Jahre
     TransportControls(v-if="uiMode !== 'presentation'")
     .minimal-controls(v-else)
       button.step-btn.play-btn(:class="{ playing: !isPaused }", @click="togglePlayback")
@@ -20,6 +26,8 @@
   //- Event Card (appears above timeline)
   .event-card-container(v-if="showEventCard && currentEvent")
     EventCard(:event="currentEvent", :impact="currentEventImpact", @dismiss="dismissEvent")
+
+  .film-loecher.unten(aria-hidden="true")
 </template>
 
 <script>
@@ -102,26 +110,61 @@ export default {
 </script>
 
 <style lang="sass" scoped>
+// Die Timeline ist die Filmrolle des Stadtarchivs: dunkles Band mit
+// Transportlöchern — die Precomputed-Architektur als Fiktion.
 .timeline-bar-v2
   position: absolute
   bottom: 0
   left: 0
   right: 0
   z-index: 6
-  background: rgba(0, 0, 0, 0.9)
-  backdrop-filter: blur(10px)
-  border-top: 1px solid rgba(255, 255, 255, 0.08)
-  padding: 0.4rem 1rem 0.5rem
+  background: linear-gradient(180deg, #26262f, var(--inst-film))
+  border-top: 1px solid rgba(245, 240, 220, 0.12)
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.4)
+  padding: 14px 1rem 15px
   transition: all 0.3s ease
 
   &.minimal
-    padding: 0.2rem 1rem
-    background: rgba(0, 0, 0, 0.6)
+    padding: 10px 1rem 11px
+    background: rgba(20, 20, 26, 0.75)
+
+.film-loecher
+  position: absolute
+  left: 0
+  right: 0
+  height: 10px
+  background-image: radial-gradient(circle at 9px 5px, rgba(245, 240, 220, 0.65) 2.6px, transparent 3.4px)
+  background-size: 22px 10px
+  pointer-events: none
+  &.oben
+    top: 2px
+  &.unten
+    bottom: 2px
+
+.film-plakette
+  flex: none
+  border-radius: 5px
+  padding: 2px 12px 3px
+  background: linear-gradient(160deg, var(--inst-messing-1), var(--inst-messing-2) 60%, #caa55a)
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -2px 4px rgba(0, 0, 0, 0.35), 0 2px 5px rgba(0, 0, 0, 0.5)
+  color: var(--inst-messing-text)
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.5)
+  text-align: center
+  user-select: none
+  .z1
+    font-family: var(--inst-druck)
+    font-size: 7.5px
+    font-weight: 800
+    letter-spacing: 2px
+  .z2
+    font-family: var(--inst-schreibmaschine)
+    font-size: 10.5px
+    white-space: nowrap
 
 .timeline-collapsed
   display: flex
   align-items: center
-  gap: 0.5rem
+  gap: 0.6rem
   margin-bottom: 0.3rem
 
 .minimal-controls

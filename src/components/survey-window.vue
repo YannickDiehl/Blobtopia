@@ -993,7 +993,12 @@ export default {
 .survey-window
   position: absolute
   bottom: 1rem
-  left: 1rem
+  // Rechts der Registratur (196px + Überstand der aktiven Mappe) — das
+  // Fenster liegt jetzt auf dem Schreibtisch, nicht mehr über der Welt
+  left: 240px
+  // Schmale Viewports: Registratur ist dort nur eine 64px-Griffleiste
+  @media (max-width: 900px)
+    left: 84px
   // Über der TimelineBar (6/7), unter der TopBar (10) — sonst fängt die
   // Timeline Touch-Gesten am Resize-Grip ab, wenn das Fenster tief hängt
   z-index: 8

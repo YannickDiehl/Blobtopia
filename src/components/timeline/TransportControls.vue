@@ -124,14 +124,15 @@ export default {
   .icon
     margin: 0 -3px
   &.play-btn
+    // Projektor-Knopf der Filmrolle: Messing
     min-width: 32px
     height: 28px
-    border-color: rgba(78, 204, 163, 0.4)
-    color: $primary
+    border-color: rgba(216, 181, 105, 0.55)
+    color: var(--inst-messing-1)
     &:hover
-      background: rgba(78, 204, 163, 0.15)
+      background: rgba(216, 181, 105, 0.15)
     &.playing
-      border-color: rgba(240, 201, 41, 0.4)
+      border-color: rgba(240, 201, 41, 0.5)
       color: #f0c929
       &:hover
         background: rgba(240, 201, 41, 0.15)

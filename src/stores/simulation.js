@@ -137,6 +137,11 @@ export const useSimulationStore = defineStore('simulation', {
 
     // UI Mode state
     , uiMode: 'exploration'
+    // Akten-Räume (docs/ui-institut.md): 'stadt' = Feld über der 3D-Welt,
+    // 'schreibtisch' = Auswertung (Registratur: studien | presse | dozent).
+    // Bewusst KEINE Route — die Welt bleibt gemountet (Three.js-Kontext).
+    , room: 'stadt'
+    , deskSection: 'studien'
     , rightPanelOpen: true
     , rightPanelTab: 'pulse'
     , spotlightActive: false
@@ -496,6 +501,16 @@ export const useSimulationStore = defineStore('simulation', {
       } else if (mode === 'analysis') {
         this.rightPanelOpen = true
       }
+    }
+    , setRoom(room) {
+      this.room = room
+    }
+    , openDesk(section) {
+      this.room = 'schreibtisch'
+      if (section) this.deskSection = section
+    }
+    , setDeskSection(section) {
+      this.deskSection = section
     }
     , setRightPanelOpen(open) {
       this.rightPanelOpen = open

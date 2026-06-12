@@ -1,14 +1,11 @@
 <template lang="pug">
 .instructor-layout(:class="[modeClass, { 'cursor-hidden': cursorHidden }]")
-  //- TopBar
+  //- Akten-Leiste (Reiter Stadt/Schreibtisch + Werkzeuge + Datums-Stempel)
   TopBar(
     :show-feed="showFeed"
-    , :show-newspaper="showNewspaper"
-    , :show-survey="surveyOpen"
     , @toggle-feed="showFeed = !showFeed"
-    , @toggle-newspaper="showNewspaper = !showNewspaper"
-    , @toggle-survey="toggleSurvey"
-    , @toggle-pause="toggleServerPause"
+    , @set-room="onSetRoom"
+    , @open-desk="openDeskSection"
     , @toggle-command-palette="showCommandPalette = true"
     , @fire-event="fireEvent"
   )
@@ -45,41 +42,50 @@
       , @close="deactivateSpotlight"
     )
 
-  //- Floating inspectors (left side)
+  //- Schreibtisch (Auswertungsraum) — legt sich über die Welt,
+  //- die Welt bleibt gemountet (Three.js-Kontext)
+  transition(name="fade")
+    DeskRoom(
+      v-if="onDesk"
+      , :desk-section="deskSection"
+      , @select-section="openDeskSection"
+    )
+
+  //- Feld-Artefakte (nur in der Stadt)
   transition(name="fade")
     BlobInteraction(
-      v-if="selectedBlob"
+      v-if="selectedBlob && !onDesk"
       , :blob="selectedBlob"
       , :timeline-mode="timelineMode"
       , @close="onCloseInteraction"
     )
   transition(name="fade")
     BuildingInspector(
-      v-if="selectedBuilding"
+      v-if="selectedBuilding && !onDesk"
       , :building="selectedBuilding"
       , :timeline-mode="timelineMode"
       , @close="selectedBuilding = null"
       , @select-blob="blob => onTapBlob({ blob })"
     )
 
-  //- Befragungsinstitut (survey institute) window
+  //- Studienmappe (Befragungsinstitut) — liegt auf dem Schreibtisch
   transition(name="fade")
     SurveyWindow(
-      v-if="surveyOpen"
+      v-if="onDesk && deskSection === 'studien' && surveyOpen"
       , :timeline-mode="timelineMode"
-      , @close="surveyStore.CLOSE_SURVEY()"
+      , @close="closeDeskToStadt"
     )
 
-  //- BlobFeed (slide-in from right)
+  //- BlobFeed (slide-in from right, Stadt-Artefakt)
   transition(name="slide-right")
-    BlobFeed(v-if="showFeed", :tweets="tweets")
+    BlobFeed(v-if="showFeed && !onDesk", :tweets="tweets")
 
-  //- Newspaper Overlay
+  //- Presse-Mappe (Zeitungen) — liegt auf dem Schreibtisch
   transition(name="fade")
     NewspaperOverlay(
-      v-if="showNewspaper"
+      v-if="onDesk && deskSection === 'presse'"
       , :issues="newspapers"
-      , @close="showNewspaper = false"
+      , @close="closeDeskToStadt"
       , @select-blob="onNewspaperSelectBlob"
     )
 
@@ -105,6 +111,7 @@ import BlobInteraction from '@/components/blob-interaction'
 import BuildingInspector from '@/components/building-inspector'
 import BlobFeed from '@/components/blob-feed'
 import TopBar from './TopBar'
+import DeskRoom from '@/components/desk/DeskRoom'
 // RightPanel removed — BlobFeed now standalone slide-in
 import LiveMetrics from './LiveMetrics'
 import SpotlightOverlay from './SpotlightOverlay'
@@ -121,6 +128,7 @@ export default {
     , BuildingInspector
     , BlobFeed
     , TopBar
+    , DeskRoom
     , LiveMetrics
     , SpotlightOverlay
     , CommandPalette
@@ -141,7 +149,6 @@ export default {
     , selectedBuilding: null
     , showCommandPalette: false
     , showFeed: false
-    , showNewspaper: false
     , cursorHidden: false
     , cursorTimer: null
   })
@@ -180,10 +187,15 @@ export default {
       , tweets: 'tweets'
       , newspapers: 'newspapers'
       , connectionStatus: 'connectionStatus'
+      , room: 'room'
+      , deskSection: 'deskSection'
     })
     , ...mapStores(useSimulationStore, useChatStore, useSurveyStore)
     , surveyOpen(){
       return this.surveyStore.isOpen
+    }
+    , onDesk(){
+      return this.room === 'schreibtisch'
     }
   }
   , watch: {
@@ -257,7 +269,8 @@ export default {
       }
     }
     , onNewspaperSelectBlob(blobId) {
-      this.showNewspaper = false
+      // Aus der Zeitung heraus zum Blob: zurück ins Feld
+      this.simulationStore.setRoom('stadt')
       const gen = this.getCurrentGeneration()
       if (gen) {
         const blob = gen.blobs.find(b => b.id === blobId)
@@ -275,13 +288,41 @@ export default {
       this.chatStore.closeChat()
     }
     , onCommandSelectBlob(blob){
+      // Blob-Auswahl gehört ins Feld
+      this.simulationStore.setRoom('stadt')
       this.onTapBlob({ blob })
     }
-    , toggleSurvey(){
-      if (this.surveyStore.isOpen) {
-        this.surveyStore.CLOSE_SURVEY()
+
+    // --- Räume (Akte: Stadt / Schreibtisch) ---
+    , onSetRoom(room){
+      if (room === 'schreibtisch') {
+        this.openDeskSection(this.deskSection || 'studien')
       } else {
+        this.simulationStore.setRoom('stadt')
+      }
+    }
+    , openDeskSection(section){
+      this.simulationStore.openDesk(section || 'studien')
+      if ((section || 'studien') === 'studien' && !this.surveyStore.isOpen) {
         this.surveyStore.OPEN_SURVEY()
+      }
+    }
+    , closeDeskToStadt(){
+      if (this.deskSection === 'studien') this.surveyStore.CLOSE_SURVEY()
+      this.simulationStore.setRoom('stadt')
+    }
+    , toggleSurvey(){
+      if (this.onDesk && this.deskSection === 'studien') {
+        this.closeDeskToStadt()
+      } else {
+        this.openDeskSection('studien')
+      }
+    }
+    , toggleNewspaper(){
+      if (this.onDesk && this.deskSection === 'presse') {
+        this.closeDeskToStadt()
+      } else {
+        this.openDeskSection('presse')
       }
     }
 
@@ -316,22 +357,21 @@ export default {
       // Escape
       if (e.key === 'Escape') {
         e.preventDefault()
-        if (this.surveyOpen) { this.surveyStore.CLOSE_SURVEY(); return }
-        if (this.showNewspaper) { this.showNewspaper = false; return }
         if (this.showCommandPalette) { this.showCommandPalette = false; return }
+        if (this.onDesk) { this.closeDeskToStadt(); return }
         if (this.spotlightActive) { this.deactivateSpotlight(); return }
         if (this.selectedBlob) { this.onCloseInteraction(); return }
         if (this.selectedBuilding) { this.selectedBuilding = null; return }
         return
       }
 
-      // Newspaper toggle
+      // Presse-Mappe (Schreibtisch)
       if (e.key === 'n' || e.key === 'N') {
-        this.showNewspaper = !this.showNewspaper
+        this.toggleNewspaper()
         return
       }
 
-      // Befragungsinstitut toggle
+      // Studienmappe / Befragungsinstitut (Schreibtisch)
       if (e.key === 'b' || e.key === 'B') {
         this.toggleSurvey()
         return
@@ -454,7 +494,7 @@ export default {
 // World container sizes
 .world-container
   position: absolute
-  top: 44px
+  top: 48px
   left: 0
   bottom: 0
   transition: right 0.3s ease
@@ -475,7 +515,7 @@ export default {
 // Presentation mode overrides
 .presentation-mode
   .world-container
-    top: 44px
+    top: 48px
     right: 0 !important
 
 .loading-cover
