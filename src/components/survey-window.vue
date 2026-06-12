@@ -1,11 +1,15 @@
 <template lang="pug">
 .survey-window(:class="{ 'has-timeline': timelineMode }", :style="panelStyle")
   .survey-card(:style="cardStyle")
-    //- Header doubles as the drag handle (matches panelConfig.headerSelector)
+    //- Briefkopf — doubles as the drag handle (matches panelConfig.headerSelector)
     .survey-header
+      img.briefkopf-logo(src="/blobtopia-logo.png", alt="")
       .header-text
-        .survey-title Befragungsinstitut
-        .survey-subtitle Eigene Befragung erstellen
+        .survey-title Befragungsinstitut Blobtopia
+        .survey-subtitle Rathausplatz 1 · 00001 Blobtopia · Abt. Empirische Blobforschung
+      .formblatt-nr
+        div Formblatt {{ formblattNr }}
+        div Studien-Nr. {{ studienNr }}
       .header-actions
         span.action-btn(@click="$emit('close')", title="Schließen")
           b-icon(icon="close", size="is-small")
@@ -616,6 +620,14 @@ export default {
     , currentYear() {
       return Math.floor((this.simulationStore.tick || 0) / this.ticksPerYear)
     }
+    // Briefkopf: Formblatt-Nummer je Arbeitsschritt + Aktenzeichen
+    , formblattNr() {
+      return { editor: 'S-3', sample: 'Z-1', results: 'D-2', truth: 'W-0' }[this.step] || 'S-3'
+    }
+    , studienNr() {
+      const tag = ((this.simulationStore.tick || 0) % this.ticksPerYear) + 1
+      return this.currentYear + '/' + String(tag).padStart(3, '0')
+    }
     , availableYears() {
       const m = this.simulationStore.timelineMeta
       const maxYear = Math.floor(((m && m.max_tick) || 8030) / this.ticksPerYear)
@@ -990,65 +1002,95 @@ export default {
 </script>
 
 <style lang="sass" scoped>
+// ═══════════════════════════════════════════════════════════════════════
+// Die Studienmappe: ein Formblatt des Befragungsinstituts auf dem
+// Schreibtisch (Zielbild design-prototyp/komplett.html, Plan
+// docs/ui-institut.md). Alle Klassennamen sind e2e-Vertrag — nur die
+// Optik wechselt von Dunkel-Panel auf Papier.
+// ═══════════════════════════════════════════════════════════════════════
+
+$korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")
+
 .survey-window
   position: absolute
   bottom: 1rem
-  // Rechts der Registratur (196px + Überstand der aktiven Mappe) — das
-  // Fenster liegt jetzt auf dem Schreibtisch, nicht mehr über der Welt
+  // Rechts der Registratur (196px + Überstand der aktiven Mappe)
   left: 240px
   // Schmale Viewports: Registratur ist dort nur eine 64px-Griffleiste
   @media (max-width: 900px)
     left: 84px
-  // Über der TimelineBar (6/7), unter der TopBar (10) — sonst fängt die
-  // Timeline Touch-Gesten am Resize-Grip ab, wenn das Fenster tief hängt
+  // Über der TimelineBar (6/7), unter der TopBar (10)
   z-index: 8
   pointer-events: auto
-  // Card darf nie unter die TopBar (44px, z-index 10) ragen — sonst sind
-  // die Tabs auf flachen Viewports (Beamer/Tablet quer) nicht klickbar
+  filter: drop-shadow(0 14px 26px rgba(40, 28, 8, 0.45))
   .survey-card
-    max-height: calc(100vh - 44px - 2rem)
+    max-height: calc(100vh - 48px - 2rem)
   &.has-timeline
-    bottom: 10rem
+    bottom: 7.5rem
     .survey-card
-      max-height: calc(100vh - 44px - 11rem)
+      max-height: calc(100vh - 48px - 8.5rem)
 
 .survey-card
-  background: rgba(0, 0, 0, 0.9)
-  backdrop-filter: blur(8px)
-  border-radius: 8px
-  border: 1px solid rgba(255, 255, 255, 0.15)
-  width: 460px
+  background-color: var(--inst-papier-hell)
+  background-image: $korn
+  border-radius: 2px
+  width: 540px
+  // Schmale Viewports (Tablet hochkant): schmaleres Blatt, sonst fehlt
+  // dem Resize-Grip der Spielraum bis zur Viewport-Klemmung
+  @media (max-width: 900px)
+    width: 460px
   max-height: 86vh
   display: flex
   flex-direction: column
   overflow: hidden
-  color: $grey-lighter
+  color: var(--inst-tinte)
+  font-family: var(--inst-druck)
   font-size: 0.8rem
 
+// ── Briefkopf (zugleich Drag-Griff) ──
 .survey-header
   display: flex
   align-items: center
-  gap: 0.5rem
-  padding: 0.6rem 0.75rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+  gap: 0.6rem
+  padding: 0.7rem 0.9rem 0.5rem
+  border-bottom: 2.5px solid var(--inst-tinte)
+  margin: 0 0.9rem
   flex-shrink: 0
   cursor: grab
   &:active
     cursor: grabbing
+
+  .briefkopf-logo
+    height: 34px
+    flex-shrink: 0
+    pointer-events: none
 
   .header-text
     flex: 1
     min-width: 0
 
   .survey-title
-    font-weight: 700
-    font-size: 0.95rem
-    color: $grey-lighter
+    font-weight: 800
+    font-size: 0.78rem
+    letter-spacing: 2px
+    text-transform: uppercase
+    color: var(--inst-tinte)
+    white-space: nowrap
 
   .survey-subtitle
-    font-size: 0.7rem
-    color: $grey
-    margin-top: 1px
+    font-size: 0.56rem
+    letter-spacing: 0.5px
+    color: var(--inst-beschriftung)
+    margin-top: 2px
+
+  .formblatt-nr
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.58rem
+    color: var(--inst-beschriftung)
+    text-align: right
+    line-height: 1.5
+    white-space: nowrap
+    flex-shrink: 0
 
   .header-actions
     display: flex
@@ -1057,93 +1099,140 @@ export default {
 
   .action-btn
     cursor: pointer
-    color: $grey
+    color: var(--inst-beschriftung)
     display: inline-flex
     align-items: center
     padding: 2px
     &:hover
-      color: $grey-lighter
+      color: var(--inst-stempelrot)
 
+// ── Blattreiter (Workflow Fragebogen → Stichprobe → Ergebnis · Wahrheit) ──
 .survey-steps
   display: flex
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1)
+  gap: 4px
+  padding: 0.5rem 0.9rem 0
   flex-shrink: 0
 
   .step-tab
     flex: 1
+    display: inline-flex
+    align-items: center
+    justify-content: center
+    gap: 0.2rem
     text-align: center
-    padding: 0.45rem 0.25rem
-    font-size: 0.74rem
-    color: $grey
+    padding: 0.4rem 0.25rem
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.72rem
+    letter-spacing: 0.5px
+    color: #8a7c5e
+    background: var(--inst-karton)
+    border-radius: 6px 6px 0 0
+    box-shadow: inset 0 -5px 6px rgba(90, 70, 30, 0.14)
     cursor: pointer
-    border-bottom: 2px solid transparent
     transition: all 0.15s
     &:hover
-      color: $grey-lighter
+      background: #efe4c8
     &.active
-      color: $primary
-      border-bottom-color: $primary
+      background: rgba(51, 81, 142, 0.1)
+      box-shadow: inset 0 2.5px 0 var(--inst-stempelblau)
+      color: var(--inst-stempelblau)
+      font-weight: bold
+    &.truth-tab
+      color: #a8588a
+      background: rgba(224, 105, 159, 0.12)
+      &.active
+        background: rgba(224, 105, 159, 0.2)
+        box-shadow: inset 0 2.5px 0 var(--inst-pink)
+        color: #9c2f63
 
 .survey-body
   flex: 1 1 auto
   min-height: 0
   overflow-y: auto
   -webkit-overflow-scrolling: touch
-  padding: 0.6rem 0.75rem
+  padding: 0.6rem 0.9rem 0.9rem
+
+  &::-webkit-scrollbar
+    width: 7px
+  &::-webkit-scrollbar-track
+    background: rgba(43, 58, 85, 0.06)
+  &::-webkit-scrollbar-thumb
+    border-radius: 4px
+    background: rgba(43, 58, 85, 0.25)
 
 .hint
   font-size: 0.72rem
-  color: $grey
+  color: var(--inst-tinte-soft)
   margin-bottom: 0.6rem
 
 .mini-hint
-  font-size: 0.7rem
-  color: $grey
+  font-family: var(--inst-hand)
+  font-size: 0.85rem
+  color: var(--inst-graphit)
   margin-bottom: 0.4rem
+  line-height: 1.15
 
-// ── Fragebogen ──
+// ── Fragebogen: Items als Formblatt-Fragen ──
 .item-card
-  border: 1px solid rgba(255, 255, 255, 0.1)
-  border-radius: 6px
+  background: rgba(255, 252, 244, 0.7)
+  border: 1.5px solid #ece1c8
+  border-radius: 4px
   padding: 0.5rem
-  margin-bottom: 0.5rem
+  margin-bottom: 0.55rem
 
   .item-head
     display: flex
     align-items: center
     gap: 0.4rem
-    margin-bottom: 0.4rem
+    margin-bottom: 0.35rem
 
   .item-num
+    font-family: var(--inst-schreibmaschine)
     font-weight: 700
-    color: $grey
+    color: var(--inst-beschriftung)
+    &::before
+      content: 'F'
 
   .action-btn.del
     cursor: pointer
-    color: $grey
+    color: var(--inst-beschriftung)
     margin-left: auto
     display: inline-flex
     &:hover
-      color: #e74c3c
+      color: var(--inst-stempelrot)
 
 .survey-input
-  background: rgba(255, 255, 255, 0.06)
-  border: 1px solid rgba(255, 255, 255, 0.18)
-  border-radius: 4px
-  color: $grey-lighter
-  padding: 0.3rem 0.4rem
-  font-size: 0.75rem
-  font-family: inherit
+  background: rgba(255, 255, 255, 0.45)
+  border: none
+  border-bottom: 1.5px dotted var(--inst-linie)
+  border-radius: 0
+  color: var(--inst-tinte)
+  padding: 0.3rem 0.2rem 0.15rem
+  font-size: 0.78rem
+  font-family: var(--inst-schreibmaschine)
   outline: none
   width: 100%
   box-sizing: border-box
   &:focus
-    border-color: $primary
+    border-bottom: 2px solid var(--inst-stempelblau)
+  &::placeholder
+    color: var(--inst-beschriftung)
+    opacity: 0.75
   &.mini
     width: 70px
 
+select.survey-input
+  border: 1.5px solid rgba(43, 58, 85, 0.25)
+  border-radius: 4px
+  background: rgba(255, 255, 255, 0.6)
+
 .item-text
   resize: vertical
+  border: 1.5px dashed rgba(43, 58, 85, 0.3)
+  border-radius: 4px
+  background: repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0 22px, rgba(70, 110, 160, 0.07) 22px 23px)
+  line-height: 23px
+  padding: 0.2rem 0.4rem
 
 .study-actions
   display: flex
@@ -1152,7 +1241,7 @@ export default {
   .survey-btn.mini-btn
     margin-top: 0
     padding: 0.3rem
-    font-size: 0.7rem
+    font-size: 0.62rem
 
 .quota-row
   display: flex
@@ -1161,50 +1250,58 @@ export default {
   margin-bottom: 0.25rem
   .quota-label
     flex: 1
+    font-family: var(--inst-schreibmaschine)
     font-size: 0.7rem
-    color: $grey-light
+    color: var(--inst-tinte-soft)
 
 .planner
   margin-top: 0.6rem
   padding-top: 0.5rem
-  border-top: 1px dashed rgba(255, 255, 255, 0.12)
+  border-top: 1.5px dashed rgba(43, 58, 85, 0.25)
   .planner-row
     display: flex
     align-items: center
     gap: 0.35rem
+    font-family: var(--inst-schreibmaschine)
     font-size: 0.75rem
-    color: $grey-light
+    color: var(--inst-tinte-soft)
   .planner-result
     font-weight: 600
-    color: $grey-lighter
+    color: var(--inst-tinte)
 
 .item-meta
   display: flex
   align-items: center
   gap: 0.4rem
-  margin-top: 0.35rem
+  margin-top: 0.4rem
   flex-wrap: wrap
 
+// Prüfvermerke: beantwortbar (blauer Haken) / nicht beantwortbar (roter Stempel)
 .detect-chip
   display: inline-flex
   align-items: center
   gap: 0.25rem
-  padding: 0.1rem 0.45rem
-  border-radius: 999px
-  font-size: 0.66rem
+  padding: 0.08rem 0.45rem
+  border-radius: 3px
+  font-size: 0.62rem
+  font-weight: 800
+  letter-spacing: 0.5px
   white-space: nowrap
+  text-transform: uppercase
+  opacity: 0.9
   &.ok
-    border: 1px solid rgba(78, 204, 163, 0.5)
-    color: #4ecca3
+    border: 1.5px solid #2c7d40
+    color: #2c7d40
+    transform: rotate(-0.5deg)
   &.warn
-    border: 1px solid rgba(230, 126, 34, 0.6)
-    color: #e67e22
+    border: 2px double var(--inst-stempelrot)
+    color: var(--inst-stempelrot)
+    transform: rotate(-1.5deg)
 
 .misst-label
-  font-size: 0.66rem
-  text-transform: uppercase
-  letter-spacing: 0.3px
-  color: $grey
+  font-family: var(--inst-hand)
+  font-size: 0.95rem
+  color: var(--inst-handrot)
   margin-left: auto
 
 .misst-select
@@ -1213,43 +1310,44 @@ export default {
   font-size: 0.7rem
   padding: 0.15rem 0.3rem
 
-// ── Stichprobe blocks ──
+// ── Stichprobe: §-Abschnitte des Ziehungsplans ──
 .panel-block
-  border: 1px solid rgba(255, 255, 255, 0.1)
-  border-radius: 6px
-  margin-bottom: 0.5rem
-  overflow: hidden
+  margin-bottom: 0.7rem
 
   .block-head
     display: flex
     align-items: center
     gap: 0.4rem
-    padding: 0.45rem 0.6rem
-    background: rgba(255, 255, 255, 0.04)
+    padding: 0.3rem 0
+    border-bottom: 1.5px solid rgba(141, 127, 99, 0.45)
     cursor: default
 
   .block-title
-    font-weight: 700
-    font-size: 0.74rem
-    color: $grey-lighter
+    font-weight: 800
+    font-size: 0.62rem
+    letter-spacing: 1.5px
+    text-transform: uppercase
+    color: var(--inst-beschriftung)
 
   .block-meta
     margin-left: auto
-    font-size: 0.7rem
-    color: $primary
+    font-family: var(--inst-hand)
+    font-size: 0.9rem
+    color: var(--inst-graphit)
 
   .block-body
-    padding: 0.5rem 0.6rem
+    padding: 0.5rem 0.1rem 0.1rem
 
 .filter-group
   margin-bottom: 0.5rem
 
   label
     display: block
-    font-size: 0.66rem
+    font-size: 0.6rem
+    font-weight: 800
     text-transform: uppercase
-    letter-spacing: 0.3px
-    color: $grey
+    letter-spacing: 1px
+    color: var(--inst-beschriftung)
     margin-bottom: 0.25rem
 
   &.range
@@ -1262,84 +1360,120 @@ export default {
 .chips
   display: flex
   flex-wrap: wrap
-  gap: 0.25rem
+  gap: 0.3rem
 
+// Filter-Chips: Karteireiter-Fähnchen, aktiv = blau gestempelt
 .chip
-  padding: 0.15rem 0.5rem
-  border: 1px solid rgba(255, 255, 255, 0.2)
-  border-radius: 999px
-  font-size: 0.7rem
-  color: $grey-light
+  padding: 0.15rem 0.55rem
+  border: 1.5px solid rgba(43, 58, 85, 0.3)
+  border-radius: 3px
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.68rem
+  color: var(--inst-tinte-soft)
+  background: rgba(255, 255, 255, 0.45)
   cursor: pointer
   transition: all 0.12s
   &:hover
-    color: $grey-lighter
+    border-color: var(--inst-stempelblau)
   &.active
-    background: $primary
-    border-color: $primary
+    background: var(--inst-stempelblau)
+    border-color: var(--inst-stempelblau)
     color: #fff
 
 .dash
-  color: $grey
+  color: var(--inst-beschriftung)
 
 .reset-link
-  font-size: 0.68rem
-  color: $grey
+  font-family: var(--inst-hand)
+  font-size: 0.9rem
+  color: var(--inst-graphit)
   cursor: pointer
   text-decoration: underline
+  text-decoration-style: wavy
+  text-decoration-thickness: 1px
   &:hover
-    color: $grey-lighter
+    color: var(--inst-tinte)
 
+// Auswahl per Rotstift: aktive Option ist eingekreist
 .radio-row
   display: flex
   align-items: center
-  gap: 0.4rem
-  padding: 0.2rem 0
+  gap: 0.15rem
+  padding: 0.12rem 0
+  font-family: var(--inst-schreibmaschine)
   font-size: 0.76rem
-  color: $grey-light
+  color: var(--inst-tinte-soft)
   cursor: pointer
+
+  input
+    // Unsichtbar, aber klickbar (Playwright braucht eine Box)
+    position: absolute
+    width: 14px
+    height: 14px
+    opacity: 0
+    margin: 0
+
+  span
+    display: inline-block
+    border: 2px solid transparent
+    border-radius: 50%
+    padding: 1px 10px 2px
+    transform: rotate(-1.5deg)
+    transition: border-color 0.12s ease
+
+  &:hover span
+    border-color: rgba(196, 55, 42, 0.25)
+
   &.active
-    color: $grey-lighter
+    color: var(--inst-tinte)
+    span
+      border-color: var(--inst-handrot)
 
 .params
   margin-top: 0.4rem
   label
     display: block
-    font-size: 0.66rem
+    font-size: 0.6rem
+    font-weight: 800
     text-transform: uppercase
-    letter-spacing: 0.3px
-    color: $grey
+    letter-spacing: 1px
+    color: var(--inst-beschriftung)
     margin: 0.4rem 0 0.2rem
 
-// ── Realized sample / picker ──
+// ── Realisierte Stichprobe / Namensliste ──
 .search
   margin: 0.4rem 0
 
 .blob-list
   max-height: 200px
   overflow-y: auto
-  border: 1px solid rgba(255, 255, 255, 0.08)
+  border: 1.5px solid rgba(141, 127, 99, 0.35)
   border-radius: 4px
+  background: rgba(255, 255, 255, 0.4)
 
 .blob-row
   display: flex
   align-items: center
   gap: 0.4rem
   padding: 0.25rem 0.4rem
-  font-size: 0.72rem
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.7rem
+  border-bottom: 1px solid rgba(141, 127, 99, 0.2)
   &:last-child
     border-bottom: none
   &.picked
-    background: rgba(78, 204, 163, 0.12)
+    background: rgba(51, 81, 142, 0.1)
+
+  input[type="checkbox"]
+    accent-color: var(--inst-stempelblau)
 
   .b-name
     font-weight: 600
-    color: $grey-lighter
+    color: var(--inst-tinte)
     white-space: nowrap
 
   .b-meta
-    color: $grey
+    color: var(--inst-beschriftung)
     flex: 1
     min-width: 0
     overflow: hidden
@@ -1348,24 +1482,25 @@ export default {
 
   .action-btn.del
     cursor: pointer
-    color: $grey
+    color: var(--inst-beschriftung)
     display: inline-flex
     &:hover
-      color: #e74c3c
+      color: var(--inst-stempelrot)
 
 .list-empty
   padding: 0.6rem
-  font-size: 0.72rem
-  color: $grey
+  font-family: var(--inst-hand)
+  font-size: 0.9rem
+  color: var(--inst-graphit)
   text-align: center
 
 .list-overflow
   font-size: 0.66rem
-  color: $grey
+  color: var(--inst-beschriftung)
   margin-top: 0.3rem
   text-align: center
 
-// ── shared ──
+// ── Stempel-Knöpfe ──
 .survey-btn
   display: inline-flex
   align-items: center
@@ -1374,38 +1509,49 @@ export default {
   width: 100%
   padding: 0.45rem
   margin-top: 0.4rem
-  border: 1px solid rgba(255, 255, 255, 0.2)
-  border-radius: 5px
-  background: rgba(255, 255, 255, 0.06)
-  color: $grey-lighter
-  font-size: 0.78rem
-  font-family: inherit
+  border: 2.5px solid var(--inst-stempelblau)
+  border-radius: 4px
+  background: rgba(255, 255, 255, 0.5)
+  color: var(--inst-stempelblau)
+  font-size: 0.66rem
+  font-weight: 800
+  letter-spacing: 1.5px
+  text-transform: uppercase
+  font-family: var(--inst-druck)
   cursor: pointer
-  transition: all 0.15s
+  box-shadow: 0 2px 0 rgba(51, 81, 142, 0.35)
+  transition: transform 0.06s ease, box-shadow 0.06s ease, background 0.15s
   &:hover
-    background: rgba(255, 255, 255, 0.12)
+    background: rgba(255, 255, 255, 0.85)
+  &:active
+    transform: translateY(2px)
+    box-shadow: 0 0 0 rgba(51, 81, 142, 0.35)
   &:disabled
     opacity: 0.4
     cursor: not-allowed
   &.primary
-    background: $primary
-    border-color: $primary
+    background: var(--inst-stempelblau)
     color: #fff
     &:hover
-      filter: brightness(1.1)
+      filter: brightness(1.12)
   &.add-btn
     border-style: dashed
+    box-shadow: none
+    color: var(--inst-tinte-soft)
+    border-color: rgba(43, 58, 85, 0.35)
 
 .info-item
   display: flex
   justify-content: space-between
   padding: 0.2rem 0
   .info-label
-    color: $grey
+    color: var(--inst-beschriftung)
   .info-value
-    color: $grey-lighter
+    font-family: var(--inst-schreibmaschine)
+    color: var(--inst-tinte)
     font-weight: 600
 
+// Bleistift-Balken (Ziehungsprotokoll)
 .dist
   margin-bottom: 0.5rem
 
@@ -1414,88 +1560,101 @@ export default {
     align-items: center
     gap: 0.4rem
     margin-bottom: 0.25rem
-    font-size: 0.7rem
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.68rem
 
   .dist-key
     width: 90px
-    color: $grey-light
+    color: var(--inst-tinte-soft)
     white-space: nowrap
     overflow: hidden
     text-overflow: ellipsis
 
   .dist-bar
     flex: 1
-    height: 8px
-    background: rgba(255, 255, 255, 0.08)
-    border-radius: 4px
+    height: 10px
+    background: rgba(43, 58, 85, 0.07)
+    border-radius: 2px
     overflow: hidden
 
   .dist-fill
     display: block
     height: 100%
-    background: $primary
+    background: repeating-linear-gradient(45deg, rgba(90, 95, 105, 0.55) 0 2px, rgba(90, 95, 105, 0.22) 2px 4px)
+    border-right: 1.5px solid rgba(70, 75, 85, 0.7)
 
   .dist-val
     width: 28px
     text-align: right
-    color: $grey-lighter
+    color: var(--inst-tinte)
 
 .results-divider
-  border-top: 1px solid rgba(255, 255, 255, 0.1)
+  border-top: 2px dashed rgba(141, 127, 99, 0.4)
   margin: 0.6rem 0 0.4rem
 
-// ── Ergebnis-Datentabelle ──
+// ── Datenlieferung: Endlospapier ──
 .data-table-wrap
   margin-top: 0.4rem
   max-height: 240px
   overflow: auto
-  border: 1px solid rgba(255, 255, 255, 0.1)
-  border-radius: 4px
+  border: none
+  border-radius: 2px
+  background: #fbfbf6 repeating-linear-gradient(180deg, rgba(110, 170, 120, 0.13) 0 24px, transparent 24px 48px)
+  // Transportlochstreifen links + rechts
+  background-image: radial-gradient(circle at 9px 12px, rgba(90, 110, 90, 0.35) 3px, transparent 4px), radial-gradient(circle at calc(100% - 9px) 12px, rgba(90, 110, 90, 0.35) 3px, transparent 4px), repeating-linear-gradient(180deg, rgba(110, 170, 120, 0.13) 0 24px, transparent 24px 48px)
+  background-size: 18px 24px, 18px 24px, auto
+  background-repeat: repeat-y, repeat-y, repeat
+  background-position: left top, right top, left top
+  box-shadow: inset 0 0 0 1.5px rgba(90, 110, 90, 0.3)
+  padding: 0 18px
 
 .data-table
   width: 100%
   border-collapse: collapse
-  font-size: 0.68rem
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.66rem
   white-space: nowrap
 
   th
     position: sticky
     top: 0
-    background: #1a1a1a
-    color: $grey
+    background: #f3f3ea
+    color: #5d6e54
     font-weight: 600
+    font-size: 0.56rem
+    letter-spacing: 1px
+    text-transform: uppercase
     text-align: left
-    padding: 0.25rem 0.45rem
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15)
+    padding: 0.3rem 0.45rem
+    border-bottom: 2px solid rgba(60, 90, 60, 0.4)
 
   td
     padding: 0.2rem 0.45rem
-    color: $grey-lighter
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05)
+    color: #27332a
     &.idx
-      color: $grey
-
-  tbody tr:last-child td
-    border-bottom: none
+      color: #8a9882
 
 .demo-block
   margin-top: 0.6rem
 
 .progress-line
   margin-top: 0.5rem
-  font-size: 0.8rem
-  color: $grey-light
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.78rem
+  color: var(--inst-tinte-soft)
 
 .error-banner
   margin-top: 0.5rem
   padding: 0.4rem 0.5rem
-  background: rgba(231, 76, 60, 0.15)
-  border: 1px solid rgba(231, 76, 60, 0.4)
-  border-radius: 4px
-  color: #e74c3c
-  font-size: 0.72rem
+  border: 2px double var(--inst-stempelrot)
+  border-radius: 3px
+  color: var(--inst-stempelrot)
+  font-size: 0.7rem
+  font-weight: 600
+  transform: rotate(-0.4deg)
+  background: rgba(255, 255, 255, 0.4)
 
-// ── Wahrheit (Gott-Perspektive) ──
+// ── Wahrheit (Dozentenzimmer-Vorzimmer im Formblatt) ──
 .truth-tab
   display: inline-flex
   align-items: center
@@ -1513,11 +1672,14 @@ export default {
     max-width: 220px
 
 .survey-input.has-error
-  border-color: #e74c3c
+  border-bottom-color: var(--inst-stempelrot)
+  &::placeholder
+    color: var(--inst-stempelrot)
 
 .truth-item
-  border: 1px solid rgba(255, 255, 255, 0.1)
-  border-radius: 6px
+  background: rgba(253, 248, 238, 0.85)
+  border: 1.5px solid rgba(224, 105, 159, 0.35)
+  border-radius: 4px
   padding: 0.5rem
   margin-bottom: 0.6rem
 
@@ -1526,17 +1688,21 @@ export default {
   align-items: center
   gap: 0.4rem
   .item-num
+    font-family: var(--inst-schreibmaschine)
     font-weight: 700
-    color: $grey
+    color: var(--inst-beschriftung)
 
 .truth-construct
   margin-left: auto
-  font-size: 0.68rem
-  color: $primary
+  font-size: 0.62rem
+  font-weight: 800
+  letter-spacing: 0.5px
+  color: #9c2f63
 
 .truth-text
-  font-size: 0.72rem
-  color: $grey-light
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.7rem
+  color: var(--inst-tinte-soft)
   margin: 0.25rem 0 0.5rem
 
 .tse-chain
@@ -1547,11 +1713,11 @@ export default {
   align-items: center
   gap: 0.4rem
   margin-bottom: 0.3rem
-  font-size: 0.7rem
+  font-size: 0.66rem
 
 .tse-label
   width: 132px
-  color: $grey-light
+  color: var(--inst-tinte-soft)
   white-space: nowrap
   overflow: hidden
   text-overflow: ellipsis
@@ -1560,60 +1726,68 @@ export default {
   flex: 1
   position: relative
   height: 10px
-  background: rgba(255, 255, 255, 0.07)
-  border-radius: 5px
+  border-bottom: 1.5px solid rgba(43, 58, 85, 0.5)
 
 .tse-dot
   position: absolute
   top: 50%
-  width: 10px
-  height: 10px
+  width: 11px
+  height: 11px
   border-radius: 50%
+  border: 2.5px solid var(--inst-tinte)
+  background: var(--inst-papier-hell)
   transform: translate(-50%, -50%)
+  box-sizing: border-box
   &.truth
-    background: $primary
+    border-color: var(--inst-pink)
+    background: var(--inst-pink)
   &.est
-    background: #e67e22
+    border-color: var(--inst-stempelrot)
+    background: var(--inst-stempelrot)
 
 .tse-val
   min-width: 38px
   text-align: right
-  color: $grey-lighter
+  font-family: var(--inst-schreibmaschine)
+  color: var(--inst-tinte)
   white-space: nowrap
 
 .tse-deltas
-  border-top: 1px dashed rgba(255, 255, 255, 0.12)
+  border-top: 1.5px dashed rgba(43, 58, 85, 0.25)
   padding-top: 0.35rem
   margin-bottom: 0.3rem
 
 .tse-parts
   margin: 0 0 0.3rem 0.8rem
-  opacity: 0.85
+  opacity: 0.9
   .tse-delta
-    font-size: 0.66rem
+    font-size: 0.62rem
 
 .tse-delta
   display: flex
   justify-content: space-between
-  font-size: 0.7rem
+  font-size: 0.68rem
   padding: 0.1rem 0
   .tse-delta-label
-    color: $grey
+    color: var(--inst-beschriftung)
   .tse-delta-val
+    font-family: var(--inst-schreibmaschine)
     font-weight: 600
     &.pos
-      color: #e67e22
+      color: var(--inst-stempelrot)
     &.neg
-      color: #3498db
+      color: var(--inst-stempelblau)
     &.neutral
-      color: $grey-light
+      color: var(--inst-graphit)
   &.total
-    border-top: 1px solid rgba(255, 255, 255, 0.12)
+    border-top: 1.5px solid rgba(43, 58, 85, 0.4)
     margin-top: 0.2rem
     padding-top: 0.25rem
     .tse-delta-label
-      color: $grey-lighter
+      color: var(--inst-tinte)
+      font-weight: 700
 
+// Replikations-Histogramm in Bleistift
 .sim-hist
   margin-top: 0.4rem
 
@@ -1623,37 +1797,38 @@ export default {
   align-items: flex-end
   gap: 1px
   height: 56px
-  background: rgba(255, 255, 255, 0.04)
-  border-radius: 4px
-  padding: 2px
+  border-bottom: 2px solid rgba(43, 58, 85, 0.5)
+  padding: 2px 2px 0
   overflow: hidden
 
 .hist-bar
   flex: 1
-  background: rgba(78, 204, 163, 0.55)
-  border-radius: 1px 1px 0 0
+  background: repeating-linear-gradient(45deg, rgba(90, 95, 105, 0.5) 0 2px, rgba(90, 95, 105, 0.22) 2px 4px)
+  border: 1px solid rgba(70, 75, 85, 0.5)
+  border-bottom: none
   min-height: 1px
 
 .hist-truth
   position: absolute
   top: 0
   bottom: 0
-  width: 2px
-  background: #e67e22
+  width: 2.5px
+  background: var(--inst-stempelrot)
 
 .hist-meta
   display: flex
   gap: 0.8rem
-  font-size: 0.66rem
-  color: $grey
+  font-family: var(--inst-schreibmaschine)
+  font-size: 0.62rem
+  color: var(--inst-beschriftung)
   margin-top: 0.2rem
 
 .sim-controls
   margin-bottom: 0.4rem
   label
     display: block
-    font-size: 0.7rem
-    color: $grey-light
+    font-size: 0.68rem
+    color: var(--inst-tinte-soft)
     margin-bottom: 0.3rem
   .sim-row
     display: flex
@@ -1668,17 +1843,23 @@ export default {
   margin-top: 0.5rem
   text-align: center
 
+// Dispositionscodes als rote Stempel-Vermerke
 .dispo-row
   display: flex
   flex-wrap: wrap
-  gap: 0.5rem
+  gap: 0.4rem
   margin: 0.25rem 0
   .dispo
-    font-size: 0.68rem
-    color: $grey
-    border: 1px solid rgba(255, 255, 255, 0.15)
-    border-radius: 999px
-    padding: 0.05rem 0.45rem
+    font-size: 0.58rem
+    font-weight: 800
+    letter-spacing: 0.5px
+    text-transform: uppercase
+    color: var(--inst-stempelrot)
+    border: 1.5px solid var(--inst-stempelrot)
+    border-radius: 3px
+    padding: 0.05rem 0.4rem
+    transform: rotate(-1.5deg)
+    opacity: 0.85
 
 .summary-table
   margin-top: 0.4rem
@@ -1694,20 +1875,18 @@ export default {
   gap: 0.4rem
   margin-bottom: 0.25rem
   .wave-label
+    font-family: var(--inst-schreibmaschine)
     font-size: 0.72rem
-    color: $grey-light
+    color: var(--inst-tinte-soft)
   .action-btn.del
     cursor: pointer
-    color: $grey
+    color: var(--inst-beschriftung)
     display: inline-flex
     &:hover
-      color: #e74c3c
+      color: var(--inst-stempelrot)
 
 .wave-chips
   display: flex
   gap: 0.3rem
   margin-bottom: 0.5rem
-
-.change-card
-  border-color: rgba(78, 204, 163, 0.35)
 </style>

@@ -1,0 +1,27 @@
+import { chromium } from 'playwright'
+const browser = await chromium.launch({ channel: 'chrome' }).catch(() => chromium.launch())
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+const errors = []
+page.on('pageerror', e => errors.push('PAGEERROR: ' + e.message))
+await page.goto('http://localhost:8080/#/s/0', { waitUntil: 'domcontentloaded' })
+await page.waitForTimeout(9000)
+const skip = page.locator('text=Überspringen')
+if (await skip.count()) { await skip.first().click(); await page.waitForTimeout(800) }
+await page.keyboard.press('b')
+await page.waitForTimeout(1500)
+// Beispiel-Item eintippen, damit die Vermerke sichtbar sind
+await page.locator('.item-text').first().fill('Wie sehr vertrauen Sie den Institutionen Blobtopias? Skala von 1 bis 10.')
+await page.waitForTimeout(800)
+await page.screenshot({ path: '/tmp/e3-fragebogen.png' })
+await page.locator('.step-tab:has-text("Stichprobe")').click()
+await page.waitForTimeout(800)
+await page.screenshot({ path: '/tmp/e3-stichprobe.png' })
+await page.locator('button:has-text("Stichprobe ziehen")').click()
+await page.waitForTimeout(1000)
+await page.locator('.step-tab:has-text("Ergebnis")').click()
+await page.waitForTimeout(600)
+await page.locator('button:has-text("Befragung durchführen")').click()
+await page.waitForTimeout(2500)
+await page.screenshot({ path: '/tmp/e3-ergebnis.png' })
+console.log(errors.length ? errors.join('\n') : '0 Konsolen-Fehler')
+await browser.close()

@@ -45,7 +45,7 @@ await page.locator('.item-text').nth(1).fill('Wie alt sind Sie?')
 await page.waitForTimeout(300)
 report('demographic question (age) is answerable as an open number'
   , (await page.locator('.detect-chip.ok').count()) === 2
-    && /offene Zahlenangabe/.test(await page.locator('.item-card').nth(1).innerText()))
+    && /offene Zahlenangabe/i.test(await page.locator('.item-card').nth(1).innerText()))
 
 await page.locator('.step-tab:has-text("Stichprobe")').first().click()
 await page.locator('button:has-text("Stichprobe ziehen")').click()
@@ -62,8 +62,8 @@ report('per-item estimates table shown', (await page.locator('.summary-table tbo
 // ── Ergebnis-Datentabelle: echte Antworten sichtbar, Name default, Rest opt-in ──
 report('data matrix shows the collected answers', (await page.locator('.data-table-wrap .data-table tbody tr').count()) > 0)
 const tableHead = await page.locator('.data-table-wrap .data-table thead').innerText()
-report('respondent names collected by default', /Name/.test(tableHead))
-report('sociodemographics are NOT collected automatically', !/Alter|Bildung|Partei/.test(tableHead))
+report('respondent names collected by default', /Name/i.test(tableHead))
+report('sociodemographics are NOT collected automatically', !/Alter|Bildung|Partei/i.test(tableHead))
 const firstAnswer = await page.locator('.data-table-wrap .data-table tbody tr').first().innerText()
 report('answer cells are populated', /\d|kA|wn/.test(firstAnswer))
 // Alter dazuwählen → neue Erhebung trägt die Spalte
@@ -73,7 +73,7 @@ await page.locator('.step-tab:has-text("Ergebnis")').first().click()
 await page.locator('button:has-text("Befragung durchführen")').click()
 await page.waitForTimeout(1200)
 report('opting in adds the column on the next run'
-  , /Alter/.test(await page.locator('.data-table-wrap .data-table thead').innerText()))
+  , /Alter/i.test(await page.locator('.data-table-wrap .data-table thead').innerText()))
 
 // ── Schloss ──
 await page.locator('.step-tab.truth-tab').click()
@@ -135,7 +135,7 @@ await page.waitForTimeout(400)
 report('trend study reports per-wave response rates'
   , /Welle 1/.test(await page.locator('.survey-section').innerText()))
 report('data matrix carries the wave column'
-  , /welle/.test(await page.locator('.data-table-wrap .data-table thead').innerText()))
+  , /welle/i.test(await page.locator('.data-table-wrap .data-table thead').innerText()))
 await page.locator('.step-tab.truth-tab').click()
 await page.locator('.truth-lock input[type="password"]').fill(process.env.E2E_INSPECTOR_PASSWORD || 'blob123')
 await page.keyboard.press('Enter')
@@ -144,7 +144,7 @@ await page.locator('button:has-text("Wahre Werte aufdecken")').click()
 await page.waitForTimeout(600)
 report('wave chips switch the decomposition', (await page.locator('.wave-chips .chip').count()) === 2)
 report('change card compares estimated vs true delta'
-  , /Δ wahr/.test(await page.locator('.change-card').first().innerText()))
+  , /Δ wahr/i.test(await page.locator('.change-card').first().innerText()))
 
 finish(errors)
 await browser.close()
