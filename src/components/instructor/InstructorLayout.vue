@@ -525,10 +525,12 @@ export default {
   &.cursor-hidden
     cursor: none
 
-// World container sizes
+// World container sizes — die Welt füllt bis zur Oberkante, sodass in der Stadt
+// die Reiter direkt über der lebenden Stadt schweben (kein dunkler Streifen mehr,
+// wie im Designprototyp). Am Schreibtisch deckt die Desk-Room-Fläche ohnehin ab.
 .world-container
   position: absolute
-  top: 48px
+  top: 0
   left: 0
   bottom: 0
   transition: right 0.3s ease
@@ -549,7 +551,7 @@ export default {
 // Presentation mode overrides
 .presentation-mode
   .world-container
-    top: 48px
+    top: 0
     right: 0 !important
 
 .loading-cover

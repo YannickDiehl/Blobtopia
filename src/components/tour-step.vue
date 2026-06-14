@@ -107,4 +107,24 @@ export default {
   padding-left: 14px
   .button
     font-size: 0.9rem
+
+  // Bulma berechnet auf der hellen Karteikarte falsche Button-Töne: der
+  // Primärtext wird fast schwarz auf Blau, „Zurück" ein hartes Schwarz
+  // (btn-dark nutzt alte Dark-Theme-Variablen). Hier in die Institut-Palette
+  // geholt — helle Schrift auf Stempelblau, „Zurück" als ruhiger Tinte-Umriss.
+  :deep(.button.is-primary)
+    color: var(--inst-papier-hell)
+    border-color: transparent
+    &:hover
+      color: #fff
+  :deep(.button.btn-dark)
+    background: rgba(255, 255, 255, 0.45)
+    border-color: var(--inst-tinte-soft)
+    color: var(--inst-tinte-soft)
+    &:hover
+      background: rgba(255, 255, 255, 0.82)
+      border-color: var(--inst-tinte)
+      color: var(--inst-tinte)
+    &:active
+      border-color: var(--inst-tinte)
 </style>

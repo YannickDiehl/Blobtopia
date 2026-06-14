@@ -33,6 +33,13 @@ for (const device of ['iPad Pro 11 landscape', 'iPad Pro 11']) {
   report('touch drag moves window', after.x - before.x > 150 && after.y - before.y > 80,
     `Δ(${Math.round(after.x - before.x)}, ${Math.round(after.y - before.y)})`)
 
+  // Vor dem Resize zur Standardlage zurück (Doppeltipp auf den Briefkopf):
+  // die zentrierte Vorgabe hat rechts Platz zum Wachsen, während ein nach
+  // unten/rechts gezogenes Fenster den Grip an der Viewport-Kante hätte.
+  const hdr2 = await page.locator('.survey-header').boundingBox()
+  await t.doubleTap(hdr2.x + hdr2.width / 2, hdr2.y + hdr2.height / 2)
+  await page.waitForTimeout(500)
+
   // Resize via the injected grip — must work even above the timeline bar
   const grip = () => page.locator('[aria-label="Größe ändern (Doppeltipp: maximieren)"]').boundingBox()
   const g1 = await grip()

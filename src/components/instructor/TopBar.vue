@@ -1,5 +1,5 @@
 <template lang="pug">
-.akten-leiste
+.akten-leiste(:class="{ 'ist-schreibtisch': room === 'schreibtisch' }")
   //- Logo-Sticker (klebt auf der Akte)
   .logo-sticker(@click="goToAbout", title="Über Blobtopia", role="button")
     img(src="/blobtopia-logo.png", alt="Blobtopia")
@@ -112,9 +112,10 @@ export default {
 </script>
 
 <style lang="sass" scoped>
-// Die Leiste ist die Oberkante der Akte: Aktendeckel-Karton, an dem die Reiter
-// hängen — eine durchgehende Fläche (Stadt wie Schreibtisch einheitlich), statt
-// dass darunter der dunkle Layout-Grund bzw. das Holz durchscheint.
+// Die Leiste ist die Oberkante der Akte. Stadt (Hauptmenü): die Reiter hängen
+// direkt über der lebenden Stadt — KEINE eigene Leiste (wie im Designprototyp),
+// sonst kollidiert das Braun mit den Grüntönen. Nur am Schreibtisch legt sich
+// eine Manila-Kopfleiste über das Holz.
 .akten-leiste
   position: absolute
   top: 0
@@ -125,12 +126,16 @@ export default {
   display: flex
   align-items: flex-start
   padding: 0
-  // Manila-Karton (gedämpft, leicht entsättigt) mit Falzkante unten —
-  // ruhiger als das frühere Orange-Braun, bridge zu Holz + grünem Filz
-  background: linear-gradient(180deg, #cbbd98 0%, #bdac80 60%, #af9d70 100%)
-  border-bottom: 2px solid rgba(86, 64, 33, 0.42)
-  box-shadow: 0 3px 7px rgba(40, 28, 8, 0.24), inset 0 -4px 7px rgba(86, 64, 33, 0.13), inset 0 1px 0 rgba(255, 250, 235, 0.45)
-  pointer-events: auto
+  pointer-events: none
+  > *
+    pointer-events: auto
+
+  // Schreibtisch: gedämpfter Manila-Karton mit Falzkante über dem Holz
+  &.ist-schreibtisch
+    pointer-events: auto
+    background: linear-gradient(180deg, #cbbd98 0%, #bdac80 60%, #af9d70 100%)
+    border-bottom: 2px solid rgba(86, 64, 33, 0.42)
+    box-shadow: 0 3px 7px rgba(40, 28, 8, 0.24), inset 0 -4px 7px rgba(86, 64, 33, 0.13), inset 0 1px 0 rgba(255, 250, 235, 0.45)
 
 .logo-sticker
   margin: 5px 10px 0 12px
@@ -195,13 +200,18 @@ export default {
   font-family: var(--inst-schreibmaschine)
   font-size: 0.62rem
   letter-spacing: 1px
-  // getippte Aktennotiz auf dem Karton — braune Tinte statt Weiß-auf-Dunkel
-  color: rgba(74, 56, 28, 0.82)
-  text-shadow: 0 1px 0 rgba(255, 248, 230, 0.35)
+  // Stadt: helle Notiz, lesbar über der lebenden Stadt
+  color: rgba(255, 253, 252, 0.92)
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7)
 
   .aera
     font-style: italic
     opacity: 0.85
+
+// Schreibtisch: getippte Aktennotiz auf dem Manila-Karton (braune Tinte)
+.ist-schreibtisch .leiste-mitte
+  color: rgba(74, 56, 28, 0.85)
+  text-shadow: 0 1px 0 rgba(255, 248, 230, 0.4)
 
 .leiste-rechts
   display: flex
