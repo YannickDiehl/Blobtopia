@@ -167,6 +167,7 @@
                   p
                     b N = {{ frameBlobs.length }} — Grundgesamtheit:
                     |  So viele Blobs gibt es in deiner Auswahl. Ist N klein, brauchst du etwas weniger Befragte (endliche-Population-Korrektur).
+                  p.explain-note Gemeint ist die Genauigkeit deiner Mittelwert­schätzung — also wie schmal das Konfidenzintervall um den Mittelwert ist. Das ist nicht die Teststärke (Power), mit der man einen Effekt wie einen Gruppenunterschied aufdeckt.
             button.survey-btn(v-if="design.technique !== 'manual'", @click="onPreview")
               b-icon(icon="account-search", size="is-small")
               span Stichprobe ziehen
@@ -1314,6 +1315,12 @@ select.survey-input
         margin-bottom: 0
       b
         color: var(--inst-tinte)
+    .explain-note
+      margin-top: 0.5rem
+      padding-top: 0.4rem
+      border-top: 1px dashed rgba(43, 58, 85, 0.28)
+      font-style: italic
+      color: var(--inst-tinte-soft)
 
 .item-meta
   display: flex
