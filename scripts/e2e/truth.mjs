@@ -19,7 +19,7 @@ await page.locator('.item-text').first().fill(
 await page.waitForTimeout(300)
 report('answerable item shows the ok chip', (await page.locator('.detect-chip.ok').count()) === 1)
 
-// ── Nicht zuordenbares Item: Warnung sichtbar, Feldstart blockiert, Picker heilt ──
+// ── Nicht zuordenbares Item: Warnung sichtbar, Feldstart blockiert, Umformulieren heilt ──
 await page.locator('button:has-text("Item hinzufügen")').click()
 await page.locator('.item-text').nth(1).fill('Was ist Ihr Lieblingsessen? Skala von 1 bis 10.')
 await page.waitForTimeout(300)
@@ -32,10 +32,12 @@ await page.locator('button:has-text("Befragung durchführen")').click()
 await page.waitForTimeout(500)
 report('fieldwork is blocked while an item is unanswerable'
   , /Nicht beantwortbar/.test(await page.locator('.error-banner').innerText().catch(() => '')))
+// Ohne manuelles Dropdown heilt das Umformulieren: eine erkennbare Formulierung
+// lässt die Auto-Erkennung greifen → Warnung verschwindet.
 await page.locator('.step-tab:has-text("Fragebogen")').first().click()
-await page.locator('.misst-select').nth(1).selectOption({ label: 'Allgemeines Vertrauen' })
+await page.locator('.item-text').nth(1).fill('Wie sehr vertrauen Sie der Regierung? Skala von 1 bis 10.')
 await page.waitForTimeout(300)
-report('manual binding fixes the warning', (await page.locator('.detect-chip.warn').count()) === 0)
+report('rewording the question fixes the warning', (await page.locator('.detect-chip.warn').count()) === 0)
 await page.locator('.item-card').nth(1).locator('.action-btn.del').click()
 await page.waitForTimeout(300)
 

@@ -288,7 +288,7 @@ export const useSurveyStore = defineStore('survey', {
           .filter(x => !x.it.construct)
         if (unbound.length) {
           this.error = 'Nicht beantwortbar: ' + unbound.map(x => x.label).join(', ')
-            + ' — im Fragebogen ein Merkmal („misst …") zuordnen, sonst können die Blobs nichts antworten.'
+            + ' — diese Frage(n) ließen sich nicht eindeutig zuordnen. Formuliere sie im Fragebogen etwas konkreter, sonst können die Blobs nicht antworten.'
           return
         }
       }

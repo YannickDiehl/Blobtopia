@@ -43,12 +43,10 @@
           .item-meta(v-if="it.text && it.text.trim()")
             span.detect-chip(:class="it.construct ? 'ok' : 'warn'")
               b-icon(:icon="it.construct ? 'check-circle' : 'alert'", size="is-small")
-              span {{ it.construct ? ('beantwortbar · ' + scaleLabel(it)) : 'nicht beantwortbar — Merkmal wählen' }}
-            label.misst-label misst:
-            select.survey-input.misst-select(:value="it.construct || ''", @change="onConstructChange(it, $event)")
-              option(value="") automatisch erkennen
-              optgroup(v-for="g in constructGroups", :key="g.group", :label="g.group")
-                option(v-for="c in g.items", :key="c.key", :value="c.key") {{ c.label }}
+              span {{ it.construct ? ('beantwortbar · ' + scaleLabel(it)) : 'noch nicht eindeutig' }}
+          p.reword-hint(v-if="it.text && it.text.trim() && !it.construct")
+            | Formuliere die Frage etwas konkreter — z. B. zu Zufriedenheit, Vertrauen,
+            | Sorgen oder einer politischen Einstellung. Dann kann die Simulation sie beantworten.
         button.survey-btn.add-btn(@click="addItem")
           b-icon(icon="plus", size="is-small")
           span Item hinzufügen
@@ -148,12 +146,27 @@
               label Seed (Reproduzierbarkeit)
               input.survey-input(type="number", v-model.number="design.seed")
             .planner(v-if="['srs', 'stratified', 'systematic'].includes(design.technique)")
-              label Planung: n für gewünschte Präzision (±e, 95 %)
+              label Wie viele Befragte brauchst du?
+              p.mini-hint Je genauer dein Ergebnis sein soll, desto mehr Leute musst du befragen. Gib an, wie nah dein geschätzter Mittelwert am wahren Wert liegen soll (±):
               .planner-row
                 span ±
                 input.survey-input.mini(type="number", step="0.1", min="0.1", v-model.number="planE")
-                span.planner-result → n ≥ {{ plannedN != null ? plannedN : '—' }}
-              p.mini-hint konservative Annahme σ ≈ Skalenbreite/4 = {{ planSigma }} · Rahmen N = {{ frameBlobs.length }}
+                span.planner-result → mindestens {{ plannedN != null ? plannedN : '—' }} Befragte
+              .planner-explain
+                span.explain-toggle(@click="planExplain = !planExplain") {{ planExplain ? '▾' : '▸' }} Was heißt das?
+                .explain-body(v-if="planExplain")
+                  p
+                    b ±{{ komma(planE) }} — Genauigkeit:
+                    |  So weit darf dein geschätzter Mittelwert höchstens vom wahren Wert abweichen. Kleineres ± = genauer = mehr Befragte nötig.
+                  p
+                    b 95 % — Sicherheit:
+                    |  In 95 von 100 solcher Stichproben liegt der wahre Wert in deinem ±-Bereich.
+                  p
+                    b σ ≈ {{ komma(planSigma) }} — Streuung der Antworten:
+                    |  Wie unterschiedlich die Leute antworten. Vorab unbekannt, deshalb grob als Skalenbreite ÷ 4 geschätzt (Faustregel).
+                  p
+                    b N = {{ frameBlobs.length }} — Grundgesamtheit:
+                    |  So viele Blobs gibt es in deiner Auswahl. Ist N klein, brauchst du etwas weniger Befragte (endliche-Population-Korrektur).
             button.survey-btn(v-if="design.technique !== 'manual'", @click="onPreview")
               b-icon(icon="account-search", size="is-small")
               span Stichprobe ziehen
@@ -293,7 +306,7 @@
                   td.idx {{ ri + 1 }}
                   td(v-for="c in tableColumns", :key="c.key") {{ c.cell(r) }}
           p.mini-hint kA = keine Angabe (verweigert) · wn = weiß nicht · — = nicht beantwortbar
-          .error-banner(v-if="unsupportedItems.length") Für {{ unsupportedItems.join(', ') }} kamen keine Antworten — das Merkmal ist in der Simulation nicht verfügbar. Im Fragebogen die „misst …“-Zuordnung prüfen.
+          .error-banner(v-if="unsupportedItems.length") Für {{ unsupportedItems.join(', ') }} kamen keine Antworten — die Frage ließ sich nicht eindeutig zuordnen. Formuliere sie im Fragebogen etwas konkreter (z. B. zu Zufriedenheit, Vertrauen oder einer Einstellung).
           button.survey-btn.primary(@click="onExport")
             b-icon(icon="download", size="is-small")
             span Als CSV exportieren
@@ -435,7 +448,6 @@ import { planSampleSize } from '@/lib/survey-sampling'
 import { FIELD_MODES } from '@/lib/survey-fieldwork'
 import { calibratedEstimate } from '@/lib/survey-weighting'
 import { datasetColumns } from '@/lib/survey-dataset'
-import { CONSTRUCTS } from '@/lib/survey-constructs'
 import { DEMOGRAPHICS, DEMOGRAPHICS_BY_KEY } from '@/lib/survey-demographics'
 import { DISTRICT_NAMES, PARTY_NAMES, EDUCATION_LABELS } from '@/lib/blob-adapter'
 
@@ -465,6 +477,7 @@ export default {
       , passwordError: false
       , simB: 500
       , planE: 0.5
+      , planExplain: false
       , localItems: []
       , design: {
         technique: 'srs'
@@ -582,15 +595,6 @@ export default {
     }
     , plannedN() {
       return planSampleSize({ e: this.planE, sigma: this.planSigma, N: this.frameBlobs.length })
-    }
-    , constructGroups() {
-      const groups = []
-      const byName = {}
-      for (const c of CONSTRUCTS) {
-        if (!byName[c.group]) { byName[c.group] = { group: c.group, items: [] }; groups.push(byName[c.group]) }
-        byName[c.group].items.push(c)
-      }
-      return groups
     }
     // Items, auf die im Ergebnis ausschließlich 'unsupported' kam (Daten-Loch).
     , unsupportedItems() {
@@ -761,7 +765,6 @@ export default {
         , text: ''
         , scale: { min: 1, max: 10, minLabel: '', maxLabel: '', format: 'numeric' }
         , construct: null
-        , constructManual: false
         , wording: {}
       }
     }
@@ -775,18 +778,10 @@ export default {
       const p = parseItem(it.text)
       it.scale = p.scale
       it.wording = p.wording
-      // Auto-Erkennung folgt dem Text, solange nicht manuell zugeordnet wurde.
-      if (!it.constructManual) it.construct = p.construct
-    }
-    , onConstructChange(it, e) {
-      const v = e.target.value
-      if (v) {
-        it.constructManual = true
-        it.construct = v
-      } else {
-        it.constructManual = false
-        it.construct = parseItem(it.text).construct
-      }
+      // Die Zuordnung zum Konstrukt wird automatisch aus dem Fragetext erkannt.
+      // (Das frühere manuelle „misst …“-Dropdown wurde entfernt — es verwirrte
+      // die Studierenden mehr, als es half.)
+      it.construct = p.construct
     }
     , canonicalDesign() {
       return {
@@ -939,6 +934,10 @@ export default {
       const s = it.scale || {}
       if (s.format === 'open' || s.min == null || s.max == null) return 'offene Zahlenangabe'
       return 'Skala ' + s.min + '–' + s.max
+    }
+    // Zahl mit deutschem Dezimalkomma (für die Power-Erklärung)
+    , komma(n) {
+      return String(n).replace('.', ',')
     }
     // Achsenbereich der 5-Punkte-Kette: Item-Skala, bei offenen Zahlenfragen
     // (Alter, Einkommen) aus den fünf Mittelwerten selbst abgeleitet.
@@ -1286,6 +1285,36 @@ select.survey-input
     font-weight: 600
     color: var(--inst-tinte)
 
+  // Ausklappbare Erklärung „Was heißt das?“ — Symbole in Alltagssprache
+  .planner-explain
+    margin-top: 0.45rem
+  .explain-toggle
+    display: inline-block
+    font-family: var(--inst-druck)
+    font-size: 0.7rem
+    font-weight: 700
+    letter-spacing: 0.3px
+    color: var(--inst-stempelblau)
+    cursor: pointer
+    user-select: none
+    &:hover
+      text-decoration: underline
+  .explain-body
+    margin-top: 0.35rem
+    padding: 0.45rem 0.6rem
+    background: rgba(51, 81, 142, 0.06)
+    border-left: 2.5px solid rgba(51, 81, 142, 0.35)
+    border-radius: 0 4px 4px 0
+    font-size: 0.72rem
+    line-height: 1.35
+    color: var(--inst-tinte-soft)
+    p
+      margin: 0 0 0.4rem
+      &:last-child
+        margin-bottom: 0
+      b
+        color: var(--inst-tinte)
+
 .item-meta
   display: flex
   align-items: center
@@ -1315,17 +1344,14 @@ select.survey-input
     color: var(--inst-stempelrot)
     transform: rotate(-1.5deg)
 
-.misst-label
+// Freundlicher Umformulier-Hinweis, wenn die Frage (noch) nicht erkannt wurde
+.reword-hint
   font-family: var(--inst-hand)
   font-size: 0.95rem
+  line-height: 1.2
   color: var(--inst-handrot)
-  margin-left: auto
-
-.misst-select
-  width: auto
-  max-width: 200px
-  font-size: 0.7rem
-  padding: 0.15rem 0.3rem
+  margin: 0.3rem 0 0.1rem
+  padding-left: 0.1rem
 
 // ── Stichprobe: §-Abschnitte des Ziehungsplans ──
 .panel-block
