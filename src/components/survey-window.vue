@@ -506,6 +506,13 @@ export default {
         , maxHeight: Math.round(window.innerHeight * 0.92)
         , headerSelector: '.survey-header'
         , resizable: true
+        // Das Blatt liegt auf der Schreibunterlage RECHTS der Registratur und
+        // darf nie darunter rutschen (sie liegt z-9 darüber und verdeckte sonst
+        // Briefkopf/Text). Breit: hinter der aktiven Mappe (~227px); schmal
+        // (≤900px, Registratur = 64px-Griffleiste): direkt rechts daneben.
+        , minLeft: 230
+        , minLeftNarrow: 84
+        , narrowBelow: 900
       }
     }
     , cardStyle() {

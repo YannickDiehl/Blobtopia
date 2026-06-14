@@ -61,7 +61,9 @@ export default {
       const vw = window.innerWidth
       const vh = window.innerHeight
       if (s.x != null && s.y != null && s.x >= 0 && s.x < vw && s.y >= TOP_BAR_HEIGHT - 10 && s.y < vh) {
-        this.panelX = clamp(s.x, 0, vw - 80)
+        // minLeft hebt eine zu weit links gespeicherte Position automatisch an
+        // (repariert ein Fenster, das früher unter die Registratur gezogen wurde)
+        this.panelX = clamp(s.x, this._dpMinLeft(), vw - 80)
         this.panelY = clamp(s.y, TOP_BAR_HEIGHT, vh - 60)
         if (s.w != null) this.panelW = clamp(s.w, cfg.minWidth, Math.min(cfg.maxWidth, vw))
         if (s.h != null) this.panelH = clamp(s.h, cfg.minHeight, Math.min(cfg.maxHeight, vh - TOP_BAR_HEIGHT))
@@ -146,10 +148,23 @@ export default {
   }
 
   , methods: {
+    // Linke Sperrkante: verhindert, dass das Fenster unter eine fixe
+    // Seitenleiste (z. B. die Registratur am Schreibtisch, die z-9 darüber liegt)
+    // rutscht und deren Mappen den Briefkopf/Text verdecken. Liest die
+    // Viewport-Breite LIVE (nicht über das gecachte panelConfig), damit der Wert
+    // beim Resize über die Schmal-Schwelle korrekt bleibt. Ohne minLeft (z. B.
+    // Stadt-Inspektoren) ist die Kante 0 → unverändertes Verhalten.
+    _dpMinLeft() {
+      const cfg = this.panelConfig
+      if (!cfg) return 0
+      if (cfg.minLeftNarrow != null && window.innerWidth <= (cfg.narrowBelow || 900)) return cfg.minLeftNarrow
+      return cfg.minLeft || 0
+    }
+
     // Touch/pen double-tap detection in pointerdown: Chrome synthesizes
     // dblclick from touch unreliably (esp. right after a drag/resize), so we
     // detect it ourselves. Mouse keeps the native dblclick path.
-    _dpIsDoubleTap(e, key) {
+    , _dpIsDoubleTap(e, key) {
       if (e.pointerType === 'mouse') return false
       const now = e.timeStamp || Date.now()
       const last = this[key]
@@ -213,7 +228,7 @@ export default {
 
     , _dpDragMove(e) {
       const w = this.panelW || this.$el.offsetWidth
-      this.panelX = clamp(this._dp_ox + (e.clientX - this._dp_sx), 0, window.innerWidth - Math.min(w, window.innerWidth))
+      this.panelX = clamp(this._dp_ox + (e.clientX - this._dp_sx), this._dpMinLeft(), window.innerWidth - Math.min(w, window.innerWidth))
       this.panelY = clamp(this._dp_oy + (e.clientY - this._dp_sy), TOP_BAR_HEIGHT, window.innerHeight - 40)
     }
 
@@ -262,9 +277,10 @@ export default {
         this._dp_prev = { x: this.panelX, y: this.panelY, w: this.panelW, h: this.panelH }
         const vw = window.innerWidth
         const vh = window.innerHeight
-        this.panelX = 8
+        // beim Maximieren die Sperrkante respektieren (Registratur freihalten)
+        this.panelX = Math.max(8, this._dpMinLeft())
         this.panelY = TOP_BAR_HEIGHT + 4
-        this.panelW = clamp(vw - 16, cfg.minWidth, cfg.maxWidth)
+        this.panelW = clamp(vw - this.panelX - 8, cfg.minWidth, cfg.maxWidth)
         this.panelH = clamp(vh - TOP_BAR_HEIGHT - 12, cfg.minHeight, cfg.maxHeight)
         this._dp_maximized = true
       } else {
@@ -297,7 +313,7 @@ export default {
       if (cfg && this.panelW !== null) this.panelW = clamp(this.panelW, cfg.minWidth, Math.min(cfg.maxWidth, vw))
       if (cfg && this.panelH !== null) this.panelH = clamp(this.panelH, cfg.minHeight, Math.min(cfg.maxHeight, vh - TOP_BAR_HEIGHT))
       const w = this.panelW || this.$el.offsetWidth
-      this.panelX = clamp(this.panelX, 0, vw - Math.min(w, vw))
+      this.panelX = clamp(this.panelX, this._dpMinLeft(), vw - Math.min(w, vw))
       this.panelY = clamp(this.panelY, TOP_BAR_HEIGHT, vh - 40)
       this._dpSave()
     }

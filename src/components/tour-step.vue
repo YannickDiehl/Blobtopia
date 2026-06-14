@@ -88,6 +88,13 @@ export default {
   font-family: var(--inst-schreibmaschine)
   padding-left: 14px
 
+  // Bulma setzt --bulma-body-color auf Elfenbein (#fffdfc, für dunkle Flächen).
+  // Auf der hellen Karteikarte muss der Fließtext dunkle Tinte sein — sonst ist
+  // er weiß auf Creme und praktisch unlesbar. Die .hide-Spans des
+  // Schreibmaschinen-Effekts bleiben über ihre eigene Regel transparent.
+  :deep(p)
+    color: var(--inst-tinte)
+
   :deep(.title)
     color: var(--inst-tinte) !important
     font-family: var(--inst-schreibmaschine)

@@ -77,12 +77,14 @@
       , @close="closeDeskToStadt"
     )
 
-  //- BlobPhone (BlobFeed — das Twitter der Blobs, Stadt-Artefakt)
-  transition(name="slide-right")
+  //- BlobPhone (BlobFeed — das Twitter der Blobs, Stadt-Artefakt).
+  //- Entfaltet sich aus dem Dock unten rechts (dort, wo das Mini-Phone liegt),
+  //- damit Wegstecken/Hervorholen wie ein zusammenhängender Griff wirkt.
+  transition(name="phone-dock")
     BlobFeed(v-if="showFeed && !onDesk", :tweets="tweets", @close="showFeed = false")
 
-  //- Mini-BlobPhone: liegt gesperrt in der Ecke, solange der Feed zu ist
-  transition(name="fade")
+  //- Mini-BlobPhone: liegt gesperrt im selben Eck, solange der Feed zu ist
+  transition(name="phone-dock-mini")
     button.miniphone(
       v-if="!showFeed && !onDesk && tweets && tweets.length"
       , @click="showFeed = true"
@@ -230,9 +232,10 @@ export default {
       // Resize 3D after CSS transition completes
       setTimeout(() => this.fixLayout(), 350)
     }
-    , showFeed(){
-      setTimeout(() => this.fixLayout(), 350)
-    }
+    // Kein fixLayout() beim Feed-Toggle: der Feed ist ein Overlay (fixed),
+    // die Welt bleibt 'world-full' — der Canvas ändert seine Größe nicht.
+    // Der alte 3D-Resize war ein Rest aus dem 'world-with-panel'-Design und
+    // ließ das Auf-/Zuklappen ruckeln.
   }
   , mounted(){
     this._keyHandler = (e) => this.onGlobalKey(e)
@@ -583,10 +586,11 @@ export default {
 .fade-enter, .fade-enter-from, .fade-leave-to
   opacity: 0
 
-// Mini-BlobPhone (gesperrt in der Stadt-Ecke, öffnet den Feed)
+// Mini-BlobPhone (gesperrt in der Stadt-Ecke unten rechts — gleiche Ecke
+// wie der ausgeklappte Feed, damit Wegstecken/Hervorholen zusammenhängt)
 .miniphone
   position: absolute
-  left: 14px
+  right: 16px
   bottom: 96px
   width: 96px
   height: 160px
@@ -663,8 +667,23 @@ export default {
     background: linear-gradient(180deg, #fff, #dbe2ef)
     box-shadow: inset 0 -1.5px 3px rgba(80, 90, 120, 0.4)
 
-.slide-right-enter-active, .slide-right-leave-active
-  transition: transform 0.3s ease
-.slide-right-enter, .slide-right-enter-from, .slide-right-leave-to
-  transform: translateX(100%)
+// Feed entfaltet sich aus dem Dock unten rechts (transform-origin = Dock-Ecke)
+.phone-dock-enter-active, .phone-dock-leave-active
+  transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.3, 1.04), opacity 0.2s ease
+  transform-origin: bottom right
+.phone-dock-enter-from, .phone-dock-enter, .phone-dock-leave-to
+  transform: translateY(20px) scale(0.82)
+  opacity: 0
+
+// Mini-Phone klappt am selben Eck auf/zu (leichtes Pop, gegenläufig zum Feed)
+.phone-dock-mini-enter-active
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.3, 1.2), opacity 0.18s ease
+  transition-delay: 0.06s
+  transform-origin: bottom right
+.phone-dock-mini-leave-active
+  transition: transform 0.16s ease, opacity 0.14s ease
+  transform-origin: bottom right
+.phone-dock-mini-enter-from, .phone-dock-mini-enter, .phone-dock-mini-leave-to
+  transform: rotate(-6deg) scale(0.5)
+  opacity: 0
 </style>

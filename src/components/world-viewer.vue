@@ -43,8 +43,6 @@
         , :near="10"
         , :aspect="viewWidth / viewHeight"
       )
-        v3-dom(ref="tour", :position="tourPosition")
-          Tour
       //- Intensitäten ×π: three hat den Legacy-Lighting-Modus entfernt
       //- (physikalisch korrekte Lichter) — alte Werte: 0.5 / 0.35 / 0.15
       v3-light(type="ambient", :intensity="1.571")
@@ -82,6 +80,13 @@
               BlobStatus(:blob="g")
             v3-group(:position="[-100, 50, 0]", ref="cameraGoal")
             v3-group(:position="[0, 30, 0]", ref="cameraFocusGoal")
+
+  //- Begrüßungs-Tour: bildschirmfestes Overlay statt 3D-projiziert. Früher hing
+  //- die Karte als v3-dom an einer 3D-Position und wanderte mit der Kamerafahrt
+  //- mit — beim Schreibmaschinen-Tippen ruckelte das. Jetzt sitzt sie ruhig.
+  transition(name="tour-fade")
+    .tour-overlay(v-if="tourStepNumber")
+      Tour
 </template>
 
 <script>
@@ -564,5 +569,29 @@ export default {
 .world-viewer
   max-width: 100vw
   background: $grey-darker
+  position: relative
+
+// Begrüßungs-Tour: ruhiges, bildschirmfestes Overlay (vormals 3D-projiziert)
+.tour-overlay
+  position: absolute
+  inset: 0
+  z-index: 20
+  display: flex
+  align-items: center
+  justify-content: center
+  padding: 1rem
+  // dezente Vignette: klare Mitte hinter der Karte, sanft abgedunkelte Ränder
+  background: radial-gradient(closest-side at 50% 45%, transparent 38%, rgba(18, 12, 4, 0.26))
+  pointer-events: none
+  // nur die Karteikarte selbst ist klickbar
+  :deep(.tour-step)
+    pointer-events: auto
+
+.tour-fade-enter-active
+  transition: opacity 0.35s ease
+.tour-fade-leave-active
+  transition: opacity 0.25s ease
+.tour-fade-enter-from, .tour-fade-leave-to
+  opacity: 0
 </style>
 

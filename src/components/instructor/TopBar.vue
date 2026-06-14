@@ -112,7 +112,9 @@ export default {
 </script>
 
 <style lang="sass" scoped>
-// Die Leiste ist die Oberkante der Akte: Karton, an dem die Reiter hängen
+// Die Leiste ist die Oberkante der Akte: Aktendeckel-Karton, an dem die Reiter
+// hängen — eine durchgehende Fläche (Stadt wie Schreibtisch einheitlich), statt
+// dass darunter der dunkle Layout-Grund bzw. das Holz durchscheint.
 .akten-leiste
   position: absolute
   top: 0
@@ -123,9 +125,11 @@ export default {
   display: flex
   align-items: flex-start
   padding: 0
-  pointer-events: none
-  > *
-    pointer-events: auto
+  // Kraftpapier/Karton mit leichtem Faserverlauf + Falzkante unten
+  background: linear-gradient(180deg, #cdae7c 0%, #c0a06d 62%, #b5945f 100%)
+  border-bottom: 2px solid rgba(74, 52, 22, 0.5)
+  box-shadow: 0 3px 7px rgba(40, 28, 8, 0.32), inset 0 -4px 7px rgba(74, 52, 22, 0.16), inset 0 1px 0 rgba(255, 248, 230, 0.4)
+  pointer-events: auto
 
 .logo-sticker
   margin: 5px 10px 0 12px
@@ -186,16 +190,17 @@ export default {
   display: flex
   align-items: center
   gap: 0.4rem
-  margin: 9px 0 0 14px
+  margin: 11px 0 0 16px
   font-family: var(--inst-schreibmaschine)
   font-size: 0.62rem
   letter-spacing: 1px
-  color: rgba(255, 253, 252, 0.75)
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6)
+  // getippte Aktennotiz auf dem Karton — braune Tinte statt Weiß-auf-Dunkel
+  color: rgba(74, 56, 28, 0.82)
+  text-shadow: 0 1px 0 rgba(255, 248, 230, 0.35)
 
   .aera
     font-style: italic
-    opacity: 0.8
+    opacity: 0.85
 
 .leiste-rechts
   display: flex
@@ -204,24 +209,27 @@ export default {
   margin: 7px 8px 0 auto
 
 .werkzeug-btn
+  // kleine Papier-Chips, die auf dem Karton liegen
   display: flex
   align-items: center
   justify-content: center
   width: 32px
   height: 28px
-  border: none
+  border: 1px solid rgba(120, 96, 56, 0.35)
   border-radius: 6px
-  background: rgba(251, 247, 236, 0.85)
+  background: linear-gradient(180deg, #fdfaf1, #f1e9d6)
   color: var(--inst-tinte-soft)
   cursor: pointer
   transition: all 0.15s
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25)
+  box-shadow: 0 2px 4px rgba(50, 35, 12, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.7)
   &:hover
     background: #fff
     color: var(--inst-tinte)
+    border-color: rgba(120, 96, 56, 0.5)
   &.active
     background: var(--inst-stempelblau)
     color: #fff
+    border-color: var(--inst-stempelblau)
 
 .datum-stempel
   margin: 6px 12px 0 6px
