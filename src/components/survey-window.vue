@@ -499,7 +499,9 @@ export default {
     }
     , panelConfig() {
       return {
-        storageKey: 'blobtopia_panel_survey'
+        // _v2: einmaliger Reset, damit die neue zentrierte Standardlage greift
+        // (eine alt gespeicherte, links-bündige Position würde sie sonst überschreiben)
+        storageKey: 'blobtopia_panel_survey_v2'
         , minWidth: 380
         , maxWidth: 820
         , minHeight: 340
@@ -1026,11 +1028,14 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
 .survey-window
   position: absolute
   bottom: 1rem
-  // Rechts der Registratur (196px + Überstand der aktiven Mappe)
-  left: 240px
-  // Schmale Viewports: Registratur ist dort nur eine 64px-Griffleiste
+  // Standardlage: mittig auf der Schreibunterlage (rechts der Registratur).
+  // Blatt = 540px → linke Kante = Mitte der Unterlage − 270px. Die Unterlage
+  // reicht von 230px bis vw−40px ⇒ Mitte = (vw+190)/2 ⇒ left = 0.5vw − 175.
+  left: calc(50vw - 175px)
+  // Schmale Viewports: Registratur ist nur 64px-Griffleiste, Blatt 460px,
+  // Unterlage 80px…vw−16px ⇒ left = 0.5vw − 198.
   @media (max-width: 900px)
-    left: 84px
+    left: calc(50vw - 198px)
   // Über der TimelineBar (6/7), unter der TopBar (10)
   z-index: 8
   pointer-events: auto

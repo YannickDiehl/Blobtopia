@@ -125,10 +125,11 @@ export default {
   display: flex
   align-items: flex-start
   padding: 0
-  // Kraftpapier/Karton mit leichtem Faserverlauf + Falzkante unten
-  background: linear-gradient(180deg, #cdae7c 0%, #c0a06d 62%, #b5945f 100%)
-  border-bottom: 2px solid rgba(74, 52, 22, 0.5)
-  box-shadow: 0 3px 7px rgba(40, 28, 8, 0.32), inset 0 -4px 7px rgba(74, 52, 22, 0.16), inset 0 1px 0 rgba(255, 248, 230, 0.4)
+  // Manila-Karton (gedämpft, leicht entsättigt) mit Falzkante unten —
+  // ruhiger als das frühere Orange-Braun, bridge zu Holz + grünem Filz
+  background: linear-gradient(180deg, #cbbd98 0%, #bdac80 60%, #af9d70 100%)
+  border-bottom: 2px solid rgba(86, 64, 33, 0.42)
+  box-shadow: 0 3px 7px rgba(40, 28, 8, 0.24), inset 0 -4px 7px rgba(86, 64, 33, 0.13), inset 0 1px 0 rgba(255, 250, 235, 0.45)
   pointer-events: auto
 
 .logo-sticker
