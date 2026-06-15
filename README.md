@@ -5,14 +5,14 @@
 <h1 align="center">Blobtopia</h1>
 
 <p align="center">
-  <strong>Eine interaktive 3D-Gesellschaftssimulation als Lehrwerkzeug für empirische Sozialforschung.</strong>
+  <strong>Eine interaktive 3D-Gesellschaftssimulation als Lehrwerkzeug für die empirische Sozialforschung.</strong>
 </p>
 
 <p align="center">
   <a href="https://blobtopia.vercel.app/#/s/0?intro=1"><strong>Blobtopia live ausprobieren</strong></a>
 </p>
 
-Blobtopia ist eine simulierte Stadt mit 500 kugelförmigen Wesen -- den *Blobs* -- die in fünf Distrikten leben, arbeiten, wählen und protestieren. Studierende erforschen diese Gesellschaft wie echte Sozialforscher\*innen: durch Beobachtung, Interviews, Datenanalyse und Inhaltsanalyse.
+Blobtopia ist eine simulierte Stadt mit 500 kugelförmigen Wesen — den *Blobs* — die in fünf Distrikten leben, arbeiten, wählen und protestieren. Studierende erforschen diese Gesellschaft wie echte Sozialforscher\*innen: durch Beobachtung, Interviews, Datenanalyse und Inhaltsanalyse.
 
 Teil des **Globtopia-Lehrkonzepts** für das Proseminar *Methoden I* (B.A. Politikwissenschaft) an der Philipps-Universität Marburg.
 
@@ -22,13 +22,13 @@ Teil des **Globtopia-Lehrkonzepts** für das Proseminar *Methoden I* (B.A. Polit
 
 Blobtopia baut auf drei Projekten auf, ohne die es nicht existieren würde:
 
-- **[minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator)** von Jasper Palfree (GPL-3.0) -- Die ursprüngliche Simulationsplattform (Vue.js + Three.js), deren Architektur und Rendering-Pipeline als Grundlage für Blobtopia dient. Die Blob-Kreaturen, das Komponentensystem und der 3D-Viewer stammen aus diesem Projekt.
+- **[minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator)** von Jasper Palfree (GPL-3.0) — die ursprüngliche Simulationsplattform, deren Aufbau und Darstellung als Grundlage für Blobtopia dienen. Die Blob-Wesen, das Bausteinsystem und die 3D-Ansicht stammen aus diesem Projekt.
 
-- **[Primer Learning](https://www.youtube.com/@PrimerLearning)** -- Der YouTube-Kanal von Justin Helps, dessen Simulationsvideos zu Evolution, natürlicher Selektion und emergenten Gesellschaften die Idee inspirierten, kugelförmige Agenten (*Blobs*) als intuitive Repräsentationen sozialer Akteure einzusetzen.
+- **[Primer Learning](https://www.youtube.com/@PrimerLearning)** — der YouTube-Kanal von Justin Helps, dessen Simulationsvideos zu Evolution und entstehenden Gesellschaften die Idee inspirierten, kugelförmige Figuren (*Blobs*) als anschauliche Vertreter sozialer Akteure einzusetzen.
 
-- **[Kenney](https://kenney.nl)** -- Die 3D-Stadtmodelle (Gebäude, Straßen, Vegetation, Infrastruktur) stammen aus den Asset-Packs von Kenney Vleugels, insbesondere den Packs *City Kit (Suburban)*, *City Kit (Commercial)* und *Nature Kit*. Alle Kenney-Assets sind unter **CC0 1.0 Universal (Public Domain)** lizenziert.
+- **[Kenney](https://kenney.nl)** — die 3D-Stadtmodelle (Gebäude, Straßen, Pflanzen, Infrastruktur) stammen aus den Asset-Packs von Kenney Vleugels, vor allem *City Kit (Suburban)*, *City Kit (Commercial)* und *Nature Kit*. Alle Kenney-Assets stehen unter **CC0 1.0 Universal (Public Domain)**.
 
-Blobtopia transformiert die biologische Evolutionssimulation in eine **politikwissenschaftliche Gesellschaftssimulation**: Statt Nahrungssuche und Reproduktion modelliert es Einstellungen, Wahlen, soziale Netzwerke und politische Krisen.
+Blobtopia verwandelt die ursprüngliche Evolutionssimulation in eine **politikwissenschaftliche Gesellschaftssimulation**: Statt Nahrungssuche und Fortpflanzung bildet es Einstellungen, Wahlen, soziale Netzwerke und politische Krisen ab.
 
 ---
 
@@ -36,58 +36,31 @@ Blobtopia transformiert die biologische Evolutionssimulation in eine **politikwi
 
 Blobtopia ist ein *lebendiges Labor* für die Methodenlehre. Es verbindet drei didaktische Säulen:
 
-1. **Beobachtung** -- Studierende beobachten die 3D-Stadt, erkennen Muster (wer geht wohin, wann, warum?) und unterscheiden sichtbare Merkmale von latenten Konstrukten.
+1. **Beobachtung** — Studierende beobachten die 3D-Stadt, erkennen Muster (wer geht wann wohin, und warum?) und lernen, sichtbare Merkmale von verborgenen Eigenschaften zu unterscheiden.
 
-2. **Befragung** -- Ueber ein LLM-basiertes Interview-System (Anthropic Claude) koennen Blobs direkt befragt werden. Jeder Blob antwortet gemaess seinem Persoenlichkeitsprofil, seinen Einstellungen und seiner aktuellen Stimmung -- inklusive sozialer Erwuenschtheit und Antwortverweigerung.
+2. **Befragung** — Über ein KI-gestütztes Interview-System lassen sich Blobs direkt befragen. Jeder Blob antwortet im Rahmen seiner Persönlichkeit, seiner Einstellungen und seiner aktuellen Stimmung — inklusive sozialer Erwünschtheit und Antwortverweigerung.
 
-3. **Datenanalyse** -- Artefakte wie der BlobFeed (Twitter-ähnliche Kurznachrichten) und die BlobGazetta (Zeitungsausgaben) liefern Materialien für Inhaltsanalyse, während die vorberechneten Zeitreihendaten quantitative Analysen ermöglichen.
+3. **Datenanalyse** — Materialien wie der BlobFeed (kurze Nachrichten wie auf Twitter) und die BlobGazetta (Zeitungsausgaben) eignen sich für die Inhaltsanalyse; die aufgezeichneten Zeitverläufe erlauben quantitative Auswertungen.
 
-Der Clou: Die Simulation kennt die *wahren Werte* jedes Blobs. Studierende erleben den Unterschied zwischen dem, was sie durch Befragung erfahren, und dem, was tatsaechlich der Fall ist -- und verstehen so Validität, Reliabilität und Messfehler am eigenen Leib.
+Der Clou: Die Simulation kennt die *wahren Werte* jedes Blobs. Studierende erleben den Unterschied zwischen dem, was sie durch eine Befragung erfahren, und dem, was tatsächlich der Fall ist — und verstehen so Gültigkeit (Validität), Zuverlässigkeit (Reliabilität) und Messfehler ganz unmittelbar.
 
 ---
 
-## Architektur
+## Wie es funktioniert
 
-Blobtopia ist **vollständig vorberechnet**. Die gesamte 22-jährige Gesellschaftsentwicklung (8.030 Tage) wird offline durch eine Rust-Simulation generiert und in kompakten JSON-Dateien gespeichert. Das Frontend ist ein reiner Timeline-Player.
+Blobtopia ist **vollständig vorberechnet**: Die gesamte 22-jährige Entwicklung der Gesellschaft (über 8.000 Tage) wird einmal im Voraus berechnet und gespeichert. Die Anwendung im Browser spielt diese Geschichte dann nur noch ab — wie ein Film, durch den man vor- und zurückspulen kann.
 
-```
-Rust-Simulation (offline)       Vue.js Frontend (Browser)       Anthropic API (live)
-========================       ========================        ====================
-Gesellschaftsmodell             3D-Stadt (Three.js)             Blob-Interviews
-Einstellungsdynamik      --->   Timeline-Playback         <-->  Chat mit Blobs
-Wahlen & Events                 BlobFeed & Gazetta              (einzige Live-Komponente)
-Tagesabläufe                   Waypoint-Patrol-Animation
-```
+Die **einzige Live-Komponente** sind die KI-gestützten Interviews: Wenn man einen Blob direkt befragt, entsteht die Antwort in dem Moment.
 
-Einzige Live-Komponente: Das LLM-Chat-System für Blob-Interviews (Anthropic Claude Haiku).
+*Technische Details zum Aufbau stehen in [ARCHITECTURE.md](ARCHITECTURE.md).*
 
 ---
 
 ## Stadt-Editor
 
-Unter `/#/editor` liegt das Authoring-Werkzeug für die Stadt (Dozenten-Werkzeug,
-Desktop). Werkzeuge: Platzieren im **Stempel-Modus** (Werkzeug bleibt aktiv,
-`R` dreht, `Esc` beendet), Auswählen/Verschieben/Drehen, **Straßenzug ziehen**
-(L-förmige Linie, Tile-Typen verbinden sich automatisch), Distrikt malen,
-Löschen, Undo/Redo (`Ctrl+Z` / `Ctrl+Shift+Z`). Der **Inspektor** (rechts)
-editiert pro Gebäude Bezeichnung, Funktion (`functional_type` aus dem
-Simulationsmodell) und Kapazität; die **Prüfung** warnt live, wenn die Stadt
-nicht simulationstauglich ist (zu wenig Wohnraum für alle Blobs, zerrissenes
-Straßennetz, unerreichbare Gebäude).
+Unter der Adresse `/#/editor` gibt es ein Werkzeug, mit dem Lehrende die Stadt selbst gestalten können (am Desktop): Gebäude platzieren, drehen, verschieben und löschen, Straßenzüge ziehen, Distrikte einfärben sowie Schritte rückgängig machen und wiederholen. Pro Gebäude lassen sich Bezeichnung, Funktion und Kapazität festlegen. Ein Prüf-Assistent warnt sofort, wenn die Stadt nicht simulierbar wäre — etwa bei zu wenig Wohnraum für alle Blobs oder unerreichbaren Gebäuden.
 
-Der Arbeitsstand wird automatisch als Entwurf gesichert (localStorage).
-**„In Welt ansehen"** zeigt den Entwurf sofort in der 3D-Welt (rein visuell —
-das Blob-Verhalten bleibt die vorberechnete Standard-Stadt, ein Toast weist
-darauf hin). Damit eine neue Stadt wirklich simuliert wird:
-
-```bash
-# 1. Im Editor (npm run dev): „In Repo speichern" — schreibt
-#    data/blobtopia-city.json + public/blobtopia-city.json synchron
-# 2. Simulation neu rechnen + exportieren:
-cargo run -p blobtopia-precompute    # ~1 min für 500 Blobs
-npm run export
-# 3. committen + deployen
-```
+Der Arbeitsstand wird automatisch gesichert. **„In Welt ansehen"** zeigt den Entwurf sofort in der 3D-Stadt (rein zur Ansicht — das Verhalten der Blobs bleibt zunächst das der ausgelieferten Standard-Stadt). Damit eine neu gebaute Stadt auch wirklich neu simuliert wird, muss die Simulation einmal neu durchgerechnet werden (siehe [Setup](#setup)).
 
 ---
 
@@ -97,114 +70,102 @@ npm run export
 
 | Distrikt | Blobs | Profil |
 |---|---|---|
-| **Gruental** | 80 | Ländlich, niedrige Zufriedenheit, links-orientiert, geringes Vertrauen |
-| **Sonnenberg** | 80 | Wohlhabend, hohe Zufriedenheit, rechts-orientiert, hohes Vertrauen |
-| **Hafenviertel** | 120 | Urban-divers, breit gestreute Einstellungen, hohe Durchmischung |
-| **Mittelfeld** | 120 | Zentristisch, moderate Werte, Median-Einkommen |
+| **Grüntal** | 80 | Ländlich, niedrige Zufriedenheit, links orientiert, geringes Vertrauen |
+| **Sonnenberg** | 80 | Wohlhabend, hohe Zufriedenheit, rechts orientiert, hohes Vertrauen |
+| **Hafenviertel** | 120 | Urban und vielfältig, breit gestreute Einstellungen, hohe Durchmischung |
+| **Mittelfeld** | 120 | Mitte, gemäßigte Werte, mittleres Einkommen |
 | **Industriezone** | 100 | Arbeiterviertel, niedrige Zufriedenheit, links, niedriges Vertrauen |
 
-Jeder Blob hat: Name, Alter (15--65), Bildungsniveau (0--3), Einkommen, Wohnort, Arbeitsplatz, Parteizugehörigkeit, 9 Einstellungsdimensionen, 21 latente Trait-Indikatoren, Emotionszustand und ein Persönlichkeitsmerkmal.
+Jeder Blob hat: Name, Alter, Bildung, Einkommen, Wohnort, Arbeitsplatz, Parteinähe, neun politische Einstellungen, verborgene Persönlichkeitseigenschaften samt beobachtbaren Anzeichen, eine aktuelle Stimmung und ein stabiles Persönlichkeitsmerkmal.
 
 ---
 
-## Psychologische Konstrukte
+## Verborgene Eigenschaften (Konstrukte)
 
-Blobtopia modelliert **6 latente Konstrukte** mit insgesamt **21 beobachtbaren Indikatoren**. Die Konstrukte sind nicht direkt messbar -- Studierende muessen sie durch Befragung und Beobachtung operationalisieren.
+Blobtopia bildet **sechs verborgene Konstrukte** mit insgesamt **21 beobachtbaren Anzeichen** ab. Die Konstrukte sind nicht direkt messbar — Studierende müssen sie durch Befragung und Beobachtung greifbar machen (operationalisieren).
 
-### 1. Politische Efficacy
+### 1. Politische Wirksamkeit (Efficacy)
 
-*"Kann ich als Bürger\*in politisch etwas bewirken?"* (Dalton: kognitive Mobilisierung)
+*„Kann ich als Bürger\*in politisch etwas bewirken?"* (nach Dalton)
 
-| Indikator | Beschreibung |
-|---|---|
-| `self_efficacy` | "Ich kann politische Entscheidungen beeinflussen" |
-| `political_knowledge` | Verstaendnis politischer Prozesse |
-| `vote_importance` | "Meine Stimme zählt bei Wahlen" |
-| `external_efficacy` | "Die Regierung kuemmert sich um die Meinung normaler Leute" |
+- „Ich kann politische Entscheidungen beeinflussen"
+- Verständnis politischer Abläufe
+- „Meine Stimme zählt bei Wahlen"
+- „Die Regierung kümmert sich um die Meinung normaler Leute"
 
-**Primärer Treiber:** Bildung (je höher, desto stärker die Efficacy).
+**Stärkster Einfluss:** Bildung — je höher, desto stärker das Gefühl der Wirksamkeit.
 
 ### 2. Soziales Kapital
 
-*"Bin ich sozial eingebettet?"* (Putnam: soziale Akkumulation)
+*„Bin ich sozial eingebunden?"* (nach Putnam)
 
-| Indikator | Beschreibung |
-|---|---|
-| `network_size` | Anzahl regelmaessiger sozialer Kontakte |
-| `neighbor_trust` | Vertrauen in die Nachbarschaft |
-| `community_participation` | Häufigkeit gemeinschaftlicher Aktivitaeten |
-| `generalized_trust` | "Den meisten Menschen kann man vertrauen" |
-| `media_trust` | Vertrauen in die Medienberichterstattung |
+- Zahl regelmäßiger sozialer Kontakte
+- Vertrauen in die Nachbarschaft
+- Häufigkeit gemeinschaftlicher Aktivitäten
+- „Den meisten Menschen kann man vertrauen"
+- Vertrauen in die Medienberichterstattung
 
-**Primärer Treiber:** Alter (soziale Akkumulation über die Lebenszeit).
+**Stärkster Einfluss:** Alter — soziale Bindungen wachsen über das Leben.
 
 ### 3. Autoritarismus
 
-*"Brauchen wir starke Führung und Ordnung?"* (Feldman & Stenner: Sozialisationshypothese)
+*„Brauchen wir starke Führung und Ordnung?"* (nach Feldman & Stenner)
 
-| Indikator | Beschreibung |
-|---|---|
-| `obedience_value` | "Gehorsam und Respekt vor Autoritaet sind wichtige Tugenden" |
-| `rule_conformity` | "Regeln muessen strikt befolgt werden" |
-| `strong_leader_preference` | "Starke Führer sind besser als parlamentarische Diskussion" |
+- „Gehorsam und Respekt vor Autorität sind wichtige Tugenden"
+- „Regeln müssen strikt befolgt werden"
+- „Starke Führung ist besser als langes parlamentarisches Diskutieren"
 
-**Primärer Treiber:** Altersgruppe (ältere Kohorten stärker). Negativer Bildungseffekt. Moderiert durch Need for Cognitive Closure.
+**Stärkster Einfluss:** Alter (ältere Jahrgänge stärker); höhere Bildung schwächt es ab.
 
 ### 4. Politikverdrossenheit
 
-*"Ist das politische System entfremdet von mir?"* (Ökonomische Deprivationstheorie)
+*„Ist das politische System mir entfremdet?"*
 
-| Indikator | Beschreibung |
-|---|---|
-| `powerlessness` | "Die da oben machen doch was sie wollen" |
-| `political_complexity` | "Politik ist zu komplex für normale Leute" |
-| `party_indifference` | "Alle Parteien sind im Grunde gleich" |
+- „Die da oben machen doch, was sie wollen"
+- „Politik ist zu kompliziert für normale Leute"
+- „Alle Parteien sind im Grunde gleich"
 
-**Primärer Treiber:** Einkommen (je niedriger, desto stärker die Verdrossenheit).
+**Stärkster Einfluss:** Einkommen — je niedriger, desto stärker die Verdrossenheit.
 
 ### 5. Materialismus vs. Postmaterialismus
 
-*"Was zählt mehr: Sicherheit oder Selbstverwirklichung?"* (Inglehart: Wertewandel)
+*„Was zählt mehr: Sicherheit oder Selbstverwirklichung?"* (nach Inglehart)
 
-| Indikator | Beschreibung |
-|---|---|
-| `economic_security_priority` | Wirtschaftliche Sicherheit vs. Selbstentfaltung |
-| `environment_over_economy` | "Umwelt wichtiger als Wachstum" |
-| `freedom_over_order` | "Freiheit wichtiger als Ordnung" |
+- Wirtschaftliche Sicherheit gegenüber Selbstentfaltung
+- „Umwelt ist wichtiger als Wachstum"
+- „Freiheit ist wichtiger als Ordnung"
 
-**Primärer Treiber:** Einkommen (ökonomische Unsicherheit fördert Materialismus).
+**Stärkster Einfluss:** Einkommen — wirtschaftliche Unsicherheit fördert materielle Prioritäten.
 
 ### 6. Populismus
 
-*"Steht das Volk gegen die Elite?"* (Akkerman, Mudde & Zaslove 2014)
+*„Steht das Volk gegen die Elite?"* (nach Akkerman, Mudde & Zaslove)
 
-| Indikator | Beschreibung |
-|---|---|
-| `anti_elitism` | "Politiker haben den Kontakt zum Volk verloren" |
-| `people_centrism` | "Das Volk, nicht Politiker, sollte wichtige Fragen entscheiden" |
-| `manichean_outlook` | "Politik ist letztlich Gut gegen Boese" |
+- „Politiker haben den Kontakt zum Volk verloren"
+- „Das Volk, nicht die Politiker, sollte wichtige Fragen entscheiden"
+- „Politik ist letztlich Gut gegen Böse"
 
-**Komposit-Konstrukt:** Gespeist aus hoher Verdrossenheit, niedriger Efficacy und niedrigem Sozialkapital.
+**Zusammengesetztes Konstrukt:** gespeist aus hoher Verdrossenheit, geringer Wirksamkeit und niedrigem Sozialkapital.
 
 ---
 
-## Einstellungssystem
+## Politische Einstellungen
 
-Jeder Blob hat **9 dynamische Einstellungsdimensionen** (Skala 0--10):
+Jeder Blob hat **neun politische Einstellungen** auf einer Skala von 0 bis 10:
 
-| Dimension | Pole |
+| Einstellung | Pole |
 |---|---|
-| `political_satisfaction` | Unzufrieden (0) -- Zufrieden (10) |
-| `ideology` | Links (1) -- Rechts (10) |
-| `institutional_trust` | Misstrauisch (0) -- Vertrauend (10) |
-| `policy_economy` | Staatsregulierung (0) -- Marktliberalisierung (10) |
-| `policy_environment` | Umweltschutz (0) -- Wirtschaftswachstum (10) |
-| `policy_security` | Bürgerfreiheiten (0) -- Ordnung/Kontrolle (10) |
-| `policy_social` | Umverteilung (0) -- Eigenverantwortung (10) |
-| `policy_migration` | Offen/liberal (0) -- Restriktiv (10) |
-| `policy_democracy` | Direkte Demokratie (0) -- Repraesentative Eliten (10) |
+| Politische Zufriedenheit | unzufrieden – zufrieden |
+| Ideologie | links – rechts |
+| Vertrauen in Institutionen | misstrauisch – vertrauensvoll |
+| Wirtschaftspolitik | staatliche Regulierung – Marktfreiheit |
+| Umweltpolitik | Umweltschutz – Wirtschaftswachstum |
+| Sicherheitspolitik | Bürgerfreiheiten – Ordnung und Kontrolle |
+| Sozialpolitik | Umverteilung – Eigenverantwortung |
+| Migrationspolitik | offen – restriktiv |
+| Demokratieverständnis | direkte Demokratie – repräsentative Eliten |
 
-Einstellungen veraendern sich durch **Ereignisse**, **sozialen Einfluss** und **Lebenserfahrung**.
+Diese Einstellungen verändern sich durch **Ereignisse**, **sozialen Einfluss** und **Lebenserfahrung**.
 
 ---
 
@@ -212,297 +173,178 @@ Einstellungen veraendern sich durch **Ereignisse**, **sozialen Einfluss** und **
 
 ### Parteien
 
-| Partei | Ideologie-Band | Profil |
-|---|---|---|
-| **Fortschritt** | < 3.5 | Progressiv, links |
-| **Mitte** | 3.5 -- 6.5 | Zentristisch |
-| **Tradition** | > 6.5 | Konservativ, rechts |
-| **Unabhaengige** | Trust < 3.0 | Systemkritisch, nicht-parteigebunden |
+| Partei | Ausrichtung |
+|---|---|
+| **Fortschritt** | progressiv, links |
+| **Mitte** | zentristisch |
+| **Tradition** | konservativ, rechts |
+| **Unabhängige** | systemkritisch, parteiungebunden |
 
 ### Wahlverhalten
 
-- **Wahlbereitschaft:** `satisfaction > 2.0 UND trust > 1.5` -- niedrige Zufriedenheit + niedriges Vertrauen führt zur Wahlenthaltung.
-- **Wahlen** finden alle 1.460 Tage (4 Sim-Jahre) statt.
+Wer sowohl sehr unzufrieden als auch sehr misstrauisch ist, bleibt der Wahl eher fern. Wahlen finden alle vier Jahre statt.
 
 ### Protest
 
-- **Protestbereitschaft:** `((5 - satisfaction) * (5 - trust)) / 25` -- steigt wenn sowohl Zufriedenheit als auch Vertrauen sinken.
-- **Distriktschwelle:** Wenn die durchschnittliche Protestbereitschaft eines Distrikts > 0.4, beginnen Proteste.
-- **Individuelle Teilnahme:** Blobs mit Protestbereitschaft > 0.3 ziehen zum Rathausplatz.
+Die Protestbereitschaft steigt, je stärker Unzufriedenheit und Misstrauen zusammenkommen. Überschreitet sie in einem Distrikt eine Schwelle, beginnen dort Proteste — und besonders unzufriedene Blobs ziehen zum Rathausplatz.
 
 ---
 
-## Emotionssystem
+## Stimmungen
 
-Jeder Blob hat einen Emotionszustand basierend auf **Valenz** (negativ--positiv) und **Arousal** (ruhig--aktiviert):
+Jeder Blob hat eine Stimmung, die sich daraus ergibt, wie positiv oder negativ und wie ruhig oder aufgewühlt er sich fühlt: **begeistert, hoffnungsvoll, zufrieden, gelassen, angespannt, besorgt, frustriert** oder **wütend**.
 
-| Emotion | Bedingung |
+Die Stimmung färbt seine Interview-Antworten, seine Kurznachrichten und die Zeitungsartikel.
+
+---
+
+## Sozialer Einfluss
+
+Jeder Blob ist in ein soziales Netzwerk eingebunden (bis zu 15 enge Kontakte). Am stärksten zählen Haushaltsmitglieder, dann Kolleg\*innen, Nachbar\*innen und Bekannte.
+
+Blobs in Sichtweite beeinflussen sich gegenseitig in Zufriedenheit, Ideologie und Vertrauen — je näher, desto stärker. Sehr ausgeprägte Überzeugungen lassen sich schwerer beeinflussen. Dieser soziale Einfluss wird wöchentlich neu berechnet.
+
+---
+
+## Persönlichkeit: Bedürfnis nach Eindeutigkeit
+
+Jeder Blob hat ein stabiles **Bedürfnis nach klaren, eindeutigen Antworten** (in der Forschung: *Need for Cognitive Closure*, nach Webster & Kruglanski):
+
+- **Stark ausgeprägt:** bevorzugt einfache, klare Antworten, ist anfälliger für populistische Botschaften, ändert seine Ideologie schneller, neigt stärker zum Autoritarismus.
+- **Schwach ausgeprägt:** hält Mehrdeutigkeit besser aus, ist widerstandsfähiger gegen Populismus, denkt eher in Graustufen.
+
+Dieses Merkmal beeinflusst, wie empfänglich ein Blob für bestimmte Botschaften ist und wie er im Interview kommuniziert.
+
+---
+
+## Ereignisse
+
+Über die 22 Jahre laufen **27 Ereignisse** ab. Jedes löst eine Kette von Wirkungen auf Einstellungen und Eigenschaften aus — und zwar **ungleich verteilt**: Manche Distrikte und Einkommensgruppen trifft es härter als andere.
+
+| Ereignis | Wirkung |
 |---|---|
-| **begeistert** | Valenz > 0.25, Arousal > 0.35 |
-| **hoffnungsvoll** | Valenz > 0.15, Arousal > 0.1 |
-| **zufrieden** | Valenz > 0.1 |
-| **wuetend** | Valenz < -0.15, Arousal > 0.25 |
-| **frustriert** | Valenz < -0.2 |
-| **besorgt** | Valenz < -0.05, Arousal > 0.15 |
-| **angespannt** | Arousal > 0.3 |
-| **gelassen** | Standard |
-
-Emotionen beeinflussen die Chat-Antworten, Tweets und Zeitungsartikel.
-
----
-
-## Soziale Einflussmechanismen
-
-### Kontaktnetzwerk
-
-Jeder Blob hat ein soziales Netzwerk (max. 15 aktive Kontakte, Dunbar's Active Circle):
-
-| Kontakttyp | Gewicht |
-|---|---|
-| Haushaltsmitglieder | 2.0 |
-| Kolleg\*innen | 1.0 |
-| Nachbar\*innen | 0.5 |
-| Bekannte (Freizeit/Mittagessen) | 0.2 |
-
-### Proximity-basierter Einfluss
-
-- Blobs in Sichtweite beeinflussen gegenseitig `satisfaction`, `ideology` und `trust`.
-- Nähe verstärkt den Einfluss: `1.0 - (Distanz / Sichtweite)`.
-- Extreme Ideologien sind resistenter gegen Einfluss.
-- Soziale Einflussberechnung erfolgt woechentlich (alle 7 Ticks).
+| **Wirtschaftskrise** | Trifft niedrige Bildung und niedriges Einkommen härter. Materielle Prioritäten steigen, das Gefühl der Wirksamkeit sinkt, Populismus wächst. |
+| **Politischer Skandal** | Vertrauensverlust besonders bei Anhänger\*innen der betroffenen Partei. Überträgt sich auf andere, vor allem bei geringem politischen Wissen. |
+| **Naturkatastrophe** | Trifft einen ganzen Distrikt. Solidarität entsteht: das soziale Kapital steigt trotz Verlusten, das Umweltbewusstsein wächst. |
+| **Politische Reform** | Geringverdiener profitieren (Zufriedenheit und Wirksamkeit steigen); Besserverdienende reagieren je nach Haltung unterschiedlich. |
+| **Medienkampagne** | Wirkt weniger stark bei höherer Bildung. Fortschrittliche Kampagnen in benachteiligten Distrikten stärken das Gefühl der Wirksamkeit. |
+| **Bildungsreform** | Langfristig wirksam: Bildung, Einkommen und Wissen steigen, das Bedürfnis nach Eindeutigkeit sinkt. |
+| **Bürgererfolg** | Trifft einen Distrikt. Vertrauen, Wirksamkeit und Beteiligung steigen — „Engagement lohnt sich". |
+| **Kulturveranstaltung** | Trifft einen Distrikt. Zufriedenheit und Gemeinschaftsgefühl steigen. |
+| **Polarisierungsdebatte** | Zu einem Thema (Klima, Sicherheit, Ungleichheit). Die Bevölkerung driftet auseinander. |
+| **Ungleichheitsbericht** | Zufriedenheit sinkt, je größer die eigene Einkommenslücke wirkt. Die Kritik an „den Eliten" wächst. |
+| **Distriktübergreifender Konflikt** | Regionale Identität verstärkt sich, die Distrikte polarisieren gegeneinander, das Vertrauen in Institutionen sinkt. |
+| **Korruptionsenthüllung** | Vertrauensverlust überall, Gefühl der Machtlosigkeit steigt, Protestwelle über alle Distrikte. |
 
 ---
 
-## Persoenlichkeit: Need for Cognitive Closure
+## Materialien
 
-Jeder Blob hat einen stabilen **Need for Cognitive Closure**-Wert (NfC, 0--10; Webster & Kruglanski 1994):
+### BlobFeed (kurze Nachrichten)
 
-- **Hoher NfC (> 6.5):** Bevorzugt einfache, klare Antworten. Anfällig für populistische Framings. Schnellere Ideologieänderung. Stärkerer Autoritarismus.
-- **Niedriger NfC (< 3.5):** Toleriert Ambiguitaet. Resistenter gegen Populismus. Denkt in Graustufen.
-
-NfC moderiert Autoritarismus-Aktivierung, Ideologieresistenz und Kommunikationsstil im Chat.
-
----
-
-## Ereignissystem
-
-Die Simulation enthält **27 Ereignisse über 22 Jahre** (8.030 Tage). Jedes Ereignis löst kaskadierende Effekte auf Einstellungen und latente Traits aus, mit **asymmetrischen Distrikt- und Einkommenseffekten**.
-
-| Event-Typ | Mechanismus |
-|---|---|
-| **Wirtschaftskrise** | Asymmetrische Verwundbarkeit (niedrige Bildung + niedriges Einkommen stärker betroffen). Materialismus steigt, Efficacy sinkt, Populismus waechst. |
-| **Politischer Skandal** | Vertrauenskollaps bei Parteimitgliedern (Verratseffekt). Spillover auf Nicht-Mitglieder bei niedrigem Politikwissen. Populismus-Schub. |
-| **Naturkatastrophe** | Distriktweit. Solidaritaetseffekt: Sozialkapital steigt trotz Einkommensverlusten. Umweltbewusstsein waechst. |
-| **Politische Reform** | Progressive Umverteilung: Geringverdiener profitieren (Zufriedenheit + Efficacy steigen). Besserverdienende je nach Ideologie unterschiedlich betroffen. |
-| **Medienkampagne** | Parteigesteuert. Individuelle Anfälligkeit sinkt mit Bildung. Progressive Kampagnen in benachteiligten Distrikten stärken Efficacy. |
-| **Bildungsreform** | Transformativ: Bildungsniveau + Einkommen + Wissen steigen. Need for Closure sinkt. Permanente Basis-Verschiebung der Efficacy. |
-| **Bürger-Erfolg** | Distriktweit. Vertrauen + Efficacy + Partizipation steigen. "Engagement lohnt sich"-Effekt. |
-| **Kulturveranstaltung** | Distriktweit. Zufriedenheit + Gemeinschaftsgefuehl steigen. |
-| **Polarisierungsdebatte** | Themenbasiert (Klima, Sicherheit, Ungleichheit). Bevoelkerung wird entlang der Policy-Dimension auseinandergezogen. |
-| **Ungleichheitsbericht** | Relative Deprivation: Zufriedenheitsverlust proportional zur Einkommensluecke. Anti-Elitismus waechst. |
-| **Distriktüber&shy;greifender Konflikt** | Regionale Identität stärkt sich. Ideologische Polarisierung zwischen Distrikten. Institutionelles Vertrauen sinkt. |
-| **Korruptionsenthüll&shy;ung** | Globaler Vertrauenskollaps. Machtlosigkeitsgefühl steigt. Protestwelle über alle Distrikte. |
-
----
-
-## Artefakte
-
-### BlobFeed (Twitter-Analogon)
-
-1.707 vorberechnete Tweets, generiert via Anthropic API. Jeder Tweet reflektiert:
-- Aktuelle Emotion und Persoenlichkeit des Blobs
-- Politische Einstellungen und Policy-Positionen
-- Bildungsniveau (Umgangssprache bis akademisch)
-- Need for Cognitive Closure (plakativ vs. differenziert)
-- Reaktion auf aktuelle Ereignisse
+1.707 vorberechnete Kurznachrichten, mit KI erzeugt. Jede spiegelt die aktuelle Stimmung und Persönlichkeit eines Blobs, seine politischen Einstellungen, sein Bildungsniveau (von Umgangssprache bis akademisch) und seine Reaktion auf aktuelle Ereignisse.
 
 ### BlobGazetta (Zeitungen)
 
-50 Ausgaben in zwei Stilprofilen (progressiv/konservativ), generiert via LLM-Subagenten. Berichten über Wahlergebnisse, Krisen, Skandale und gesellschaftliche Entwicklungen.
+50 Zeitungsausgaben in zwei Stilrichtungen (fortschrittlich und konservativ), mit KI erzeugt. Sie berichten über Wahlergebnisse, Krisen, Skandale und gesellschaftliche Entwicklungen.
 
-### LLM-Interviews
+### KI-Interviews
 
-Studierende interviewen Blobs über ein Chat-Interface. Das System nutzt Claude Haiku mit einem umfassenden System-Prompt, der alle 21 Trait-Indikatoren, Einstellungen, Emotionen und die aktuelle Tagesaktivität des Blobs enthält. Sicherheitsmechanismen verhindern Prompt-Injection und System-Prompt-Leaks.
-
-## Die Akte: Stadt & Schreibtisch (UI-Konzept „Das Institut")
-
-Die Oberfläche besteht aus **physischen Forschungsartefakten** über der
-3D-Stadt (Designsystem: `docs/ui-institut.md`, `src/styles/_institut.scss`).
-Der Bildschirm ist eine Akte mit zwei Ordner-Reitern:
-
-- **Stadt** (Feld): Blob antippen → **Karteikarte** mit Polaroid-Porträt
-  (Gesicht = Emotionszustand) und Feldnotiz; „Interview führen" →
-  **Interview-Protokoll** mit laufender AUFNAHME; Gebäude → **Hausakte**;
-  der BlobFeed läuft auf dem **BlobPhone** (das Twitter der Blobs: „Blubs",
-  „weiterblubbern"; Mini-Gerät liegt in der Ecke); ⌘K öffnet das
-  **Einwohnermelderegister**. Die Timeline ist die **Filmrolle des
-  Stadtarchivs** („Aufzeichnung · 22 Jahre" — die Precomputed-Architektur
-  als Fiktion).
-- **Schreibtisch** (Auswertung): Hängeregistratur mit **Studien**
-  (Befragungsinstitut), **Presse** (Der Blobspiegel in Fraktur, der
-  blobtopia kurier mit rotem Sans-Logo) und dem verschlossenen
-  **Dozentenzimmer** (pink = Wahrheit): ein Schloss, dahinter der
-  versiegelte Umschlag mit den wahren Werten — der Wahrheit-Tab öffnet
-  sich nach dem Siegelbruch.
-
-Bedienkonventionen: Radio-Optionen werden mit **Rotstift eingekreist**,
-Checkboxen **angekreuzt**, Submit-Knöpfe **stempeln** (Druck-Animation),
-Dispositionscodes und `kA`/`wn` erscheinen als rote Stempel-Vermerke,
-Hinweise stehen in Bleistift-Handschrift.
-
-### Befragungsinstitut (Survey-Feature)
-
-Statt Blobs einzeln zu interviewen, können Studierende automatisierte
-Befragungen in Auftrag geben (Studienmappe am Schreibtisch, über den
-Umfrage-Knopf in der Akten-Leiste oder Taste `b`):
-
-1. **Fragebogen** — Fragen und Antwortskalen werden komplett frei formuliert
-   (Codebook-Stil). Das System erkennt Skala, gemessenes Konstrukt und
-   Wording-Effekte heuristisch (`src/lib/survey-parse.js`). Jedes Item zeigt
-   sichtbar, ob es **beantwortbar** ist, und die „misst …"-Zuordnung zum
-   Merkmal ist korrigierbar — Operationalisierung wird damit explizit. Ohne
-   Zuordnung kann die Simulation keine Antwort erzeugen; der Feldstart wird
-   dann mit klarer Meldung blockiert (nie wieder stumme leere Spalten).
-   **Hintergrundmerkmale** (Name, Distrikt, Alter, Bildung, Partei, Einkommen)
-   landen nur im Datensatz, wenn sie explizit zur Erhebung ausgewählt werden
-   (`src/lib/survey-demographics.js`) — wie im echten Fragebogen.
-2. **Stichprobe** — kalibrierbares Ziehungsdesign mit Grundgesamtheits-Filtern
-   (Distrikt, Bildung, Partei, Alter, Einkommen) und sechs Verfahren:
-   Zufallsauswahl, geschichtet, Klumpen (ein- und zweistufig), systematisch,
-   Quote (editierbare Soll-Zellen, proportionaler Default), manuell
-   (Selektionsbias erlebbar). Seeded und reproduzierbar, inkl. Designgewichten
-   und Stichprobenumfangs-Planer (`src/lib/survey-sampling.js`). Dazu die
-   **Feldarbeit**: Erhebungsmodus (persönlich/Telefon/online) und
-   Kontaktversuche steuern selektiven Unit-Nonresponse — Brutto ≠ Netto,
-   mit Ausschöpfungsquote und Dispositionscodes im Datensatz
-   (`src/lib/survey-fieldwork.js`). **Längsschnitt**: Trend- und Panel-Designs
-   über die Timeline (bis 4 Wellen, Panel mit selektiver Attrition,
-   `src/lib/survey-longitudinal.js`). Studien sind als JSON-Datei
-   exportierbar — Import + Durchführen repliziert den Datensatz
-   byte-identisch (`src/lib/survey-persist.js`), der Arbeitsstand wird
-   automatisch gesichert.
-3. **Ergebnis** — die synthetische Antwort-Engine (`src/lib/survey-synthetic.js`)
-   beantwortet Items aus den gespeicherten Blob-Werten plus kalibriertem
-   Messfehler und **modellierten Fragebogeneffekten** (Akquieszenz —
-   bildungsabhängig —, Framing, soziale Erwünschtheit, nicht-zufällige
-   Item-Nonresponse). Die erhobene Datenmatrix ist direkt im Fenster sichtbar
-   (Nonresponse bleibt als `kA`/`wn` lesbar); Export als CSV (Semikolon +
-   Dezimalkomma, deutsches Excel) mit Codebook.
-4. **Wahrheit** (hinter dem Dozenten-Schloss, Passwort wie beim
-   Blob-Inspektor) — weil die Simulation die wahren Werte kennt, wird jeder
-   Schätzer **exakt** in die Total-Survey-Error-Komponenten zerlegt
-   (`src/lib/survey-truth.js`): Coverage + Ziehung + Unit-Nonresponse +
-   Item-Nonresponse + Messung ≡ Schätzer − Wahrheit, der Messfehler weiter
-   aufgeschlüsselt in Akquieszenz/Framing/Erwünschtheit/Kreuzladung/Rauschen.
-   Unscharfe Fragen messen **unrein** (Mischmodell, λ < 1) — sichtbar erst
-   nach dem Aufdecken. Dazu: designehrliche Standardfehler, ein
-   **Replikations-Simulator** (Stichprobenverteilung inkl. Feldarbeit — Bias
-   überlebt, Rauschen mittelt sich heraus), **Post-Stratifizierung** an die
-   wahren Randverteilungen (repariert Nonresponse-Bias, nie Messfehler),
-   **Reliabilität** (Cronbachs α vs. wahre Reliabilität bei Item-Batterien),
-   bei Längsschnitt-Studien die **Veränderungs-Sicht** (Δ geschätzt vs. Δ
-   wahr, Panel-Attrition-Bias) und ein **Dozenten-CSV** mit
-   `<item>_wahr`-Spalten. Das Studierenden-CSV bleibt wahrheitsfrei. Die
-   synthetische Engine ist gegen die echte LLM-Engine kalibriert
-   (`scripts/experiments/compare-synthetic-llm.mjs`).
-
-Eine LLM-basierte Feld-Engine (`src/lib/survey-engine.js`) existiert
-vollständig, ist aber aus Kostengründen nicht in der UI exponiert.
-Tests: `npm test` (scripts/test-survey-*.mjs) + `npm run e2e`
-(scripts/e2e/truth.mjs).
+Studierende können Blobs in einem Chat-Gespräch interviewen. Die KI antwortet im Charakter des jeweiligen Blobs — auf Basis seiner Eigenschaften, Einstellungen, Stimmung und aktuellen Tätigkeit. Schutzmechanismen sorgen dafür, dass die KI in ihrer Rolle bleibt.
 
 ---
 
-## 3D-Welt & Bewegungssystem
+## Die Akte: Stadt & Schreibtisch
+
+Die Oberfläche ist als Sammlung **physischer Forschungsartefakte** über der 3D-Stadt gestaltet. Der Bildschirm ist eine Akte mit zwei Reitern:
+
+- **Stadt** (das Feld): Einen Blob antippen öffnet seine **Karteikarte** mit Porträt (das Gesicht zeigt die Stimmung) und Feldnotiz; „Interview führen" startet ein **Protokoll** mit laufender Aufnahme; ein Gebäude öffnet seine **Hausakte**; die Kurznachrichten laufen auf dem **BlobPhone** (das „Twitter" der Blobs); ⌘K öffnet das **Einwohnermelderegister**. Die Zeitleiste ist die **Filmrolle des Stadtarchivs** („Aufzeichnung · 22 Jahre").
+- **Schreibtisch** (die Auswertung): eine Registratur mit **Studien** (dem Befragungsinstitut), der **Presse** (dem Blobspiegel und dem blobtopia kurier) und dem verschlossenen **Dozentenzimmer** — dahinter liegen, versiegelt, die wahren Werte.
+
+Bedienlogik im Stil von Papier und Stempel: Auswahlfelder werden eingekreist oder angekreuzt, Absenden-Knöpfe „stempeln", Hinweise stehen in Bleistift-Handschrift.
+
+### Befragungsinstitut
+
+Statt Blobs einzeln zu interviewen, können Studierende ganze automatisierte Befragungen in Auftrag geben (Studienmappe am Schreibtisch oder Taste `b`):
+
+1. **Fragebogen** — Fragen und Antwortskalen werden komplett frei formuliert (wie in einem Codebook). Das System erkennt automatisch die Skala, das gemessene Merkmal und mögliche Frageeffekte. Jedes Item zeigt an, ob es beantwortbar ist; wird eine Frage nicht erkannt, gibt ein freundlicher Hinweis den Rat, sie konkreter zu formulieren. Ohne erkennbares Merkmal kann die Simulation keine Antwort erzeugen — der Feldstart wird dann mit klarer Meldung blockiert (keine stillen leeren Spalten). **Hintergrundmerkmale** (Name, Distrikt, Alter, Bildung, Partei, Einkommen) landen nur dann im Datensatz, wenn man sie ausdrücklich erhebt — wie im echten Fragebogen.
+
+2. **Stichprobe** — ein einstellbares Ziehungsdesign mit Filtern für die Grundgesamtheit (Distrikt, Bildung, Partei, Alter, Einkommen) und sechs Verfahren: Zufallsauswahl, geschichtet, Klumpen (ein- und zweistufig), systematisch, Quote und manuelle Auswahl (damit Auswahlverzerrung erlebbar wird). Reproduzierbar, mit einem Planer für die nötige Stichprobengröße. Dazu die **Feldarbeit**: Der Erhebungsmodus (persönlich, Telefon, online) und die Zahl der Kontaktversuche steuern, wer ausfällt — so unterscheiden sich Brutto und Netto, samt Ausschöpfungsquote im Datensatz. Im **Längsschnitt** gibt es Trend- und Panel-Studien über die Zeit (bis zu vier Wellen, beim Panel mit selektiver Abwanderung). Studien lassen sich als Datei sichern und exakt wiederholen.
+
+3. **Ergebnis** — die Antworten werden aus den gespeicherten wahren Werten der Blobs erzeugt, ergänzt um realistischen Messfehler und nachgebildete Frageeffekte (Zustimmungstendenz, Framing, soziale Erwünschtheit, nicht-zufällige Antwortausfälle). Die Datentabelle ist direkt im Fenster sichtbar; Export als CSV (passend für deutsches Excel) samt Codebook.
+
+4. **Wahrheit** (hinter dem Dozenten-Schloss) — weil die Simulation die wahren Werte kennt, lässt sich jeder Schätzwert **exakt** in seine Fehlerquellen zerlegen (Total Survey Error): Abdeckung, Ziehung, Ausfälle und Messung ergeben zusammen genau die Abweichung von der Wahrheit; der Messfehler wird weiter aufgeschlüsselt. Dazu: ehrliche Standardfehler, ein **Wiederholungs-Simulator** (zeigt, dass sich Zufallsfehler herausmittelt, eine Verzerrung aber bleibt), eine **Gewichtung** an die wahren Randverteilungen, die **Zuverlässigkeit** von Item-Batterien (Cronbachs Alpha) und bei Längsschnitten der Vergleich von geschätzter und wahrer Veränderung. Es gibt ein Dozenten-CSV mit den wahren Werten; das Studierenden-CSV bleibt wahrheitsfrei.
+
+Eine KI-gestützte Befragungs-Variante existiert vollständig, ist aber aus Kostengründen nicht freigeschaltet.
+
+---
+
+## Leben in der 3D-Stadt
 
 ### Tagesablauf
 
-Jeder Blob hat einen individuellen Tagesplan: Schlafen, Pendeln, Arbeiten, Mittagspause, Spazieren, Freizeit, Heimweg. Schedules werden entweder aus der vorberechneten Simulation geladen oder frontend-seitig aus Blob-Attributen generiert.
+Jeder Blob hat einen eigenen Tagesplan: schlafen, pendeln, arbeiten, Mittagspause, spazieren, Freizeit, heimgehen.
 
-### Waypoint-Patrol-Animation
+### Bewegung
 
-Anstelle kuenstlicher Sinuswellen nutzt Blobtopia ein **Random Waypoint Patrol**-System (inspiriert von Cities: Skylines, The Sims): Blobs wählen deterministisch zufaellige Gehweg-Ziele in ihrer Umgebung, laufen mit Smoothstep-Easing dorthin, pausieren, und wählen ein neues Ziel. Jeder Blob hat eigenes Timing und eigene Geschwindigkeit.
+Die Blobs bewegen sich natürlich durch die Stadt: Sie wählen ein Ziel in der Nähe, gehen ruhig dorthin, halten kurz inne und suchen sich ein neues — jeder mit eigenem Tempo und Timing (inspiriert von *Cities: Skylines* und *Die Sims*).
 
-### Outdoor-Zonen
+### Lieblingsorte
 
-Freizeitverhalten wird durch latente Traits gesteuert:
-- **Hafenpromenade** -- Hoher Community-Participation-Wert
-- **Steinweg-Park** -- Postmaterialisten, Umweltbewusste
-- **Flussufer** -- Zufriedene, nicht-entfremdete Blobs
-- **Ringstrassen-Allee** -- Junge, selbstwirksame, non-konforme Blobs
-- **Marktplatz** -- Materialisten, Gemeinschafts-orientierte
+Wo ein Blob seine Freizeit verbringt, hängt von seinen Eigenschaften ab:
+
+- **Hafenpromenade** — gemeinschaftlich aktive Blobs
+- **Steinweg-Park** — umweltbewusste, postmaterielle Blobs
+- **Flussufer** — zufriedene, nicht entfremdete Blobs
+- **Ringstraßen-Allee** — junge, selbstwirksame Blobs
+- **Marktplatz** — materiell und gemeinschaftlich orientierte Blobs
 
 ---
 
-## Tech-Stack
+## Für Entwickler
 
-| Komponente | Technologie |
+### Verwendete Technik
+
+| Bereich | Technologie |
 |---|---|
-| **Frontend** | Vue 3.5, Pinia, Vue Router 4 (Hash-Mode) |
-| **Build** | Vite 8 |
-| **3D-Rendering** | Three.js mit Kenney-Assets |
-| **UI** | Oruga + Bulma 1 (Buefy-Kompat-Schicht: `src/plugins/buefy-compat/`) |
-| **Charts** | Chart.js 4 + vue-chartjs 5 |
-| **Simulation** | Rust (simulation-core, precompute) |
-| **Chat** | Anthropic Claude Haiku (Serverless Function) |
-| **Deployment** | Vercel |
-| **Datenformat** | Kompakte JSON-Chunks (100 Ticks pro Datei) |
+| Frontend | Vue 3, Pinia, Vue Router |
+| Build | Vite |
+| 3D-Darstellung | Three.js (mit Kenney-Modellen) |
+| Oberfläche | Oruga |
+| Simulation | Rust (offline) |
+| KI-Chat | Anthropic Claude (Serverless Function) |
+| Hosting | Vercel |
 
----
+### Setup
 
-## Setup
-
-Node ≥ 22.5 (siehe `.nvmrc`; der Timeline-Export nutzt das eingebaute
-`node:sqlite`).
+Voraussetzung: Node ≥ 22.5 (siehe `.nvmrc`).
 
 ```bash
-# Dependencies installieren
-npm ci
-
-# Lokaler Entwicklungsserver (http://localhost:8080)
-npm run dev
-
-# Tests (Survey-Engine, Sampling, Tick-Decoder, ...)
-npm test
-
-# Produktion-Build
-npm run build
-
-# Timeline aus SQLite exportieren (braucht data/blobtopia_timeline.db,
-# siehe data/README.md — die DB ist NICHT in git)
-npm run export
-
-# Rust-Simulation (offline-Werkzeug, nicht für den App-Betrieb nötig)
-cargo test --workspace
-cargo run -p blobtopia-precompute --release -- 118 data/blobtopia_timeline.db 500
-
-# Python-Pipeline (Tweets/Zeitungen/Validierung)
-pip install -r requirements.txt
+npm ci          # Abhängigkeiten installieren
+npm run dev     # Entwicklungsserver (http://localhost:8080)
+npm test        # Tests
+npm run build   # Produktions-Build
 ```
 
-**Hinweis für frische Clones:** Die Tick-Daten
-(`public/data/timeline/ticks/`, ~2.3 GB) sind nicht in git — Details und
-Beschaffungswege in [data/README.md](data/README.md). Architekturüberblick:
-[ARCHITECTURE.md](ARCHITECTURE.md).
+Die Offline-Werkzeuge (Rust-Simulation, Zeitleisten-Export, Generierung der Nachrichten und Zeitungen) sind für den Betrieb der App **nicht nötig**. Details dazu in [ARCHITECTURE.md](ARCHITECTURE.md) und [data/README.md](data/README.md).
+
+**Hinweis für frische Clones:** Die großen Zeitverlaufsdaten (~2,3 GB) liegen nicht im Repository — siehe [data/README.md](data/README.md).
 
 ### Repository-Aufbau
 
 | Pfad | Inhalt |
 |---|---|
-| `src/` | Vue-3-Frontend (3D-Welt, Inspector, Chat, Befragungsinstitut, Dashboard) |
-| `api/chat.js` | Vercel-Function: Anthropic-Proxy für Blob-Interviews |
-| `crates/simulation-core` | Rust-Agentenmodell (offline) |
-| `crates/precompute` | Simulationslauf → SQLite (offline) |
-| `crates/server` | **Legacy**, nicht in Produktion (s. README im Crate) |
-| `scripts/` | Export-Pipeline, Tests (`test-*.mjs`), Python-Generierung, `experiments/` |
-| `data/` | Quelldaten + Generierungsartefakte (s. `data/README.md`) |
-| `public/data/timeline/` | exportierte Timeline (Ticks gitignored) |
+| `src/` | Frontend (3D-Welt, Inspektor, Chat, Befragungsinstitut) |
+| `api/chat.js` | Schnittstelle für die KI-Interviews |
+| `crates/` | Rust-Simulation (offline) |
+| `scripts/` | Export, Tests und Generierung |
+| `data/`, `public/data/` | Quelldaten und exportierte Zeitleiste |
 
 ---
 
 ## Lizenz
 
-Dieses Projekt steht unter der **GNU General Public License v3.0** (GPL-3.0), da es auf [minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator) aufbaut, welches unter GPL-3.0 lizenziert ist. Siehe [LICENSE](LICENSE) für den vollständigen Lizenztext.
+Dieses Projekt steht unter der **GNU General Public License v3.0** (GPL-3.0), da es auf [minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator) aufbaut, das unter GPL-3.0 lizenziert ist. Siehe [LICENSE](LICENSE) für den vollständigen Lizenztext.
 
 **Drittanbieter-Lizenzen:**
 
@@ -510,4 +352,4 @@ Dieses Projekt steht unter der **GNU General Public License v3.0** (GPL-3.0), da
 |---|---|---|
 | evolution-simulator | GPL-3.0 | [minutelabsio/evolution-simulator](https://github.com/minutelabsio/evolution-simulator) |
 | Kenney 3D-Assets | CC0 1.0 (Public Domain) | [kenney.nl](https://kenney.nl) |
-| Vue.js, Three.js, Buefy | MIT | Jeweilige Repositories |
+| Vue.js, Three.js, Oruga | MIT | jeweilige Repositories |
