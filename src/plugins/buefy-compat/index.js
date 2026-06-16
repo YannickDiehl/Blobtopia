@@ -44,7 +44,15 @@ function commonMap(attrs, renames = {}) {
 
 export default {
   install(app) {
-    app.component('b-icon', wrap('OIcon', attrs => commonMap(attrs, { 'custom-class': 'customClass', customClass: 'customClass' })))
+    app.component('b-icon', wrap('OIcon', attrs => {
+      const mapped = commonMap(attrs, { 'custom-class': 'customClass', customClass: 'customClass' })
+      // Buefys b-icon reichte @click nativ durch; Orugas OIcon emittiert 'click'
+      // NUR mit clickable=true (sonst toter Klick). Liegt ein Klick-Listener an,
+      // schalten wir clickable automatisch frei — stellt die Buefy-Parität wieder
+      // her und bringt nebenbei role="button" + Tastaturfokus (a11y).
+      if (Object.keys(mapped.extra).some(k => /^onClick/i.test(k))) mapped.props.clickable = true
+      return mapped
+    }))
     app.component('b-button', wrap('OButton', attrs => commonMap(attrs, {
       'icon-left': 'iconLeft', iconLeft: 'iconLeft'
       , 'icon-right': 'iconRight', iconRight: 'iconRight'
