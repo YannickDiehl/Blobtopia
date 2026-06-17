@@ -41,7 +41,7 @@
           span(:class="mouthClass(tweet)")
         .tweet-body
           .tweet-header
-            span.author-name @{{ tweet.name }}
+            span.author-name.clickable(@click.stop="filterByAuthor(tweet)", :title="'Nur Blubs von @' + tweet.name") @{{ tweet.name }}
             span.tweet-time {{ tweet._timeLabel }}
           .tweet-content(v-html="renderTweetContent(tweet._text)")
       .empty-state(v-if="filteredTweets.length === 0 && tweets && tweets.length > 0")
@@ -163,6 +163,12 @@ export default {
         this.$emit('inspect-blob', name)
         return
       }
+    }
+    // Klick auf den Autornamen → Feed auf diese Person filtern (analog zum
+    // Hashtag-Klick, der die Suche setzt). Führendes @ passt zur Suchlogik
+    // in filteredTweets und erscheint sichtbar in der Suchleiste.
+    , filterByAuthor(tweet) {
+      this.searchQuery = '@' + tweet.name
     }
     , downloadTweets() {
       const header = 'name,date,content'
@@ -510,6 +516,12 @@ export default {
     white-space: nowrap
     overflow: hidden
     text-overflow: ellipsis
+
+    &.clickable
+      cursor: pointer
+      &:hover
+        color: var(--inst-phone-link)
+        text-decoration: underline
 
   .tweet-time
     font-size: 0.58rem
