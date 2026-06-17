@@ -77,6 +77,30 @@ const wbT = buildWorkbook(rows, items, {}, Object.assign({ truth: { perUnit: { a
 ok(wbT.data.header.includes('q1_wahr') && wbT.data.header.includes('q2_wahr'), '<id>_wahr-Spalten ergänzt')
 ok(wbT.data.rows[0][wbT.data.header.indexOf('q1_wahr')] === 6.7, 'wahrer Wert eingetragen (6.7)')
 
+console.log('Item-Kürzel (it.name) → Spaltenname:')
+const kItems = [
+  { id: 'q1', name: 'Atommüll', text: 'Atommüll frei entsorgen?', stem: 'Sollte Atommüll frei entsorgt werden dürfen?'
+    , construct: 'policy_environment', scale: { min: 1, max: 5, format: 'likert' } }
+  , { id: 'q2', name: 'Atommüll Entsorgung?', stem: 'Zweite Frage', construct: 'policy_environment', scale: { min: 1, max: 5, format: 'likert' } }
+  , { id: 'q3', name: '', stem: 'Dritte ohne Kürzel', construct: 'institutional_trust', scale: { min: 1, max: 5, format: 'likert' } }
+]
+const kRows = [{ blobId: 'a', weight: 1, stratum: null, disposition: 'teilgenommen'
+  , answers: { q1: { status: 'answered', value: 5 }, q2: { status: 'answered', value: 3 }, q3: { status: 'answered', value: 4 } } }]
+const wbK = buildWorkbook(kRows, kItems, {}, CAT)
+ok(wbK.data.header.includes('Atommüll') && !wbK.data.header.includes('q1'), 'Kürzel „Atommüll" ersetzt q1 als Spaltenname')
+ok(wbK.data.rows[0][wbK.data.header.indexOf('Atommüll')] === 5, 'Daten landen unter dem Kürzel (Datenschlüssel bleibt it.id)')
+ok(wbK.data.header.includes('Atommüll_Entsorgung'), 'Leerzeichen/Satzzeichen → _ (R-tauglich), Umlaut bleibt erhalten')
+ok(wbK.data.header.includes('q3'), 'ohne Kürzel → Fallback q{n}')
+ok(wbK.labels.rows.some(r => r[0] === 'Atommüll' && r[1] === 'Sollte Atommüll frei entsorgt werden dürfen?')
+  , 'Labels-Blatt: Variable = Kürzel, Variable_Label = Fragestamm')
+const wbDup = buildWorkbook(kRows, [
+  { id: 'q1', name: 'Atommüll', construct: 'policy_environment', scale: { min: 1, max: 5, format: 'likert' } }
+  , { id: 'q2', name: 'Atommüll', construct: 'policy_environment', scale: { min: 1, max: 5, format: 'likert' } }
+], {}, CAT)
+ok(wbDup.data.header.includes('Atommüll') && wbDup.data.header.includes('Atommüll_2'), 'doppeltes Kürzel → Atommüll, Atommüll_2 (eindeutig)')
+const wbKT = buildWorkbook(kRows, kItems, {}, Object.assign({ truth: { perUnit: { a: { q1: 4.8 } } } }, CAT))
+ok(wbKT.data.header.includes('Atommüll_wahr'), 'Dozentenversion: <Kürzel>_wahr-Spalte')
+
 console.log('Erzeugte .xlsx ist eine wohlgeformte (STORED) Zip mit den OOXML-Teilen:')
 const bytes = surveyToXlsx(rows, items, { demographics: ['name', 'district'] }, CAT)
 ok(bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04, 'beginnt mit der Zip-Signatur PK\\x03\\x04')

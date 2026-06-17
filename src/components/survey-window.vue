@@ -37,6 +37,7 @@
         .item-card(v-for="(it, i) in localItems", :key="i")
           .item-head
             span.item-num {{ i + 1 }}
+            input.survey-input.item-kuerzel(v-model="it.name", maxlength="40", placeholder="Kürzel – z. B. Atommüll", title="Kurzname der Frage – wird zum Variablennamen (Spaltenname) im .xlsx-Export")
             span.action-btn.del(@click="removeItem(i)", title="Entfernen")
               b-icon(icon="close", size="is-small")
           textarea.survey-input.item-text(v-model="it.text", rows="3", placeholder="Frage UND Antwortskala selbst formulieren — z. B. „Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht und 10 = völlig.“", @input="onItemInput(it)", @blur="onItemBlur(it)")
@@ -335,13 +336,7 @@
           button.survey-btn.primary(@click="surveyStore.exportXlsx()")
             b-icon(icon="download", size="is-small")
             span Für R exportieren (.xlsx)
-          button.survey-btn(@click="onExport")
-            b-icon(icon="download", size="is-small")
-            span Als CSV
-          button.survey-btn(@click="surveyStore.exportCodebook()")
-            b-icon(icon="book-open-variant", size="is-small")
-            span Codebook exportieren
-          p.mini-hint Die .xlsx lässt sich in R mit mariposa::read_xlsx() samt Variablen-/Wertelabels und Missing-Codes zurücklesen.
+          p.mini-hint Die .xlsx lässt sich in R mit mariposa::read_xlsx() samt Variablen-/Wertelabels und Missing-Codes zurücklesen. Vergebene Kürzel werden zu den Spaltennamen.
 
       //- ═══════════ WAHRHEIT (Gott-Perspektive, hinter dem Dozenten-Schloss) ═══════════
       .survey-section(v-else-if="step === 'truth'")
@@ -664,7 +659,9 @@ export default {
       }))
       for (const it of this.localItems) {
         const id = it.id
-        cols.push({ key: id, label: id, cell: r => this.fmtAnswer(r.answers && r.answers[id]) })
+        // Spaltenkopf = Kürzel (wie im .xlsx-Export), Fallback auf die Item-ID.
+        const label = (it.name && String(it.name).trim()) || id
+        cols.push({ key: id, label: label, cell: r => this.fmtAnswer(r.answers && r.answers[id]) })
       }
       return cols
     }
@@ -821,6 +818,7 @@ export default {
     , blankItem(i) {
       return {
         id: 'q' + i
+        , name: '' // frei vergebenes Kürzel → Variablenname (Spalte) im .xlsx-Export
         , text: ''
         , scale: { min: 1, max: 10, minLabel: '', maxLabel: '', format: 'numeric' }
         , construct: null
@@ -1016,9 +1014,6 @@ export default {
     // ── Run / export ──
     , onRun() {
       this.surveyStore.runFieldwork()
-    }
-    , onExport() {
-      this.surveyStore.exportCsv()
     }
     // ── Wahrheit-Tab ──
     , tryUnlock() {
@@ -1327,8 +1322,16 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
     font-family: var(--inst-schreibmaschine)
     font-weight: 700
     color: var(--inst-beschriftung)
+    flex: none
     &::before
       content: 'F'
+
+  .item-kuerzel
+    flex: 1 1 auto
+    width: auto
+    min-width: 0
+    font-weight: 700
+    color: var(--inst-stempelblau)
 
   .action-btn.del
     cursor: pointer

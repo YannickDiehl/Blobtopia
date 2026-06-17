@@ -65,6 +65,32 @@ function isRawItem(item) {
   return !!(c && c.raw) || (item.scale && item.scale.format === 'open')
 }
 
+/**
+ * R-/tibble-freundlicher Variablenname aus dem frei vergebenen Item-Kürzel
+ * (it.name, z. B. „Atommüll"). Buchstaben (inkl. Umlaute), Ziffern, „_" und „."
+ * bleiben; alles andere (Leerzeichen, Satzzeichen) wird zu „_"; führt der Name
+ * mit einer Ziffer, wird ein „x" vorangestellt. Ohne Kürzel → Fallback q{n}.
+ */
+function sanitizeVarName(s) {
+  let n = String(s == null ? '' : s).trim()
+    .replace(/[^\p{L}\p{N}_.]+/gu, '_')
+    .replace(/^[_.]+|_+$/g, '')
+  if (!n) return ''
+  if (/^[0-9]/.test(n)) n = 'x' + n
+  return n
+}
+function itemVarName(item, qi) {
+  return sanitizeVarName(item && item.name) || ('q' + (qi + 1))
+}
+
+/** Eindeutiger Spaltenname: bei Kollision _2, _3 … anhängen (Set wird ergänzt). */
+function uniqueName(base, used) {
+  let name = base, k = 2
+  while (used.has(name)) { name = base + '_' + k; k++ }
+  used.add(name)
+  return name
+}
+
 /** Eine Variable: { name, label, columnType, valueLabels, missingLabels, data }. */
 function v(name, label, columnType, valueLabels, missingLabels, data) {
   return { name, label, columnType, valueLabels: valueLabels || [], missingLabels: missingLabels || [], data }
@@ -125,10 +151,17 @@ export function buildWorkbook(rows, items, design, opts) {
     vars.push(demographicVariable(d.key, rows, { districtNames, educationLabels, partyNames }))
   }
 
-  // ── Items q1…qn (+ optionale Wahrheitsspalten für die Dozentenversion) ──
+  // ── Items (+ optionale Wahrheitsspalten für die Dozentenversion) ──
+  // Spaltenname = frei vergebenes Item-Kürzel (it.name, z. B. „Atommüll"),
+  // Fallback q{n}. Der Datenschlüssel bleibt die stabile it.id (answers[id]) —
+  // nur der nach außen sichtbare Variablenname trägt das Kürzel. Kollisionen
+  // (untereinander UND mit den bereits gesetzten id/welle/Demografie-Spalten
+  // sowie weight/stratum/disposition) werden mit _2, _3 … eindeutig gemacht.
+  const usedNames = new Set(vars.map(x => x.name).concat(['weight', 'stratum', 'disposition']))
   for (let qi = 0; qi < items.length; qi++) {
     const it = items[qi]
     const id = it.id || ('item_' + qi)
+    const varName = uniqueName(itemVarName(it, qi), usedNames)
     const s = it.scale || {}
     const data = rows.map(r => answerCell(r.answers && r.answers[id]))
     // Value-Labels: alle ausformulierten Kategorien (LLM-Analyse); sonst die
@@ -145,9 +178,9 @@ export function buildWorkbook(rows, items, design, opts) {
     // Missing-Codes nur deklarieren, wenn sie in den Daten vorkommen (kein
     // Phantom-„ungültig", keine ungenutzten Codes) — Variablen-Label = reine Frage.
     const missing = MISSING_LABELS.filter(m => data.includes(m.code))
-    vars.push(v(id, it.stem || it.text || id, 'haven_labelled', valueLabels, missing, data))
+    vars.push(v(varName, it.stem || it.text || varName, 'haven_labelled', valueLabels, missing, data))
     if (truth) {
-      vars.push(v(id + '_wahr', 'Wahrer Wert: ' + (it.stem || it.text || id), '', null, null,
+      vars.push(v(varName + '_wahr', 'Wahrer Wert: ' + (it.stem || it.text || varName), '', null, null,
         rows.map(r => {
           const t = truth.perUnit && truth.perUnit[r.blobId] ? truth.perUnit[r.blobId][id] : null
           return t == null ? null : Math.round(t * 100) / 100
