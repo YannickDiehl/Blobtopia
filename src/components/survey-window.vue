@@ -1324,7 +1324,7 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
     color: var(--inst-beschriftung)
     flex: none
     &::before
-      content: 'F'
+      content: 'q'
 
   .item-kuerzel
     flex: 1 1 auto
