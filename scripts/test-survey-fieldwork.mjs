@@ -4,7 +4,7 @@
  * Post-Stratifizierung.
  * Run:  node scripts/test-survey-fieldwork.mjs
  */
-import { simulateParticipation, fieldReport, DISPOSITION, FIELD_MODES } from '../src/lib/survey-fieldwork.js'
+import { simulateParticipation, fieldReport, questionnaireBurden, expectedResponseRate, DISPOSITION, FIELD_MODES } from '../src/lib/survey-fieldwork.js'
 import { postStratify, calibratedEstimate } from '../src/lib/survey-weighting.js'
 import { drawSample } from '../src/lib/survey-sampling.js'
 import { runSyntheticSurvey } from '../src/lib/survey-synthetic.js'
@@ -41,7 +41,10 @@ console.log('Teilnahmemodell (deterministisch, selektiv):')
   const b = simulateParticipation(units, { mode: 'personal', attempts: 2, seed: 7 })
   ok(JSON.stringify(a.map(p => p.disposition)) === JSON.stringify(b.map(p => p.disposition)), 'gleicher Seed → identische Dispositionen')
   const rep = fieldReport(a)
-  ok(rep.responseRate > 0.5 && rep.responseRate < 0.8, 'Ausschöpfung im realistischen Band (' + Math.round(rep.responseRate * 100) + ' %)')
+  // Diese Population spannt das Vertrauen extrem (0–10 gleichverteilt) → die
+  // starke Selektivität drückt die Quote unter den 90-%-Regelfall (siehe den
+  // Mittel-Merkmale-Block unten, der die 90-%-Kalibrierung selbst prüft).
+  ok(rep.responseRate > 0.70 && rep.responseRate < 0.86, 'Ausschöpfung im Band (' + Math.round(rep.responseRate * 100) + ' %)')
   const respTrust = mean(a.filter(p => p.disposition === DISPOSITION.RESPONDENT).map(p => trustOf(p.blob.id)))
   const grossTrust = mean(a.map(p => trustOf(p.blob.id)))
   ok(respTrust > grossTrust + 0.3, 'Teilnahme ist vertrauensselektiv (Netto ' + respTrust.toFixed(2) + ' vs. Brutto ' + grossTrust.toFixed(2) + ')')
@@ -123,6 +126,76 @@ console.log('Post-Stratifizierung:')
   const est = d.estimate
   const estCal = calibratedEstimate(result.rows, 'q1', cal.weights)
   ok(Math.abs(estCal - d.popMean) < Math.abs(est - d.popMean), 'kalibrierter Schätzer näher an der Wahrheit (' + estCal.toFixed(2) + ' vs. ' + est.toFixed(2) + ', wahr ' + d.popMean.toFixed(2) + ')')
+}
+
+// Mittel-Merkmale-Population (alle Teilnahmetreiber = 5 → kaum Selektivität):
+// prüft die 90/80/70-Kalibrierung des REGELFALLS für einen neutralen Fragebogen.
+function neutralBlob(i) {
+  return {
+    id: 'n' + i, district: i % 5, age: 22 + (i % 50), income: 2500, education_level: i % 4
+    , attitudes: { political_satisfaction: 5, institutional_trust: 5 }
+    , latent_traits: { party_indifference: 5, generalized_trust: 5, community_participation: 5, powerlessness: 5 }
+    , political_state: {}
+  }
+}
+const neutralUnits = Array.from({ length: 500 }, (_, i) => ({ blob: neutralBlob(i), weight: 1, stratum: null }))
+
+console.log('90/80/70-Regelfall (neutrale Merkmale, neutraler Fragebogen, 2 Versuche):')
+{
+  const rate = mode => fieldReport(simulateParticipation(neutralUnits, { mode, attempts: 2, seed: 3, burden: 0 })).responseRate
+  const p = rate('personal'), ph = rate('phone'), on = rate('online')
+  ok(p > 0.87 && p < 0.94, 'persönlich ≈ 90 % (' + Math.round(p * 100) + ' %)')
+  ok(ph > 0.77 && ph < 0.87, 'telefonisch ≈ 80 % (' + Math.round(ph * 100) + ' %)')
+  ok(on > 0.66 && on < 0.78, 'online ≈ 70 % (' + Math.round(on * 100) + ' %)')
+  ok(p > ph && ph > on, 'Modus-Gefälle bleibt: persönlich > Telefon > online')
+}
+
+console.log('Fragebogen-Last (questionnaireBurden):')
+{
+  const clean = [{ construct: 'political_satisfaction', wording: {}, scale: { difficulty: 5 } }]
+  const typical = [
+    { construct: 'political_satisfaction', wording: {}, scale: { difficulty: 5 } }
+    , { construct: 'institutional_trust', wording: {}, scale: { difficulty: 5 } }
+    , { construct: 'ideology', wording: {}, scale: { difficulty: 5 } }
+  ]
+  const nasty = [
+    { construct: 'income', wording: {}, scale: { difficulty: 5 } }
+    , { construct: 'self_efficacy', wording: { socialDesirability: true }, scale: { difficulty: 5 } }
+    , { construct: 'policy_environment', wording: { loadedNegative: true }, scale: { difficulty: 9 } }
+  ]
+  const bc = questionnaireBurden(clean), bt = questionnaireBurden(typical), bn = questionnaireBurden(nasty)
+  ok(questionnaireBurden([]) === 0, 'leerer Fragebogen → Last 0')
+  ok(bc < 0 && bc <= bt && bt < bn, 'sauber < typisch < problematisch (' + bc.toFixed(2) + ' < ' + bt.toFixed(2) + ' < ' + bn.toFixed(2) + ')')
+  ok(bn <= 2.6, 'Last gedeckelt (≤ 2.6)')
+
+  const r0 = fieldReport(simulateParticipation(neutralUnits, { mode: 'personal', attempts: 2, seed: 3, burden: 0 })).responseRate
+  const rClean = fieldReport(simulateParticipation(neutralUnits, { mode: 'personal', attempts: 2, seed: 3, burden: bc })).responseRate
+  const rNasty = fieldReport(simulateParticipation(neutralUnits, { mode: 'personal', attempts: 2, seed: 3, burden: bn })).responseRate
+  ok(rClean >= r0 && r0 > rNasty + 0.1, 'einfacher Fragebogen hebt, problematischer senkt die Quote (' + Math.round(rClean * 100) + ' % ≥ ' + Math.round(r0 * 100) + ' % > ' + Math.round(rNasty * 100) + ' %)')
+}
+
+console.log('Problematischer Fragebogen verstärkt ③ (selektiver Tail rückt in den steilen Logit-Bereich):')
+{
+  // Vertrauensspreizung wie oben — bei hoher Last fallen die Misstrauischen
+  // deutlich häufiger aus, der Nonresponse-Bias auf einem Vertrauensitem wächst.
+  const drawn = blobs.map(b => ({ blob: b, weight: 1, stratum: null }))
+  const nettoTrust = burden => {
+    const p = simulateParticipation(drawn, { mode: 'personal', attempts: 2, seed: 9, burden })
+    const r = p.filter(x => x.disposition === DISPOSITION.RESPONDENT)
+    return mean(r.map(x => trustOf(x.blob.id))) - mean(p.map(x => trustOf(x.blob.id)))
+  }
+  const dLow = nettoTrust(0), dHigh = nettoTrust(2.0)
+  ok(dLow > 0, 'schon bei voller Quote ist die Teilnahme vertrauensselektiv (Δ' + dLow.toFixed(2) + ', systematisch)')
+  ok(dHigh > dLow, 'höhere Last → stärkerer Nonresponse-Bias (Δ' + dLow.toFixed(2) + ' → Δ' + dHigh.toFixed(2) + ')')
+}
+
+console.log('Vorschau expectedResponseRate ≈ realisiert:')
+{
+  const frame = neutralUnits.map(u => u.blob)
+  const exp = expectedResponseRate(frame, { mode: 'personal', attempts: 2, burden: 0 })
+  const real = fieldReport(simulateParticipation(neutralUnits, { mode: 'personal', attempts: 2, seed: 3, burden: 0 })).responseRate
+  ok(exp != null && Math.abs(exp - real) < 0.05, 'Vorschau ' + Math.round(exp * 100) + ' % ≈ realisiert ' + Math.round(real * 100) + ' %')
+  ok(expectedResponseRate([], {}) === null, 'leerer Rahmen → keine Vorschau (null)')
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed')

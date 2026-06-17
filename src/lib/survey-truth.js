@@ -30,7 +30,7 @@
 import { drawSample, eligibleFrame } from './survey-sampling.js'
 import { runSyntheticSurvey, latentToItemScale } from './survey-synthetic.js'
 import { CONSTRUCTS_BY_KEY } from './survey-constructs.js'
-import { simulateParticipation, DISPOSITION, FIELD_MODES } from './survey-fieldwork.js'
+import { simulateParticipation, questionnaireBurden, DISPOSITION, FIELD_MODES } from './survey-fieldwork.js'
 
 // Zeile zählt als Unit-Respondent (Zeilen ohne disposition = Altbestand).
 function isRespondentRow(r) {
@@ -325,6 +325,7 @@ export async function simulateSamplingDistribution(blobs, design, items, opts) {
   const baseSeed = design && design.seed != null ? design.seed : 12345
   const field = opts.field || null
   const sdFactor = field && FIELD_MODES[field.mode] ? FIELD_MODES[field.mode].sdFactor : 1
+  const burden = field ? questionnaireBurden(items) : 0
 
   const estimates = {}
   for (let qi = 0; qi < items.length; qi++) estimates[itemKey(items[qi], qi)] = []
@@ -334,7 +335,7 @@ export async function simulateSamplingDistribution(blobs, design, items, opts) {
     const sample = drawSample(blobs, d)
     let units = sample.units
     if (field) {
-      units = simulateParticipation(units, { mode: field.mode, attempts: field.attempts, seed: baseSeed + 1 + b })
+      units = simulateParticipation(units, { mode: field.mode, attempts: field.attempts, seed: baseSeed + 1 + b, burden })
         .filter(p => p.disposition === DISPOSITION.RESPONDENT)
     }
     const { rows } = runSyntheticSurvey(units, items, { seed: baseSeed + 1 + b, sdFactor })

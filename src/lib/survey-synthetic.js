@@ -92,11 +92,15 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording, sdFactor
 
   // Modeled item nonresponse: rises with party-indifference (don't-know) and
   // distrust (refusal) — so nonresponse is non-random, the teachable point.
-  // Sensitive Fragen (z. B. Einkommen) werden deutlich öfter verweigert.
+  // Sensitive Fragen (z. B. Einkommen) werden deutlich öfter verweigert; sozial
+  // heikle/moralisierende Fragen ebenfalls (item-seitiger Teil von „Beides":
+  // wer teilnimmt, lässt die heikle Einzelfrage trotzdem öfter aus — parallel
+  // zur Fragebogen-Last, die schon die Teilnahme selbst senkt).
   const partyIndiff = trait(blob, 'party_indifference')
   const instTrust = trait(blob, 'institutional_trust')
   let pRefuse = 0.02 + 0.03 * ((instTrust == null ? 5 : (10 - instTrust)) / 10)
   if (construct && construct.sensitive) pRefuse += 0.12
+  if (wording && wording.socialDesirability) pRefuse += 0.05
   const pDontKnow = 0.02 + 0.04 * ((partyIndiff == null ? 5 : partyIndiff) / 10)
   const roll = rng()
   if (roll < pRefuse) return { status: 'refused', value: null, verbatim: '' }

@@ -16,7 +16,7 @@
  */
 import { drawSample } from './survey-sampling.js'
 import { runSyntheticSurvey } from './survey-synthetic.js'
-import { simulateParticipation, fieldReport, DISPOSITION, FIELD_MODES } from './survey-fieldwork.js'
+import { simulateParticipation, fieldReport, questionnaireBurden, DISPOSITION, FIELD_MODES } from './survey-fieldwork.js'
 import { snapshotTruth } from './survey-truth.js'
 import { makeRng } from './survey-sampling.js'
 import { CONSTRUCTS_BY_KEY } from './survey-constructs.js'
@@ -60,6 +60,7 @@ export function runLongitudinalStudy({ type, waves, design, items, demographics 
   const mode = FIELD_MODES[design.fieldMode] ? design.fieldMode : 'personal'
   const sdFactor = FIELD_MODES[mode].sdFactor
   const baseSeed = design.seed != null ? design.seed : 12345
+  const burden = questionnaireBurden(items)
 
   const allRows = []
   const waveMeta = []
@@ -92,7 +93,7 @@ export function runLongitudinalStudy({ type, waves, design, items, demographics 
     } else {
       // Welle 1 (oder Trend-Welle): frische Ziehung + volle Feldarbeit.
       const sample = drawSample(wave.blobs, Object.assign({}, design, { seed: waveSeed }))
-      participation = simulateParticipation(sample.units, { mode, attempts: design.contactAttempts, seed: waveSeed })
+      participation = simulateParticipation(sample.units, { mode, attempts: design.contactAttempts, seed: waveSeed, burden })
       truthUnits = sample.units
       waveMeta[w] = { frameSize: sample.frameSize }
       if (type === 'panel' && w === 0) {

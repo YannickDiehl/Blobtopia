@@ -207,6 +207,8 @@
               label Kontaktversuche (1–4)
               input.survey-input.mini(type="number", min="1", max="4", v-model.number="design.contactAttempts")
               p.mini-hint Nicht alle machen mit: Erreichbarkeit und Kooperation sind selektiv. Mehr Versuche heben die Ausschöpfung — neutralisieren die Selektivität aber nicht.
+            p.mini-hint.expected(v-if="expectedResponse != null")
+              | Voraussichtliche Ausschöpfung: <b>~{{ Math.round(expectedResponse * 100) }} %</b>. Kurze, klare Fragebögen heben sie; sensible oder überladene Fragen senken sie.
 
         //- ④ Längsschnitt (Trend / Panel über die Timeline)
         .panel-block
@@ -469,7 +471,7 @@ import draggablePanel from '@/mixins/draggable-panel'
 import { analyzeItem } from '@/lib/survey-llm-analyze'
 import { CONSTRUCTS, CONSTRUCTS_BY_KEY } from '@/lib/survey-constructs'
 import { planSampleSize } from '@/lib/survey-sampling'
-import { FIELD_MODES } from '@/lib/survey-fieldwork'
+import { FIELD_MODES, expectedResponseRate, questionnaireBurden } from '@/lib/survey-fieldwork'
 import { calibratedEstimate } from '@/lib/survey-weighting'
 import { datasetColumns } from '@/lib/survey-dataset'
 import { DEMOGRAPHICS, DEMOGRAPHICS_BY_KEY } from '@/lib/survey-demographics'
@@ -665,6 +667,17 @@ export default {
     , fieldModeLabel() {
       const m = FIELD_MODES[this.design.fieldMode]
       return m ? m.label : ''
+    }
+    // Voraussichtliche Ausschöpfung über den aktuellen Rahmen — reagiert live auf
+    // Modus, Kontaktversuche UND den Fragebogen (Last). Macht sichtbar, dass die
+    // Quote ein Design-Feedback ist: saubere/kurze Fragebögen heben sie, sensible
+    // oder überladene senken sie. Die realisierte Quote zeigt der Ergebnis-Tab.
+    , expectedResponse() {
+      return expectedResponseRate(this.frameBlobs, {
+        mode: this.design.fieldMode
+        , attempts: this.design.contactAttempts
+        , burden: questionnaireBurden(this.localItems)
+      })
     }
     , longTypes() {
       return [

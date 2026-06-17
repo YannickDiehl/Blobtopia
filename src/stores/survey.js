@@ -19,7 +19,7 @@ import { runSurvey, makeChatSender } from '@/lib/survey-engine'
 import { runSyntheticSurvey } from '@/lib/survey-synthetic'
 import { snapshotTruth, decompose, simulateSamplingDistribution } from '@/lib/survey-truth'
 import { buildDemographics } from '@/lib/survey-demographics'
-import { simulateParticipation, fieldReport, FIELD_MODES, DISPOSITION } from '@/lib/survey-fieldwork'
+import { simulateParticipation, fieldReport, questionnaireBurden, FIELD_MODES, DISPOSITION } from '@/lib/survey-fieldwork'
 import { postStratify, calibratedEstimate } from '@/lib/survey-weighting'
 import { runLongitudinalStudy, waveSummary } from '@/lib/survey-longitudinal'
 import { reliabilityReport } from '@/lib/survey-reliability'
@@ -365,6 +365,7 @@ export const useSurveyStore = defineStore('survey', {
           const mode = FIELD_MODES[design.fieldMode] ? design.fieldMode : 'personal'
           const participation = simulateParticipation(sample.units, {
             mode: mode, attempts: design.contactAttempts, seed: design.seed
+            , burden: questionnaireBurden(this.items)
           })
           const respondents = participation.filter(p => p.disposition === DISPOSITION.RESPONDENT)
           const net = runSyntheticSurvey(respondents, this.items, {
