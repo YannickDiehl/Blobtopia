@@ -55,16 +55,17 @@ function gaussian(rng) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
 }
 
-// Map a (noisy) stored 0–10 value onto the item's response scale.
+// Map a (noisy) stored 0–10 value CONTINUOUSLY onto the item's response scale.
 // Respektiert die Polung: bei invers gepolten Skalen (s.reversed — z. B.
-// „1 = sehr zufrieden; 5 = gar nicht zufrieden") liegt der HOHE Wahrwert an der
-// NIEDRIGEN Zahl, der Bruch wird gespiegelt.
-function rescaleToItem(value, item) {
+// „1 = sehr zufrieden; 5 = gar nicht zufrieden" ODER ein negierter Item-Stamm
+// „Ich bin unzufrieden" + Zustimmung) liegt der HOHE Wahrwert an der NIEDRIGEN
+// Zahl, der Bruch wird gespiegelt. Gerundet/geklemmt wird erst NACH dem
+// Hinzufügen der richtungstreuen Akquieszenz (siehe syntheticAnswer).
+function rescaleContinuous(value, item) {
   const s = item.scale || { min: 1, max: 10 }
   let frac = clamp(value, 0, 10) / 10
   if (s.reversed) frac = 1 - frac
-  const mapped = s.min + frac * (s.max - s.min)
-  return clamp(Math.round(mapped), s.min, s.max)
+  return s.min + frac * (s.max - s.min)
 }
 
 function trait(blob, key) {
@@ -141,25 +142,39 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording, sdFactor
     // Telefon 0.7, online 0.2 — siehe survey-fieldwork.js FIELD_MODES).
     if (wording.socialDesirability) sdShift = SOCIAL_DESIRABILITY * (sdFactor != null ? sdFactor : 1)
   }
-  const shifted = clamp(stored + vShift + acqShift + fraShift + sdShift, 0, 10)
-
+  // Konstrukt-bezogene Verzerrungen (Validität, Framing, soziale Erwünschtheit)
+  // verschieben den LATENTEN Wert — sie spiegeln also mit der Skalenrichtung.
+  // Akquieszenz NICHT: die Ja-Sage-Tendenz wird unten richtungstreu addiert.
+  const cShift = vShift + fraShift + sdShift
+  const shifted = clamp(stored + cShift, 0, 10)
   const noisy = shifted + gaussian(rng) * effNoiseSd
-  const format = (item.scale && item.scale.format) || 'numeric'
+  const s = item.scale || { min: 1, max: 10 }
+  const format = s.format || 'numeric'
+
   if (format === 'binary') {
-    let bit = noisy >= 5 ? 1 : 0
-    if (item.scale && item.scale.reversed) bit = 1 - bit
+    // Binäritems werden nicht in ④ zerlegt (fx=null); Akquieszenz wirkt hier
+    // wie bisher über den Konstruktraum auf die Ja/Nein-Schwelle.
+    const noisyB = clamp(stored + acqShift + cShift, 0, 10) + (noisy - shifted)
+    let bit = noisyB >= 5 ? 1 : 0
+    if (s.reversed) bit = 1 - bit
     return { status: 'answered', value: bit, verbatim: '', fx: null }
   }
+
+  // Richtungstreue Akquieszenz: die Ja-Sage-Tendenz drückt IMMER zum HOHEN Ende
+  // der Antwortskala (Zustimmung), unabhängig von der Polung des Item-Stamms.
+  // Deshalb in Antwortskaleneinheiten und NICHT über f gespiegelt — so senkt sie
+  // bei gemischt gepolten Batterien die Inter-Item-Korrelation und Cronbachs α.
   // fx: systematische Anteile in Einheiten der ANTWORTSKALA; was die
   // Aufschlüsselung nicht erklärt, ist Rauschen/Rundung/Klemmung (residual).
-  // f trägt die Steigung der Skala-Abbildung INKL. Vorzeichen — bei inverser
-  // Polung kehrt sich die Wirkung eines latenten Shifts auf der Antwortskala um,
-  // damit die Aufschlüsselung richtig zugeordnet bleibt (Summe ≡ Messfehler).
-  const s = item.scale || { min: 1, max: 10 }
+  // f trägt die Steigung INKL. Vorzeichen für die konstrukt-bezogenen Effekte;
+  // die Akquieszenz steht bewusst außerhalb von f, damit Summe ≡ Messfehler hält.
   const f = (s.max - s.min) / 10 * (s.reversed ? -1 : 1)
+  const acqAnswer = acqShift * (s.max - s.min) / 10
+  const baseAnswer = rescaleContinuous(noisy, item)
+  const value = clamp(Math.round(baseAnswer + acqAnswer), s.min, s.max)
   return {
-    status: 'answered', value: rescaleToItem(noisy, item), verbatim: ''
-    , fx: { acq: acqShift * f, fra: fraShift * f, sd: sdShift * f, val: vShift * f, und: 0 }
+    status: 'answered', value: value, verbatim: ''
+    , fx: { acq: acqAnswer, fra: fraShift * f, sd: sdShift * f, val: vShift * f, und: 0 }
   }
 }
 

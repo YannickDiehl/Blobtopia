@@ -39,14 +39,36 @@
             span.item-num {{ i + 1 }}
             span.action-btn.del(@click="removeItem(i)", title="Entfernen")
               b-icon(icon="close", size="is-small")
-          textarea.survey-input.item-text(v-model="it.text", rows="3", placeholder="Frage UND Antwortskala selbst formulieren — z. B. „Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht und 10 = völlig.“", @input="onItemText(it)")
+          textarea.survey-input.item-text(v-model="it.text", rows="3", placeholder="Frage UND Antwortskala selbst formulieren — z. B. „Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht und 10 = völlig.“", @input="onItemInput(it)", @blur="onItemBlur(it)")
           .item-meta(v-if="it.text && it.text.trim()")
-            span.detect-chip(:class="it.construct ? 'ok' : 'warn'")
-              b-icon(:icon="it.construct ? 'check-circle' : 'alert'", size="is-small")
-              span {{ it.construct ? ('beantwortbar · ' + scaleLabel(it)) : 'noch nicht eindeutig' }}
-          p.reword-hint(v-if="it.text && it.text.trim() && !it.construct")
-            | Formuliere die Frage etwas konkreter — z. B. zu Zufriedenheit, Vertrauen,
-            | Sorgen oder einer politischen Einstellung. Dann kann die Simulation sie beantworten.
+            span.detect-chip.checking(v-if="ana(it).state === 'checking'")
+              b-icon(icon="timer-sand", size="is-small")
+              span Frage wird geprüft …
+            span.detect-chip.ok(v-else-if="it.construct")
+              b-icon(icon="check-circle", size="is-small")
+              span {{ 'erkannt: ' + constructLabel(it.construct) + ' · ' + scaleLabel(it) }}
+            span.detect-chip.warn(v-else-if="ana(it).state === 'error'")
+              b-icon(icon="alert", size="is-small")
+              span Analyse nicht möglich
+            span.detect-chip.warn(v-else-if="ana(it).state === 'unmeasurable'")
+              b-icon(icon="alert", size="is-small")
+              span in dieser Simulation nicht messbar
+            span.detect-chip.idle(v-else)
+              b-icon(icon="help-circle-outline", size="is-small")
+              span noch nicht geprüft
+            button.survey-btn.mini-btn.recheck(v-if="ana(it).state !== 'checking'", @click="checkItem(it)", title="Die Frage vom Institut auswerten lassen") Frage prüfen
+          p.reword-hint.err(v-if="ana(it).state === 'error'")
+            | {{ ana(it).error }} — bitte erneut prüfen (die Auswertung braucht eine Internetverbindung).
+          .unmeasurable-hint(v-else-if="ana(it).state === 'unmeasurable'")
+            p.reword-hint
+              | Die Frage löst auf nichts auf, das die Blobs besitzen. Formuliere sie etwas konkreter —
+              | z. B. zu Zufriedenheit, Vertrauen, Sorgen oder einer politischen Einstellung.
+            button.survey-btn.mini-btn(v-if="ana(it).suggestion", @click="acceptSuggestion(it)") Meintest du „{{ constructLabel(ana(it).suggestion) }}“? Übernehmen
+          .construct-correct(v-if="it.construct")
+            a.correct-link(@click="toggleCorrecting(it)") {{ ana(it).correcting ? 'abbrechen' : 'Konstrukt stimmt nicht?' }}
+            select.survey-input.mini.correct-select(v-if="ana(it).correcting", :value="it.construct", @change="setConstruct(it, $event.target.value)")
+              optgroup(v-for="g in constructOptions", :key="g.group", :label="g.group")
+                option(v-for="o in g.items", :key="o.key", :value="o.key") {{ o.label }}
         button.survey-btn.add-btn(@click="addItem")
           b-icon(icon="plus", size="is-small")
           span Item hinzufügen
@@ -444,7 +466,8 @@ import { mapState, mapStores } from 'pinia'
 import { useSurveyStore } from '@/stores/survey'
 import { useSimulationStore } from '@/stores/simulation'
 import draggablePanel from '@/mixins/draggable-panel'
-import { parseItem } from '@/lib/survey-parse'
+import { analyzeItem } from '@/lib/survey-llm-analyze'
+import { CONSTRUCTS, CONSTRUCTS_BY_KEY } from '@/lib/survey-constructs'
 import { planSampleSize } from '@/lib/survey-sampling'
 import { FIELD_MODES } from '@/lib/survey-fieldwork'
 import { calibratedEstimate } from '@/lib/survey-weighting'
@@ -480,6 +503,10 @@ export default {
       , planE: 0.5
       , planExplain: false
       , localItems: []
+      // LLM-Analyse pro Item (transient, NICHT in der Studien-Datei):
+      //   { [itemId]: { state: 'idle'|'checking'|'done'|'unmeasurable'|'error',
+      //                 error, suggestion, rationale, correcting } }
+      , analysis: {}
       , design: {
         technique: 'srs'
         , n: 40
@@ -574,6 +601,17 @@ export default {
     }
     , demographicsCatalog() {
       return DEMOGRAPHICS
+    }
+    // Konstrukte nach Gruppe — nur für die seltene manuelle Korrektur der
+    // LLM-Zuordnung (versteckt, bis „Konstrukt stimmt nicht?“ angeklickt wird).
+    , constructOptions() {
+      const groups = []
+      const byGroup = {}
+      for (const c of CONSTRUCTS) {
+        if (!byGroup[c.group]) { byGroup[c.group] = { group: c.group, items: [] }; groups.push(byGroup[c.group]) }
+        byGroup[c.group].items.push({ key: c.key, label: c.label })
+      }
+      return groups
     }
     , quotaCells() {
       const v = this.design.strataVar || 'district'
@@ -775,14 +813,73 @@ export default {
     , removeItem(i) {
       this.localItems.splice(i, 1)
     }
-    , onItemText(it) {
-      const p = parseItem(it.text)
-      it.scale = p.scale
-      it.wording = p.wording
-      // Die Zuordnung zum Konstrukt wird automatisch aus dem Fragetext erkannt.
-      // (Das frühere manuelle „misst …“-Dropdown wurde entfernt — es verwirrte
-      // die Studierenden mehr, als es half.)
-      it.construct = p.construct
+    // Tippen: nur den Analyse-Status zurücksetzen (kein Live-Parse mehr). Die
+    // eigentliche Auswertung macht das LLM beim Verlassen des Feldes oder per
+    // „Frage prüfen“-Knopf. Eine geänderte Frage löst die alte Konstrukt-Bindung,
+    // sonst liefe der Feldstart-Wächter mit veralteten Daten weiter.
+    , onItemInput(it) {
+      const a = this.analysis[it.id]
+      if (a && a.state === 'done' && a.text === (it.text || '').trim()) return
+      this._setAnalysis(it.id, { state: 'idle' })
+      it.construct = null
+    }
+    , onItemBlur(it) {
+      const t = (it.text || '').trim()
+      const a = this.analysis[it.id] || {}
+      if (!t) { this._setAnalysis(it.id, { state: 'idle' }); return }
+      if (a.state === 'checking') return
+      // Schon geprüft und Text unverändert → nicht erneut bezahlen.
+      if (it.construct && a.state === 'done' && a.text === t) return
+      this.checkItem(it)
+    }
+    // Die Frage vom LLM strukturiert auswerten lassen und auf den Engine-Vertrag
+    // abbilden (Skala/Konstrukt/Polung/Frageeffekte/Validität). Kein stiller
+    // Ausfall: Fehler werden sichtbar gemacht.
+    , async checkItem(it) {
+      const t = (it.text || '').trim()
+      if (!t) return
+      this._setAnalysis(it.id, { state: 'checking', error: null })
+      try {
+        const r = await analyzeItem(t)
+        it.scale = r.scale
+        it.wording = r.wording
+        it.validity = r.validity
+        it.construct = r.measurable ? r.construct : null
+        this._setAnalysis(it.id, {
+          state: r.measurable ? 'done' : 'unmeasurable'
+          , suggestion: r.suggestion, rationale: r.rationale, correcting: false, text: t
+        })
+      } catch (e) {
+        const msg = (e && e.message) ? e.message : 'Analyse fehlgeschlagen.'
+        this._setAnalysis(it.id, { state: 'error', error: msg, text: t })
+      }
+    }
+    // Vorschlag bei „nicht messbar“ übernehmen (z. B. „meintest du
+    // Institutionenvertrauen?“).
+    , acceptSuggestion(it) {
+      const a = this.analysis[it.id]
+      if (a && a.suggestion) this.setConstruct(it, a.suggestion)
+    }
+    // Konstrukt-Korrektur (selten nötig): manuelles Override der LLM-Zuordnung.
+    , setConstruct(it, key) {
+      it.construct = (key && CONSTRUCTS_BY_KEY[key]) ? key : null
+      this._setAnalysis(it.id, {
+        state: it.construct ? 'done' : 'unmeasurable'
+        , correcting: false, text: (it.text || '').trim()
+      })
+    }
+    , toggleCorrecting(it) {
+      const a = this.analysis[it.id] || {}
+      this._setAnalysis(it.id, { correcting: !a.correcting })
+    }
+    , ana(it) { return this.analysis[it.id] || {} }
+    , constructLabel(key) {
+      const c = key ? CONSTRUCTS_BY_KEY[key] : null
+      return c ? c.label : (key || 'Konstrukt')
+    }
+    , _setAnalysis(id, patch) {
+      const prev = this.analysis[id] || {}
+      this.analysis = Object.assign({}, this.analysis, { [id]: Object.assign({}, prev, patch) })
     }
     , canonicalDesign() {
       return {
@@ -1352,6 +1449,18 @@ select.survey-input
     border: 2px double var(--inst-stempelrot)
     color: var(--inst-stempelrot)
     transform: rotate(-1.5deg)
+  &.checking
+    border: 1.5px solid var(--inst-graphit)
+    color: var(--inst-graphit)
+    transform: rotate(-0.5deg)
+  &.idle
+    border: 1.5px dashed rgba(107, 111, 118, 0.55)
+    color: var(--inst-graphit)
+    opacity: 0.75
+
+// „Frage prüfen“ rechts an die Prüfvermerk-Zeile
+.recheck.mini-btn
+  margin-left: auto
 
 // Freundlicher Umformulier-Hinweis, wenn die Frage (noch) nicht erkannt wurde
 .reword-hint
@@ -1361,6 +1470,23 @@ select.survey-input
   color: var(--inst-handrot)
   margin: 0.3rem 0 0.1rem
   padding-left: 0.1rem
+  &.err
+    color: var(--inst-stempelrot)
+
+.unmeasurable-hint
+  margin-top: 0.2rem
+
+// Seltene manuelle Konstrukt-Korrektur (versteckt bis angeklickt)
+.construct-correct
+  margin-top: 0.3rem
+  .correct-link
+    font-size: 0.7rem
+    color: var(--inst-stempelblau)
+    cursor: pointer
+    text-decoration: underline
+  .correct-select
+    margin-top: 0.25rem
+    width: 100%
 
 // ── Stichprobe: §-Abschnitte des Ziehungsplans ──
 .panel-block

@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import 'dotenv/config'
+import { analyzeFetch, ANALYZE_MODEL_DEFAULT } from './src/lib/survey-analyze.js'
 
 /**
  * Dev-Middleware: lokaler Chat-Proxy — spiegelt api/chat.js (Vercel-Function),
@@ -140,8 +141,55 @@ function editorSavePlugin() {
   }
 }
 
+/**
+ * Dev-Middleware: lokaler Frage-Analyse-Proxy — spiegelt api/analyze.js.
+ * Teilt sich Schema + System-Prompt mit der Function (src/lib/survey-analyze.js),
+ * damit Dev und Produktion nicht driften. Braucht ANTHROPIC_API_KEY in .env.
+ */
+function analyzeApiPlugin() {
+  return {
+    name: 'blobtopia-analyze-api'
+    , configureServer(server) {
+      server.middlewares.use('/api/analyze', (req, res) => {
+        if (req.method !== 'POST') { res.statusCode = 405; return res.end() }
+        const send = (status, obj) => {
+          res.statusCode = status
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify(obj))
+        }
+        const chunks = []
+        req.on('data', c => chunks.push(c))
+        req.on('error', () => send(400, { error: 'bad request' }))
+        req.on('end', async () => {
+          let body
+          try { body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}') }
+          catch (_e) { return send(400, { error: 'invalid JSON' }) }
+
+          const apiKey = process.env.ANTHROPIC_API_KEY
+          if (!apiKey) return send(503, { error: 'ANTHROPIC_API_KEY not set in .env' })
+
+          const text = body && body.text
+          if (!text || typeof text !== 'string' || !text.trim()) {
+            return send(400, { error: 'text erforderlich (die Fragetext-Eingabe).' })
+          }
+          if (text.length > 1000) return send(400, { error: 'Fragetext zu lang (max. 1000 Zeichen).' })
+
+          const model = process.env.ANALYZE_MODEL || ANALYZE_MODEL_DEFAULT
+          try {
+            const out = await analyzeFetch({ apiKey, model, text })
+            send(200, out)
+          } catch (e) {
+            console.error('Analyze proxy error:', e)
+            send(502, { error: 'Analyse fehlgeschlagen: ' + (e.message || String(e)) })
+          }
+        })
+      })
+    }
+  }
+}
+
 export default defineConfig({
-  plugins: [vue(), chatApiPlugin(), editorSavePlugin()]
+  plugins: [vue(), chatApiPlugin(), analyzeApiPlugin(), editorSavePlugin()]
   , resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
