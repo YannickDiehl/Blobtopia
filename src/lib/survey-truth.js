@@ -61,8 +61,16 @@ export function trueValueOnItemScale(blob, item) {
     if (s.max != null) t = Math.min(s.max, t)
     return t
   }
-  if (s.format === 'binary') return v >= 5 ? 1 : 0
-  return s.min + (clamp(v, 0, 10) / 10) * (s.max - s.min)
+  // Polung respektieren (s.reversed): Wahrheit auf DERSELBEN gespiegelten Skala
+  // wie der synthetische Schätzer, damit die Teleskop-Zerlegung bilanziert UND
+  // relativ zu den Labels in die richtige Richtung zeigt.
+  if (s.format === 'binary') {
+    const bit = v >= 5 ? 1 : 0
+    return s.reversed ? (1 - bit) : bit
+  }
+  let frac = clamp(v, 0, 10) / 10
+  if (s.reversed) frac = 1 - frac
+  return s.min + frac * (s.max - s.min)
 }
 
 function meanOf(values) {

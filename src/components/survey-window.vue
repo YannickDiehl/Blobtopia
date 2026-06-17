@@ -934,7 +934,9 @@ export default {
     , scaleLabel(it) {
       const s = it.scale || {}
       if (s.format === 'open' || s.min == null || s.max == null) return 'offene Zahlenangabe'
-      return 'Skala ' + s.min + '–' + s.max
+      // Polung sichtbar machen: bei invers gepolten Skalen weiß der/die
+      // Studierende, dass die niedrige Zahl den hohen Ausprägungspol meint.
+      return 'Skala ' + s.min + '–' + s.max + (s.reversed ? ' · invers gepolt' : '')
     }
     // Zahl mit deutschem Dezimalkomma (für die Power-Erklärung)
     , komma(n) {
