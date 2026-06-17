@@ -67,6 +67,29 @@ export const CONSTRUCTS = [
 
 export const CONSTRUCTS_BY_KEY = CONSTRUCTS.reduce((m, c) => { m[c.key] = c; return m }, {})
 
+/**
+ * Pol-Richtung je Konstrukt für die Polungserkennung (survey-parse:detectPolarity).
+ * `high`/`low` matchen DISKRIMINIERENDE Wörter des HOHEN bzw. NIEDRIGEN
+ * gespeicherten Pols (0–10, hoch = mehr vom Konstrukt — Semantik aus
+ * build-system-prompt.js). Bipolare Skalen (links/rechts, Markt/Staat …)
+ * brauchen diese Wörter; unipolare Zustimmungs-/Intensitätsskalen werden von
+ * der generischen Negations-/Intensitäts-Schicht abgedeckt und stehen hier nur,
+ * wo ein eindeutiger Antonym-Pol existiert. Bei Unsicherheit der Richtung (z. B.
+ * policy_democracy) bewusst KEIN Eintrag → Konvention/Intensität greift.
+ */
+export const CONSTRUCT_POLES = {
+  political_satisfaction: { low: /unzufrieden|frustriert|unzufriedenheit|unglücklich/i }
+  , institutional_trust: { high: /vertrauensvoll/i, low: /misstrau|skeptisch|argwöhn|kein\w*\s*vertrauen/i }
+  , ideology: { high: /\brechts|konservativ/i, low: /\blinks|progressiv/i }
+  , policy_economy: { high: /markt|deregulier|privatisier|unternehmerfreiheit|wirtschaftsfreiheit/i, low: /regulier|staatlich|verstaatlich|\bstaat\b/i }
+  , policy_security: { high: /sicherheit|ordnung|kontrolle|überwachung/i, low: /freiheit|bürgerrecht|freiheitsrecht/i }
+  , policy_social: { high: /eigenverantwort|leistung/i, low: /umverteil|solidar|sozialstaat/i }
+  , policy_migration: { high: /restriktiv|streng|abschott|begrenz|geschlossen/i, low: /\boffen|liberal|willkommen/i }
+  , policy_environment: { high: /wachstum|wirtschaft/i, low: /umweltschutz|klimaschutz|naturschutz/i }
+  , environment_over_economy: { high: /umwelt|klima|ökolog|naturschutz/i, low: /wachstum|wirtschaftswachstum/i }
+  , freedom_over_order: { high: /freiheit|selbstverwirklich/i, low: /ordnung|kontrolle/i }
+}
+
 // Keyword hints for the "misst …"-auto-suggestion. Every construct in the
 // registry must be reachable here (tripwire: scripts/test-survey-constructs.mjs).
 // FIRST match wins — specific multi-word patterns before broad single words.

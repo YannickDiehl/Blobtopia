@@ -12,7 +12,46 @@
  * matters: two phrasings of the same construct yield different detected
  * features and therefore different (synthetic) answers.
  */
-import { suggestConstruct, analyzeValidity, CONSTRUCTS_BY_KEY } from './survey-constructs.js'
+import { suggestConstruct, analyzeValidity, CONSTRUCTS_BY_KEY, CONSTRUCT_POLES } from './survey-constructs.js'
+
+// Generische Polungsindikatoren (greifen konstruktübergreifend bei
+// „sehr …"/„gar nicht …"-Formulierungen, ergänzen die konstruktspezifischen Pole).
+const INTENSITY_HIGH = /sehr|voll|völlig|vollkommen|äußerst|stark|\bhoch\b|\bgroß|absolut|komplett|maximal/i
+const INTENSITY_LOW = /gar nicht|überhaupt nicht|gar kein|keinerlei|\bkein|\bnicht\b|\bwenig|gering|niedrig|schwach|kaum|minimal/i
+
+// Richtungs-Score eines Endpunkt-Labels: >0 deutet auf den HOHEN gespeicherten
+// Pol, <0 auf den niedrigen. Konstrukt-Pole wiegen schwerer als die generische
+// Intensität (sie sind diskriminierend formuliert).
+function poleDirection(label, poles) {
+  if (!label) return 0
+  let s = 0
+  if (poles) {
+    if (poles.high && poles.high.test(label)) s += 2
+    if (poles.low && poles.low.test(label)) s -= 2
+  }
+  if (INTENSITY_HIGH.test(label)) s += 1
+  if (INTENSITY_LOW.test(label)) s -= 1
+  return s
+}
+
+/**
+ * Ist die Skala invers gepolt (die NIEDRIGE Zahl trägt den HOHEN gespeicherten
+ * Pol)? Vergleicht die Endpunkt-Labels über konstruktspezifische Pol-Wörter
+ * (bipolare Skalen wie links/rechts) plus eine generische Negations-/
+ * Intensitäts-Schicht (sehr … / gar nicht …). Keine Labels oder Gleichstand →
+ * false (Konvention: hoher Wert → hohe Zahl).
+ */
+export function detectPolarity(scale, constructKey) {
+  if (!scale) return false
+  const minL = (scale.minLabel || '').toLowerCase()
+  const maxL = (scale.maxLabel || '').toLowerCase()
+  if (!minL && !maxL) return false
+  const poles = constructKey ? CONSTRUCT_POLES[constructKey] : null
+  const sMin = poleDirection(minL, poles)
+  const sMax = poleDirection(maxL, poles)
+  if (sMin === sMax) return false
+  return sMin > sMax
+}
 
 function endpointLabel(text, num) {
   const re = new RegExp(num + '\\s*(?:=|steht f(?:ü|ue)r|bedeutet)\\s*[„"„]?([^,;.")\\n]+)', 'i')
@@ -81,5 +120,7 @@ export function parseItem(text) {
     return { scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open' }, construct, wording, validity }
   }
 
-  return { scale: parseScale(text), construct, wording, validity }
+  const scale = parseScale(text)
+  scale.reversed = detectPolarity(scale, construct)
+  return { scale, construct, wording, validity }
 }

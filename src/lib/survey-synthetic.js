@@ -56,9 +56,13 @@ function gaussian(rng) {
 }
 
 // Map a (noisy) stored 0–10 value onto the item's response scale.
+// Respektiert die Polung: bei invers gepolten Skalen (s.reversed — z. B.
+// „1 = sehr zufrieden; 5 = gar nicht zufrieden") liegt der HOHE Wahrwert an der
+// NIEDRIGEN Zahl, der Bruch wird gespiegelt.
 function rescaleToItem(value, item) {
   const s = item.scale || { min: 1, max: 10 }
-  const frac = clamp(value, 0, 10) / 10
+  let frac = clamp(value, 0, 10) / 10
+  if (s.reversed) frac = 1 - frac
   const mapped = s.min + frac * (s.max - s.min)
   return clamp(Math.round(mapped), s.min, s.max)
 }
@@ -142,12 +146,17 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording, sdFactor
   const noisy = shifted + gaussian(rng) * effNoiseSd
   const format = (item.scale && item.scale.format) || 'numeric'
   if (format === 'binary') {
-    return { status: 'answered', value: noisy >= 5 ? 1 : 0, verbatim: '', fx: null }
+    let bit = noisy >= 5 ? 1 : 0
+    if (item.scale && item.scale.reversed) bit = 1 - bit
+    return { status: 'answered', value: bit, verbatim: '', fx: null }
   }
   // fx: systematische Anteile in Einheiten der ANTWORTSKALA; was die
   // Aufschlüsselung nicht erklärt, ist Rauschen/Rundung/Klemmung (residual).
+  // f trägt die Steigung der Skala-Abbildung INKL. Vorzeichen — bei inverser
+  // Polung kehrt sich die Wirkung eines latenten Shifts auf der Antwortskala um,
+  // damit die Aufschlüsselung richtig zugeordnet bleibt (Summe ≡ Messfehler).
   const s = item.scale || { min: 1, max: 10 }
-  const f = (s.max - s.min) / 10
+  const f = (s.max - s.min) / 10 * (s.reversed ? -1 : 1)
   return {
     status: 'answered', value: rescaleToItem(noisy, item), verbatim: ''
     , fx: { acq: acqShift * f, fra: fraShift * f, sd: sdShift * f, val: vShift * f, und: 0 }

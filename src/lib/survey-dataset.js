@@ -94,7 +94,7 @@ export function toCodebook(items) {
     variable: itemId(it, qi)
     , question: it.text || ''
     , type: it.type || (it.scale ? it.scale.format : 'offen')
-    , scale: it.scale && it.scale.min != null ? (it.scale.min + '-' + it.scale.max)
+    , scale: it.scale && it.scale.min != null ? (it.scale.min + '-' + it.scale.max + (it.scale.reversed ? ' (invers gepolt)' : ''))
       : (it.choices ? it.choices.join(' / ') : 'offene Zahl')
   }))
 }
