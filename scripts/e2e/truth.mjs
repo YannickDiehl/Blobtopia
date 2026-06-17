@@ -9,20 +9,30 @@ import { launch, gotoApp, report, finish } from './lib.mjs'
 const { browser, page, errors } = await launch()
 await gotoApp(page)
 
+// Item async binden: Text füllen → „Frage prüfen" → auf den Endzustand warten.
+// Die Frageauswertung läuft über den LLM (Rolle A), deshalb kein fester Timeout,
+// sondern auf den ok/warn-Chip warten (braucht laufenden Server MIT API-Key).
+async function bindItem(idx, text) {
+  const card = page.locator('.item-card').nth(idx)
+  await card.locator('.item-text').fill(text)
+  await page.waitForTimeout(150)
+  await card.locator('.recheck').click()
+  await page.waitForFunction((i) => {
+    const c = document.querySelectorAll('.item-card')[i]
+    return !!(c && (c.querySelector('.detect-chip.ok') || c.querySelector('.detect-chip.warn')))
+  }, idx, { timeout: 25000 }).catch(() => {})
+}
+
 // ── Setup: Fragebogen + Stichprobe + Erhebung ──
 await page.locator('button[title="Befragungsinstitut (B)"]').click()
 await page.waitForTimeout(800)
 await page.locator('.step-tab:has-text("Fragebogen")').first().click()
-await page.locator('.item-text').first().fill(
-  'Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht zufrieden und 10 = völlig zufrieden.'
-)
-await page.waitForTimeout(300)
+await bindItem(0, 'Wie zufrieden sind Sie mit der Politik? Skala von 1 bis 10, wobei 1 = gar nicht zufrieden und 10 = völlig zufrieden.')
 report('answerable item shows the ok chip', (await page.locator('.detect-chip.ok').count()) === 1)
 
 // ── Nicht zuordenbares Item: Warnung sichtbar, Feldstart blockiert, Umformulieren heilt ──
 await page.locator('button:has-text("Item hinzufügen")').click()
-await page.locator('.item-text').nth(1).fill('Was ist Ihr Lieblingsessen? Skala von 1 bis 10.')
-await page.waitForTimeout(300)
+await bindItem(1, 'Was ist Ihr Lieblingsessen? Skala von 1 bis 10.')
 report('unanswerable item shows the warning chip', (await page.locator('.detect-chip.warn').count()) === 1)
 await page.locator('.step-tab:has-text("Stichprobe")').first().click()
 await page.locator('button:has-text("Stichprobe ziehen")').click()
@@ -35,16 +45,14 @@ report('fieldwork is blocked while an item is unanswerable'
 // Ohne manuelles Dropdown heilt das Umformulieren: eine erkennbare Formulierung
 // lässt die Auto-Erkennung greifen → Warnung verschwindet.
 await page.locator('.step-tab:has-text("Fragebogen")').first().click()
-await page.locator('.item-text').nth(1).fill('Wie sehr vertrauen Sie der Regierung? Skala von 1 bis 10.')
-await page.waitForTimeout(300)
+await bindItem(1, 'Wie sehr vertrauen Sie der Regierung? Skala von 1 bis 10.')
 report('rewording the question fixes the warning', (await page.locator('.detect-chip.warn').count()) === 0)
 await page.locator('.item-card').nth(1).locator('.action-btn.del').click()
 await page.waitForTimeout(300)
 
 // ── Demografische Selbstauskunft: „Wie alt sind Sie?" ist erfragbar ──
 await page.locator('button:has-text("Item hinzufügen")').click()
-await page.locator('.item-text').nth(1).fill('Wie alt sind Sie?')
-await page.waitForTimeout(300)
+await bindItem(1, 'Wie alt sind Sie?')
 report('demographic question (age) is answerable as an open number'
   , (await page.locator('.detect-chip.ok').count()) === 2
     && /offene Zahlenangabe/i.test(await page.locator('.item-card').nth(1).innerText()))
