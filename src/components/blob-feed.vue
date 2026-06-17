@@ -99,10 +99,16 @@ export default {
     }
     , filteredTweets() {
       if (!this.searchQuery) return this.normalizedTweets
-      const q = this.searchQuery.toLowerCase()
+      const q = this.searchQuery.toLowerCase().trim()
+      // Autor-Handles werden als „@Name" angezeigt, aber ohne @ gespeichert
+      // (t.name = „Bina"). Ein führendes @ in der Suche soll den Autorennamen
+      // trotzdem treffen — sonst findet „@Bina" nur Erwähnungen im Text, nie
+      // Binas eigene Blubs. Das @ bleibt für die Volltextsuche erhalten, damit
+      // @Erwähnungen im Tweet-Text weiterhin matchen.
+      const qName = q.replace(/^@+/, '')
       return this.normalizedTweets.filter(t =>
         (t._text && t._text.toLowerCase().includes(q))
-        || (t.name && t.name.toLowerCase().includes(q))
+        || (t.name && t.name.toLowerCase().includes(qName))
       )
     }
   }
