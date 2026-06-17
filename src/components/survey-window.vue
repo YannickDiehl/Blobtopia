@@ -75,6 +75,8 @@
         button.survey-btn.add-btn(@click="addItem")
           b-icon(icon="plus", size="is-small")
           span Item hinzufügen
+        p.mini-hint.missing-default-hint
+          | Fehlende Werte werden standardmäßig als −9 (Verweigert) und −8 (Weiß nicht) kodiert. Eigene Codes + Labels gibst du direkt in der Frage an — z. B. „… 8 = weiß nicht, 9 = keine Angabe“.
         .panel-block.demo-block
           .block-head
             span.block-title Hintergrundmerkmale erheben
@@ -333,7 +335,7 @@
                 tr(v-for="(r, ri) in result.rows", :key="r.blobId")
                   td.idx {{ ri + 1 }}
                   td(v-for="c in tableColumns", :key="c.key") {{ c.cell(r) }}
-          p.mini-hint kA = keine Angabe (verweigert) · wn = weiß nicht · — = nicht beantwortbar
+          p.mini-hint Fehlende Werte tragen ihr Label (Standard: −9 Verweigert · −8 Weiß nicht) · — = nicht beantwortbar (kein Konstrukt)
           .error-banner(v-if="unsupportedItems.length") Für {{ unsupportedItems.join(', ') }} kamen keine Antworten — die Frage ließ sich nicht eindeutig zuordnen. Formuliere sie im Fragebogen etwas konkreter (z. B. zu Zufriedenheit, Vertrauen oder einer Einstellung).
           button.survey-btn.primary(@click="surveyStore.exportXlsx()")
             b-icon(icon="download", size="is-small")
@@ -1011,10 +1013,11 @@ export default {
     , fmtAnswer(a, item) {
       if (!a) return ''
       if (a.status === 'answered') return a.value
-      // Studierenden-Label zeigen, falls für diese Art angelegt — sonst kA/wn.
+      // Studierenden-Label zeigen, falls für diese Art angelegt — sonst der
+      // kohärente Default (Verweigert / Weiß nicht), passend zum xlsx-Fallback.
       const declared = (item && item.scale && item.scale.missingLabels) || []
-      if (a.status === 'refused') { const m = declared.find(x => x.kind === 'refused'); return m ? m.label : 'kA' }
-      if (a.status === 'dontknow') { const m = declared.find(x => x.kind === 'dontknow'); return m ? m.label : 'wn' }
+      if (a.status === 'refused') { const m = declared.find(x => x.kind === 'refused'); return m ? m.label : 'Verweigert' }
+      if (a.status === 'dontknow') { const m = declared.find(x => x.kind === 'dontknow'); return m ? m.label : 'Weiß nicht' }
       return '—'
     }
     // Kurzhinweis im Erkannt-Chip, wie viele fehlende Werte die Studierende

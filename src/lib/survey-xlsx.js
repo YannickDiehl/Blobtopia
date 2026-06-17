@@ -32,15 +32,15 @@ import { DISPOSITION } from './survey-fieldwork.js'
 // hereingereicht — so bleibt dieses Modul ohne Seiteneffekte node-testbar.
 
 // Missing-Schema (ALLBUS-/SPSS-Konvention, wie mariposa::set_na/read_spss).
-// Default-Codes je Art, falls die Studierende keine eigenen vergibt: verweigert
-// → -9, weiß nicht → -8, unlesbar/Fehler → -7. Nichtbefragte (Unit-Nonresponse)
+// Default-Codes + Labels je Art, falls die Studierende keine eigenen vergibt:
+// Verweigert → -9, Weiß nicht → -8, Ungültig → -7. Nichtbefragte (Unit-Nonresponse)
 // bleiben System-NA (leere Zelle). Studierende können Codes + Labels in der Frage
 // selbst anlegen (item.scale.missingLabels, kind-getrieben) — die überschreiben
-// dann die Defaults gleicher Art.
+// dann die Defaults gleicher Art. „Verweigert" deckt sich mit der Unit-Disposition.
 const DEFAULT_MISSING = Object.freeze({
-  refused: { code: -9, label: 'keine Angabe' }
-  , dontknow: { code: -8, label: 'weiß nicht' }
-  , invalid: { code: -7, label: 'ungültig' }
+  refused: { code: -9, label: 'Verweigert' }
+  , dontknow: { code: -8, label: 'Weiß nicht' }
+  , invalid: { code: -7, label: 'Ungültig' }
 })
 
 /**
