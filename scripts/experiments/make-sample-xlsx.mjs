@@ -37,12 +37,14 @@ const partyNames = ['Fortschritt', 'Mitte', 'Tradition', 'Unabhängige']
 const cat = { districtNames, educationLabels, partyNames }
 
 const items = [
-  { id: 'q1', text: 'Wie zufrieden sind Sie insgesamt mit der Politik?', construct: 'political_satisfaction'
-    , scale: { min: 1, max: 10, minLabel: 'gar nicht zufrieden', maxLabel: 'völlig zufrieden', format: 'numeric', difficulty: 5 }, wording: {}, validity: { lambda: 1 } }
-  , { id: 'q2', text: 'Wie alt sind Sie?', construct: 'age'
-    , scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open' }, wording: {}, validity: { lambda: 1 } }
-  , { id: 'q3', text: 'Stimmen Sie zu: „Den staatlichen Institutionen kann man vertrauen."', construct: 'institutional_trust'
-    , scale: { min: 1, max: 5, minLabel: 'stimme gar nicht zu', maxLabel: 'stimme voll zu', format: 'likert', difficulty: 5 }, wording: { agreeScale: true }, validity: { lambda: 1 } }
+  { id: 'q1', text: 'Wie zufrieden sind Sie insgesamt mit der Politik? Skala 1–10.', stem: 'Wie zufrieden sind Sie insgesamt mit der Politik?', construct: 'political_satisfaction'
+    , scale: { min: 1, max: 10, minLabel: 'gar nicht zufrieden', maxLabel: 'völlig zufrieden', format: 'numeric', difficulty: 5
+      , valueLabels: [{ value: 1, label: 'gar nicht zufrieden' }, { value: 10, label: 'völlig zufrieden' }] }, wording: {}, validity: { lambda: 1 } }
+  , { id: 'q2', text: 'Wie alt sind Sie?', stem: 'Wie alt sind Sie?', construct: 'age'
+    , scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open', valueLabels: [] }, wording: {}, validity: { lambda: 1 } }
+  , { id: 'q3', text: 'Den staatlichen Institutionen kann man vertrauen. 1 = stimme gar nicht zu … 5 = stimme voll zu', stem: 'Den staatlichen Institutionen kann man vertrauen.', construct: 'institutional_trust'
+    , scale: { min: 1, max: 5, minLabel: 'stimme gar nicht zu', maxLabel: 'stimme voll zu', format: 'likert', difficulty: 5
+      , valueLabels: [{ value: 1, label: 'stimme gar nicht zu' }, { value: 2, label: 'stimme eher nicht zu' }, { value: 3, label: 'teils/teils' }, { value: 4, label: 'stimme eher zu' }, { value: 5, label: 'stimme voll zu' }] }, wording: { agreeScale: true }, validity: { lambda: 1 } }
 ]
 const design = {
   technique: 'srs', n: 60, seed: 12345, demographics: ['name', 'district', 'age'], eligibility: { excludeMinors: true }

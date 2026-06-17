@@ -130,15 +130,24 @@ export function buildWorkbook(rows, items, design, opts) {
     const it = items[qi]
     const id = it.id || ('item_' + qi)
     const s = it.scale || {}
-    const valueLabels = []
+    const data = rows.map(r => answerCell(r.answers && r.answers[id]))
+    // Value-Labels: alle ausformulierten Kategorien (LLM-Analyse); sonst die
+    // Endpunkte. Bei offenen/raw Fragen keine.
+    let valueLabels = []
     if (!isRawItem(it)) {
-      if (s.minLabel && s.min != null) valueLabels.push({ code: s.min, label: s.minLabel })
-      if (s.maxLabel && s.max != null) valueLabels.push({ code: s.max, label: s.maxLabel })
+      if (Array.isArray(s.valueLabels) && s.valueLabels.length) {
+        valueLabels = s.valueLabels.map(vl => ({ code: vl.value, label: vl.label }))
+      } else {
+        if (s.minLabel && s.min != null) valueLabels.push({ code: s.min, label: s.minLabel })
+        if (s.maxLabel && s.max != null) valueLabels.push({ code: s.max, label: s.maxLabel })
+      }
     }
-    vars.push(v(id, it.text || id, 'haven_labelled', valueLabels, MISSING_LABELS,
-      rows.map(r => answerCell(r.answers && r.answers[id]))))
+    // Missing-Codes nur deklarieren, wenn sie in den Daten vorkommen (kein
+    // Phantom-„ungültig", keine ungenutzten Codes) — Variablen-Label = reine Frage.
+    const missing = MISSING_LABELS.filter(m => data.includes(m.code))
+    vars.push(v(id, it.stem || it.text || id, 'haven_labelled', valueLabels, missing, data))
     if (truth) {
-      vars.push(v(id + '_wahr', 'Wahrer Wert: ' + (it.text || id), '', null, null,
+      vars.push(v(id + '_wahr', 'Wahrer Wert: ' + (it.stem || it.text || id), '', null, null,
         rows.map(r => {
           const t = truth.perUnit && truth.perUnit[r.blobId] ? truth.perUnit[r.blobId][id] : null
           return t == null ? null : Math.round(t * 100) / 100
@@ -150,8 +159,10 @@ export function buildWorkbook(rows, items, design, opts) {
   vars.push(v('weight', 'Designgewicht', '', null, null, rows.map(r => r.weight)))
   vars.push(v('stratum', 'Schicht / Klumpen', '', null, null, rows.map(r => r.stratum)))
   if (present.has('disposition')) {
-    vars.push(v('disposition', 'Ausgang der Feldarbeit', 'haven_labelled', DISPO_LABELS, null,
-      rows.map(r => r.disposition ? (DISPO_CODE[r.disposition] || null) : 1)))
+    const dispoData = rows.map(r => r.disposition ? (DISPO_CODE[r.disposition] || null) : 1)
+    // Nur die im Datensatz vorkommenden Ausgänge labeln (kein „panel-ausfall" im Querschnitt).
+    const dispoLabels = DISPO_LABELS.filter(d => dispoData.includes(d.code))
+    vars.push(v('disposition', 'Ausgang der Feldarbeit', 'haven_labelled', dispoLabels, null, dispoData))
   }
 
   // Blätter zusammensetzen

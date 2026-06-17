@@ -864,6 +864,7 @@ export default {
         it.scale = r.scale
         it.wording = r.wording
         it.validity = r.validity
+        it.stem = r.stem || ''
         it.construct = r.measurable ? r.construct : null
         this._setAnalysis(it.id, {
           state: r.measurable ? 'done' : 'unmeasurable'

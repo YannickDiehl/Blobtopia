@@ -103,10 +103,16 @@ export function buildAnalyzeSystem() {
     , '- construct: der passende key aus dem Katalog, sonst null.'
     , '- measurable: true nur, wenn construct gesetzt ist.'
     , '- suggestion: wenn nicht messbar, der NÄCHSTLIEGENDE key als freundlicher Vorschlag (sonst null).'
+    , '- stem: NUR die Frageformulierung, OHNE die Antwortskala/Kategorien — der saubere Variablen-Text fürs'
+    , '  Codebuch. Z. B. „Sollte Atommüll frei in der Natur entsorgt werden dürfen?" (ohne „1 = …, 2 = …").'
     , '- scale.min / scale.max: die Skalen-Endpunkte als ganze Zahlen. Ohne Vorgabe: Zustimmungsskala'
     , '  → 1 und 5; sonstige Skala → 1 und 10; ja/nein → 0 und 1. raw (Alter/Einkommen): nur, wenn die'
     , '  Studierenden selbst einen Bereich nennen, sonst min=max=null.'
     , '- scale.minLabel / scale.maxLabel: die Endpunkt-Beschriftungen (was die niedrige bzw. hohe Zahl meint).'
+    , '- scale.valueLabels: ALLE vom Studierenden ausformulierten Antwortkategorien als Liste {value, label}'
+    , '  (z. B. 1=„Stimme voll zu", 2=„Stimme eher zu", … 5=„Stimme voll dagegen"). value ist die Zahl der'
+    , '  STUDIERENDEN-Skala (nicht spiegeln). Sind nur die Endpunkte beschriftet, liste nur diese zwei; eine'
+    , '  reine Zahlenskala ohne Wortlaute → leere Liste []. Bei offenen Zahlenfragen (Alter/Einkommen) → [].'
     , '- scale.format: "numeric" (allgemeine Zahlenskala inkl. semantischem Differenzial und Häufigkeit'
     , '  „nie…immer"), "likert" (Zustimmung 1–5), "binary" (ja/nein), "open" (offene Zahlenangabe Alter/Einkommen).'
     , '- scale.reversed: true, wenn eine HOHE Zahl der Studierenden-Skala den NIEDRIGEN Konstruktpol meint.'
@@ -169,11 +175,20 @@ export const ANALYZE_SCHEMA = {
         , max: { type: ['integer', 'null'] }
         , minLabel: { type: 'string' }
         , maxLabel: { type: 'string' }
+        , valueLabels: {
+          type: 'array'
+          , items: {
+            type: 'object'
+            , additionalProperties: false
+            , properties: { value: { type: 'integer' }, label: { type: 'string' } }
+            , required: ['value', 'label']
+          }
+        }
         , format: { type: 'string', enum: ['numeric', 'likert', 'binary', 'open'] }
         , reversed: { type: 'boolean' }
         , difficulty: { type: 'number' }
       }
-      , required: ['min', 'max', 'minLabel', 'maxLabel', 'format', 'reversed', 'difficulty']
+      , required: ['min', 'max', 'minLabel', 'maxLabel', 'valueLabels', 'format', 'reversed', 'difficulty']
     }
     , wording: {
       type: 'object'
@@ -195,11 +210,12 @@ export const ANALYZE_SCHEMA = {
       }
       , required: ['lambda', 'crossKey']
     }
+    , stem: { type: 'string' }
     , raw: { type: 'boolean' }
     , language: { type: 'string' }
     , rationale: { type: 'string' }
   }
-  , required: ['construct', 'measurable', 'suggestion', 'scale', 'wording', 'validity', 'raw', 'language', 'rationale']
+  , required: ['construct', 'measurable', 'suggestion', 'scale', 'wording', 'validity', 'stem', 'raw', 'language', 'rationale']
 }
 
 function numOrNull(v) {
@@ -208,6 +224,23 @@ function numOrNull(v) {
   return isNaN(n) ? null : n
 }
 function str(v) { return v == null ? '' : String(v) }
+
+/** Validierte Kategorie-Labels {value:int, label}: leere Labels raus, je Wert nur einmal. */
+function mapValueLabels(arr) {
+  if (!Array.isArray(arr)) return []
+  const out = []
+  const seen = new Set()
+  for (const e of arr) {
+    if (!e || e.value == null) continue
+    const value = Math.round(Number(e.value))
+    if (isNaN(value) || seen.has(value)) continue
+    const label = str(e.label).trim()
+    if (!label) continue
+    seen.add(value)
+    out.push({ value, label })
+  }
+  return out
+}
 function clampNum(v, lo, hi, dflt) {
   const n = Number(v)
   if (isNaN(n)) return dflt
@@ -246,6 +279,9 @@ export function mapAnalysisToItem(a) {
     , max: max
     , minLabel: str(sc.minLabel)
     , maxLabel: str(sc.maxLabel)
+    // Alle ausformulierten Antwortkategorien fürs Codebuch (leer bei offenen/raw
+    // Fragen). Die Antwort-Engine nutzt sie nicht — nur min/max/difficulty.
+    , valueLabels: isRaw ? [] : mapValueLabels(sc.valueLabels)
     , format: format
     , reversed: !!sc.reversed
     , difficulty: difficulty
@@ -279,6 +315,8 @@ export function mapAnalysisToItem(a) {
     , validity: validity
     , suggestion: suggestion
     , rationale: str(a.rationale)
+    // stem = reine Frage ohne Skala (Codebuch-Variablenlabel); Fallback: leer.
+    , stem: str(a.stem).trim()
     , raw: isRaw
     , language: str(a.language)
   }

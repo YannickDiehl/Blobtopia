@@ -21,14 +21,17 @@ const CAT = {
 }
 
 const items = [
-  { id: 'q1', text: 'Wie zufrieden sind Sie mit der Politik?', construct: 'political_satisfaction'
-    , scale: { min: 1, max: 10, minLabel: 'gar nicht zufrieden', maxLabel: 'völlig zufrieden', format: 'numeric' } }
-  , { id: 'q2', text: 'Wie hoch ist Ihr Einkommen?', construct: 'income'
+  // 5-Punkt-Likert, voll beschriftet → stem (reine Frage) + alle 5 Kategorie-Labels
+  { id: 'q1', text: 'Wie zufrieden sind Sie mit der Politik? 1 = sehr unzufrieden … 5 = sehr zufrieden'
+    , stem: 'Wie zufrieden sind Sie mit der Politik?', construct: 'political_satisfaction'
+    , scale: { min: 1, max: 5, minLabel: 'sehr unzufrieden', maxLabel: 'sehr zufrieden', format: 'likert'
+      , valueLabels: [{ value: 1, label: 'sehr unzufrieden' }, { value: 2, label: 'eher unzufrieden' }, { value: 3, label: 'teils/teils' }, { value: 4, label: 'eher zufrieden' }, { value: 5, label: 'sehr zufrieden' }] } }
+  , { id: 'q2', text: 'Wie hoch ist Ihr Einkommen?', stem: 'Wie hoch ist Ihr Einkommen?', construct: 'income'
     , scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open' } }
 ]
 const rows = [
   { blobId: 'a', name: 'Bina', district: 'Hafen', weight: 11.3, stratum: null, disposition: 'teilgenommen'
-    , answers: { q1: { status: 'answered', value: 7 }, q2: { status: 'answered', value: 2400 } } }
+    , answers: { q1: { status: 'answered', value: 4 }, q2: { status: 'answered', value: 2400 } } }
   , { blobId: 'b', name: 'Cor', district: 'Zentrum', weight: 11.3, stratum: null, disposition: 'teilgenommen'
     , answers: { q1: { status: 'dontknow', value: null }, q2: { status: 'refused', value: null } } }
   , { blobId: 'c', name: 'Dex', district: 'Aue', weight: 11.3, stratum: null, disposition: 'nicht erreicht', answers: {} }
@@ -38,25 +41,26 @@ console.log('Data-Blatt: Spaltenreihenfolge + Codes:')
 const wb = buildWorkbook(rows, items, { demographics: ['name', 'district'] }, CAT)
 ok(eq(wb.data.header, ['id', 'name', 'district', 'q1', 'q2', 'weight', 'stratum', 'disposition'])
   , 'Reihenfolge id · name · Soziodemo · q1..qn · weight · stratum · disposition')
-ok(eq(wb.data.rows[0], [1, 'Bina', 2, 7, 2400, 11.3, null, 1]), 'Teilnehmerin: Codes inkl. Distrikt-Code 2 (Hafen)')
+ok(eq(wb.data.rows[0], [1, 'Bina', 2, 4, 2400, 11.3, null, 1]), 'Teilnehmerin: Codes inkl. Distrikt-Code 2 (Hafen)')
 ok(eq(wb.data.rows[1], [2, 'Cor', 0, -8, -9, 11.3, null, 1]), 'weiß nicht → -8, verweigert → -9, Zentrum → 0')
 ok(eq(wb.data.rows[2], [3, 'Dex', 4, null, null, 11.3, null, 3]), 'nicht erreicht: Items System-NA (null), Disposition-Code 3')
 
-console.log('Labels-Blatt: Variable-/Value-/Missing-Labels:')
+console.log('Labels-Blatt: Stamm + alle Kategorien + nur vorkommende Missings:')
 const L = wb.labels.rows
 const find = (v, val, type) => L.find(r => r[0] === v && r[2] === String(val) && r[4] === type)
 ok(wb.labels.header.join(',') === 'Variable,Variable_Label,Value,Value_Label,Type,Column_Type', 'genau die 6 mariposa-Spalten')
-ok(find('q1', 1, 'valid') && find('q1', 1, 'valid')[3] === 'gar nicht zufrieden', 'q1: Value 1 = „gar nicht zufrieden" (valid)')
-ok(find('q1', 10, 'valid') && find('q1', 10, 'valid')[3] === 'völlig zufrieden', 'q1: Value 10 = „völlig zufrieden" (valid)')
-ok(find('q1', -8, 'missing') && find('q1', -8, 'missing')[3] === 'weiß nicht', 'q1: -8 = „weiß nicht" (missing)')
-ok(find('q1', -9, 'missing') && find('q1', -7, 'missing'), 'q1: -9 und -7 als missing deklariert')
+ok(L.filter(r => r[0] === 'q1' && r[4] === 'valid').length === 5, 'q1: alle 5 Kategorien als eigene valid-Zeilen')
+ok(find('q1', 1, 'valid')[3] === 'sehr unzufrieden' && find('q1', 3, 'valid')[3] === 'teils/teils' && find('q1', 5, 'valid')[3] === 'sehr zufrieden', 'q1: Kategorie-Labels 1/3/5 korrekt')
+ok(find('q1', 1, 'valid')[1] === 'Wie zufrieden sind Sie mit der Politik?', 'q1: Variable_Label = reiner Fragestamm (ohne Skala)')
+ok(find('q1', -8, 'missing') && find('q1', -8, 'missing')[3] === 'weiß nicht', 'q1: -8 = „weiß nicht" (kommt vor → deklariert)')
+ok(!find('q1', -9, 'missing') && !find('q1', -7, 'missing'), 'q1: -9/-7 NICHT deklariert (kommen nicht vor — kein Phantom)')
 ok(L.filter(r => r[0] === 'q1').every(r => r[5] === 'haven_labelled'), 'q1 durchgehend Column_Type haven_labelled')
-ok(find('q1', 1, 'valid')[1] === 'Wie zufrieden sind Sie mit der Politik?', 'q1: Variable_Label = Fragetext')
-ok(!L.some(r => r[0] === 'q2' && r[4] === 'valid') && find('q2', -8, 'missing'), 'q2 (offen/raw): keine Value-Labels, aber Missing-Decl')
+ok(!L.some(r => r[0] === 'q2' && r[4] === 'valid') && find('q2', -9, 'missing') && !find('q2', -8, 'missing'), 'q2 (offen): keine Value-Labels, nur das vorkommende -9')
 ok(find('district', 2, 'valid') && find('district', 2, 'valid')[3] === 'Hafen' && find('district', 2, 'valid')[5] === 'haven_labelled'
-  , 'Distrikt: wertgelabelt numerisch (2 = Hafen)')
-ok(find('disposition', 1, 'valid')[3] === 'teilgenommen' && find('disposition', 3, 'valid')[3] === 'nicht erreicht'
-  , 'Disposition: 1=teilgenommen … 3=nicht erreicht')
+  , 'Distrikt: wertgelabelt numerisch (2 = Hafen), volle Kategorienliste')
+ok(L.filter(r => r[0] === 'district' && r[4] === 'valid').length === 5, 'Distrikt: alle 5 Kategorien (nicht datengetrieben gekürzt)')
+ok(find('disposition', 1, 'valid')[3] === 'teilgenommen' && find('disposition', 3, 'valid')[3] === 'nicht erreicht', 'Disposition: 1=teilgenommen, 3=nicht erreicht (kommen vor)')
+ok(!find('disposition', 2, 'valid') && !find('disposition', 4, 'valid') && !find('disposition', 5, 'valid'), 'Disposition: 2/4/5 NICHT deklariert (kein Panel-Ballast im Querschnitt)')
 const nameRows = L.filter(r => r[0] === 'name')
 ok(nameRows.length === 1 && nameRows[0][1] === 'Name' && nameRows[0][4] === '' && nameRows[0][5] === ''
   , 'name: reine Variable-Label-Zeile (kein Code, Column_Type leer)')
@@ -85,10 +89,10 @@ for (const need of ['[Content_Types].xml', '_rels/.rels', 'xl/workbook.xml', 'xl
 const dec = new TextDecoder()
 const sheet1 = dec.decode(files['xl/worksheets/sheet1.xml'])
 const sheet2 = dec.decode(files['xl/worksheets/sheet2.xml'])
-ok(sheet1.includes('<t xml:space="preserve">id</t>') && sheet1.includes('<v>7</v>') && sheet1.includes('<v>-8</v>')
-  , 'Data-Blatt: Kopf „id", Zahl 7, Missing-Code -8')
+ok(sheet1.includes('<t xml:space="preserve">id</t>') && sheet1.includes('<v>4</v>') && sheet1.includes('<v>-8</v>')
+  , 'Data-Blatt: Kopf „id", Zahl 4, Missing-Code -8')
 ok(!sheet1.includes('<v>NaN</v>'), 'keine NaN-Zellen')
-ok(sheet2.includes('haven_labelled') && sheet2.includes('völlig zufrieden') && sheet2.includes('keine Angabe')
+ok(sheet2.includes('haven_labelled') && sheet2.includes('sehr zufrieden') && sheet2.includes('keine Angabe')
   , 'Labels-Blatt: Column_Type + Value-Label + Missing-Label vorhanden')
 ok(dec.decode(files['xl/workbook.xml']).includes('name="Data"') && dec.decode(files['xl/workbook.xml']).includes('name="Labels"')
   , 'workbook.xml deklariert beide Blätter')
