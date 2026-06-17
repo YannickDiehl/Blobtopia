@@ -1,0 +1,116 @@
+/**
+ * Test: labelgetreuer .xlsx-Export im mariposa-Format (Data + Labels).
+ * Prüft (a) das Spalten-/Label-/Missing-Mapping und (b) dass die erzeugte Datei
+ * eine wohlgeformte (STORED) Zip mit den erwarteten OOXML-Teilen + Inhalten ist.
+ * Den echten read_xlsx()-Roundtrip beweist R+mariposa (Abnahme durch Yannick).
+ * Run:  node scripts/test-survey-xlsx.mjs
+ */
+import { buildWorkbook, toXlsx, surveyToXlsx } from '../src/lib/survey-xlsx.js'
+
+let pass = 0, fail = 0
+function ok(cond, label) {
+  if (cond) { pass++; console.log('  ✓ ' + label) }
+  else { fail++; console.log('  ✗ ' + label) }
+}
+function eq(a, b) { return JSON.stringify(a) === JSON.stringify(b) }
+
+const CAT = {
+  districtNames: ['Zentrum', 'Nordviertel', 'Hafen', 'Anhöhe', 'Aue']
+  , educationLabels: ['Keine', 'Grundbildung', 'Höhere Bildung', 'Akademisch']
+  , partyNames: ['Fortschritt', 'Mitte', 'Tradition', 'Unabhängige']
+}
+
+const items = [
+  { id: 'q1', text: 'Wie zufrieden sind Sie mit der Politik?', construct: 'political_satisfaction'
+    , scale: { min: 1, max: 10, minLabel: 'gar nicht zufrieden', maxLabel: 'völlig zufrieden', format: 'numeric' } }
+  , { id: 'q2', text: 'Wie hoch ist Ihr Einkommen?', construct: 'income'
+    , scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open' } }
+]
+const rows = [
+  { blobId: 'a', name: 'Bina', district: 'Hafen', weight: 11.3, stratum: null, disposition: 'teilgenommen'
+    , answers: { q1: { status: 'answered', value: 7 }, q2: { status: 'answered', value: 2400 } } }
+  , { blobId: 'b', name: 'Cor', district: 'Zentrum', weight: 11.3, stratum: null, disposition: 'teilgenommen'
+    , answers: { q1: { status: 'dontknow', value: null }, q2: { status: 'refused', value: null } } }
+  , { blobId: 'c', name: 'Dex', district: 'Aue', weight: 11.3, stratum: null, disposition: 'nicht erreicht', answers: {} }
+]
+
+console.log('Data-Blatt: Spaltenreihenfolge + Codes:')
+const wb = buildWorkbook(rows, items, { demographics: ['name', 'district'] }, CAT)
+ok(eq(wb.data.header, ['id', 'name', 'district', 'q1', 'q2', 'weight', 'stratum', 'disposition'])
+  , 'Reihenfolge id · name · Soziodemo · q1..qn · weight · stratum · disposition')
+ok(eq(wb.data.rows[0], [1, 'Bina', 2, 7, 2400, 11.3, null, 1]), 'Teilnehmerin: Codes inkl. Distrikt-Code 2 (Hafen)')
+ok(eq(wb.data.rows[1], [2, 'Cor', 0, -8, -9, 11.3, null, 1]), 'weiß nicht → -8, verweigert → -9, Zentrum → 0')
+ok(eq(wb.data.rows[2], [3, 'Dex', 4, null, null, 11.3, null, 3]), 'nicht erreicht: Items System-NA (null), Disposition-Code 3')
+
+console.log('Labels-Blatt: Variable-/Value-/Missing-Labels:')
+const L = wb.labels.rows
+const find = (v, val, type) => L.find(r => r[0] === v && r[2] === String(val) && r[4] === type)
+ok(wb.labels.header.join(',') === 'Variable,Variable_Label,Value,Value_Label,Type,Column_Type', 'genau die 6 mariposa-Spalten')
+ok(find('q1', 1, 'valid') && find('q1', 1, 'valid')[3] === 'gar nicht zufrieden', 'q1: Value 1 = „gar nicht zufrieden" (valid)')
+ok(find('q1', 10, 'valid') && find('q1', 10, 'valid')[3] === 'völlig zufrieden', 'q1: Value 10 = „völlig zufrieden" (valid)')
+ok(find('q1', -8, 'missing') && find('q1', -8, 'missing')[3] === 'weiß nicht', 'q1: -8 = „weiß nicht" (missing)')
+ok(find('q1', -9, 'missing') && find('q1', -7, 'missing'), 'q1: -9 und -7 als missing deklariert')
+ok(L.filter(r => r[0] === 'q1').every(r => r[5] === 'haven_labelled'), 'q1 durchgehend Column_Type haven_labelled')
+ok(find('q1', 1, 'valid')[1] === 'Wie zufrieden sind Sie mit der Politik?', 'q1: Variable_Label = Fragetext')
+ok(!L.some(r => r[0] === 'q2' && r[4] === 'valid') && find('q2', -8, 'missing'), 'q2 (offen/raw): keine Value-Labels, aber Missing-Decl')
+ok(find('district', 2, 'valid') && find('district', 2, 'valid')[3] === 'Hafen' && find('district', 2, 'valid')[5] === 'haven_labelled'
+  , 'Distrikt: wertgelabelt numerisch (2 = Hafen)')
+ok(find('disposition', 1, 'valid')[3] === 'teilgenommen' && find('disposition', 3, 'valid')[3] === 'nicht erreicht'
+  , 'Disposition: 1=teilgenommen … 3=nicht erreicht')
+const nameRows = L.filter(r => r[0] === 'name')
+ok(nameRows.length === 1 && nameRows[0][1] === 'Name' && nameRows[0][4] === '' && nameRows[0][5] === ''
+  , 'name: reine Variable-Label-Zeile (kein Code, Column_Type leer)')
+
+console.log('Faktor (Partei) statt numerisch:')
+const wbP = buildWorkbook(
+  [{ blobId: 'a', party: 'Mitte', weight: 1, answers: {} }], [], {}, CAT)
+const pv = wbP.labels.rows.filter(r => r[0] === 'party')
+ok(pv.length && pv.every(r => r[5] === 'factor' && r[2] === r[3]), 'Partei: Column_Type factor, Value == Value_Label')
+ok(pv.some(r => r[3] === 'Mitte') && pv.some(r => r[3] === 'Keine'), 'Partei-Levels inkl. „Keine"')
+
+console.log('Dozentenversion (truth → <id>_wahr-Spalten):')
+const wbT = buildWorkbook(rows, items, {}, Object.assign({ truth: { perUnit: { a: { q1: 6.7, q2: 2510 } } } }, CAT))
+ok(wbT.data.header.includes('q1_wahr') && wbT.data.header.includes('q2_wahr'), '<id>_wahr-Spalten ergänzt')
+ok(wbT.data.rows[0][wbT.data.header.indexOf('q1_wahr')] === 6.7, 'wahrer Wert eingetragen (6.7)')
+
+console.log('Erzeugte .xlsx ist eine wohlgeformte (STORED) Zip mit den OOXML-Teilen:')
+const bytes = surveyToXlsx(rows, items, { demographics: ['name', 'district'] }, CAT)
+ok(bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04, 'beginnt mit der Zip-Signatur PK\\x03\\x04')
+const files = unzipStored(bytes)
+const names = Object.keys(files)
+for (const need of ['[Content_Types].xml', '_rels/.rels', 'xl/workbook.xml', 'xl/_rels/workbook.xml.rels'
+  , 'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/sheet2.xml']) {
+  ok(names.includes(need), 'enthält ' + need)
+}
+const dec = new TextDecoder()
+const sheet1 = dec.decode(files['xl/worksheets/sheet1.xml'])
+const sheet2 = dec.decode(files['xl/worksheets/sheet2.xml'])
+ok(sheet1.includes('<t xml:space="preserve">id</t>') && sheet1.includes('<v>7</v>') && sheet1.includes('<v>-8</v>')
+  , 'Data-Blatt: Kopf „id", Zahl 7, Missing-Code -8')
+ok(!sheet1.includes('<v>NaN</v>'), 'keine NaN-Zellen')
+ok(sheet2.includes('haven_labelled') && sheet2.includes('völlig zufrieden') && sheet2.includes('keine Angabe')
+  , 'Labels-Blatt: Column_Type + Value-Label + Missing-Label vorhanden')
+ok(dec.decode(files['xl/workbook.xml']).includes('name="Data"') && dec.decode(files['xl/workbook.xml']).includes('name="Labels"')
+  , 'workbook.xml deklariert beide Blätter')
+
+// Minimaler STORED-Zip-Leser (nur für den Test): liest die lokalen Header.
+function unzipStored(buf) {
+  const out = {}
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
+  let p = 0
+  const td = new TextDecoder()
+  while (p + 4 <= buf.length && dv.getUint32(p, true) === 0x04034b50) {
+    const nameLen = dv.getUint16(p + 26, true)
+    const extraLen = dv.getUint16(p + 28, true)
+    const size = dv.getUint32(p + 22, true)
+    const name = td.decode(buf.subarray(p + 30, p + 30 + nameLen))
+    const dataStart = p + 30 + nameLen + extraLen
+    out[name] = buf.subarray(dataStart, dataStart + size)
+    p = dataStart + size
+  }
+  return out
+}
+
+void toXlsx
+console.log('\n' + pass + ' passed, ' + fail + ' failed')
+process.exit(fail === 0 ? 0 : 1)

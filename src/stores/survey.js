@@ -13,6 +13,8 @@ import {
   SAMPLING, drawSample, eligibleFrame, realizedDistribution, ACCESSORS
 } from '@/lib/survey-sampling'
 import { toCSV, codebookToCSV } from '@/lib/survey-dataset'
+import { surveyToXlsx } from '@/lib/survey-xlsx'
+import { DISTRICT_NAMES, EDUCATION_LABELS, PARTY_NAMES } from '@/lib/blob-adapter'
 import { serializeStudy, parseStudy, saveDraft, loadDraft } from '@/lib/survey-persist'
 import { CONSTRUCTS } from '@/lib/survey-constructs'
 import { runSurvey, makeChatSender } from '@/lib/survey-engine'
@@ -91,6 +93,29 @@ function downloadText(text, filename, mime) {
     document.body.removeChild(a)
     setTimeout(() => URL.revokeObjectURL(url), 1000)
   } catch (_e) { /* ignore */ }
+}
+
+function downloadBytes(bytes, filename, mime) {
+  try {
+    const blob = new Blob([bytes], { type: mime })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch (_e) { /* ignore */ }
+}
+
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+// Code↔Label-Kataloge für den labelgetreuen xlsx-Export (Distrikt/Bildung
+// wertgelabelt numerisch, Partei als Faktor). Hier importiert statt in
+// survey-xlsx.js, damit jenes Modul ohne JSON-Import node-testbar bleibt.
+function labelCatalogs() {
+  return { districtNames: DISTRICT_NAMES, educationLabels: EDUCATION_LABELS, partyNames: PARTY_NAMES }
 }
 
 export const useSurveyStore = defineStore('survey', {
@@ -409,6 +434,13 @@ export const useSurveyStore = defineStore('survey', {
       const csv = toCSV(this.result.rows, this.items)
       downloadText(csv, 'blobtopia-befragung.csv', 'text/csv')
     }
+    // Labelgetreuer .xlsx-Export im mariposa-Format (Data + Labels), per
+    // read_xlsx() in R mit voller Label-/Missing-Rekonstruktion zurücklesbar.
+    , exportXlsx() {
+      if (!this.result) return
+      const bytes = surveyToXlsx(this.result.rows, this.items, this.design, labelCatalogs())
+      downloadBytes(bytes, 'blobtopia-befragung.xlsx', XLSX_MIME)
+    }
 
     // ── Wahrheit-Tab (god view) ──
     , revealTruth() { this.truthRevealed = true }
@@ -435,6 +467,13 @@ export const useSurveyStore = defineStore('survey', {
       }
       const csv = toCSV(rows, this.items, { truth })
       downloadText(csv, 'blobtopia-befragung-dozentenversion.csv', 'text/csv')
+    }
+    // Dozentenversion als .xlsx (zusätzliche `<id>_wahr`-Spalten). Bei
+    // Mehr-Wellen-Studien gilt die Wahrheit von Welle 1 (Panels weiter via CSV).
+    , exportInstructorXlsx() {
+      if (!this.result || !this.result.meta.truth) return
+      const bytes = surveyToXlsx(this.result.rows, this.items, this.design, Object.assign({ truth: this.result.meta.truth }, labelCatalogs()))
+      downloadBytes(bytes, 'blobtopia-befragung-dozentenversion.xlsx', XLSX_MIME)
     }
 
     // Empirical sampling distribution: rerun draw+fieldwork B times (synthetic,

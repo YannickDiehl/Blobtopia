@@ -77,3 +77,6 @@ e2e-shots/
 
 # Design-Prototyp: Renderings sind aus HTML reproduzierbar
 design-prototyp/*.png
+
+# Beispiel-Exporte (reproduzierbar via scripts/experiments/make-sample-xlsx.mjs)
+blobtopia-beispiel*.xlsx

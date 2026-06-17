@@ -332,12 +332,16 @@
                   td(v-for="c in tableColumns", :key="c.key") {{ c.cell(r) }}
           p.mini-hint kA = keine Angabe (verweigert) · wn = weiß nicht · — = nicht beantwortbar
           .error-banner(v-if="unsupportedItems.length") Für {{ unsupportedItems.join(', ') }} kamen keine Antworten — die Frage ließ sich nicht eindeutig zuordnen. Formuliere sie im Fragebogen etwas konkreter (z. B. zu Zufriedenheit, Vertrauen oder einer Einstellung).
-          button.survey-btn.primary(@click="onExport")
+          button.survey-btn.primary(@click="surveyStore.exportXlsx()")
             b-icon(icon="download", size="is-small")
-            span Als CSV exportieren
+            span Für R exportieren (.xlsx)
+          button.survey-btn(@click="onExport")
+            b-icon(icon="download", size="is-small")
+            span Als CSV
           button.survey-btn(@click="surveyStore.exportCodebook()")
             b-icon(icon="book-open-variant", size="is-small")
             span Codebook exportieren
+          p.mini-hint Die .xlsx lässt sich in R mit mariposa::read_xlsx() samt Variablen-/Wertelabels und Missing-Codes zurücklesen.
 
       //- ═══════════ WAHRHEIT (Gott-Perspektive, hinter dem Dozenten-Schloss) ═══════════
       .survey-section(v-else-if="step === 'truth'")
@@ -456,9 +460,12 @@
                 b-icon(icon="chart-bar", size="is-small")
                 span {{ isSimulating ? 'Simuliere … ' + simProgress.done + '/' + simProgress.total : 'Simulieren' }}
             p.mini-hint Zufallsdesigns streuen um die Wahrheit — Auswahl- und Fragebogen-Bias überleben auch 1000 Wiederholungen.
+          button.survey-btn(@click="surveyStore.exportInstructorXlsx()")
+            b-icon(icon="download", size="is-small")
+            span Dozenten-Datei (.xlsx, mit wahren Werten)
           button.survey-btn(@click="surveyStore.exportInstructorCsv()")
             b-icon(icon="download", size="is-small")
-            span Dozenten-CSV (mit wahren Werten)
+            span … dasselbe als CSV
           .relock-row
             span.reset-link(@click="relock") Wieder sperren
 </template>

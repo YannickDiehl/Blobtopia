@@ -32,6 +32,8 @@ export default [
         , AbortController: 'readonly'
         , process: 'readonly'
         , Buffer: 'readonly'
+        , TextEncoder: 'readonly'
+        , TextDecoder: 'readonly'
         , getComputedStyle: 'readonly'
         , ResizeObserver: 'readonly'
         , cancelAnimationFrame: 'readonly'
@@ -108,6 +110,8 @@ export default [
         , setTimeout: 'readonly'
         , fetch: 'readonly'
         , URL: 'readonly'
+        , TextEncoder: 'readonly'
+        , TextDecoder: 'readonly'
       }
     }
     , rules: {
