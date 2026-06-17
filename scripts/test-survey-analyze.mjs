@@ -74,6 +74,15 @@ console.log('\nA) mapAnalysisToItem bildet auf den Engine-Vertrag ab:')
 
   const m8 = mapAnalysisToItem(raw({ construct: 'ideology', measurable: true, scale: { min: 10, max: 1, minLabel: 'links', maxLabel: 'rechts', format: 'numeric', reversed: false } }))
   ok(m8.scale.min === 1 && m8.scale.max === 10, 'vertauschte Endpunkte korrigiert')
+
+  const m9 = mapAnalysisToItem(raw({ construct: 'policy_environment', measurable: true, scale: { min: 1, max: 5, minLabel: 'stimme zu', maxLabel: 'dagegen', format: 'likert', reversed: true, difficulty: 9 } }))
+  ok(m9.scale.difficulty === 9, 'Item-Schwierigkeit übernommen')
+  const m9b = mapAnalysisToItem(raw({ construct: 'institutional_trust', measurable: true, scale: { min: 1, max: 5, minLabel: '', maxLabel: '', format: 'likert', reversed: false, difficulty: 99 } }))
+  ok(m9b.scale.difficulty === 10, 'difficulty auf 0–10 geklemmt')
+  const m9c = mapAnalysisToItem(raw({ construct: 'institutional_trust', measurable: true }))
+  ok(m9c.scale.difficulty === 5, 'fehlende difficulty → ausgewogen (5)')
+  const m9d = mapAnalysisToItem(raw({ construct: 'age', measurable: true, raw: true, scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'numeric', reversed: false, difficulty: 9 } }))
+  ok(m9d.scale.difficulty === 5, 'raw → difficulty neutral (5)')
 }
 
 console.log('\nB) Schema + System-Prompt sind vollständig:')
@@ -145,12 +154,51 @@ console.log('\nD) Richtungstreue Akquieszenz (der Fix) + Bilanz:')
   ok(Math.abs(identity - d.total) < 1e-9, 'Teleskop-Identität ①+②+③+④ ≡ Schätzer−Population hält weiter')
 }
 
+console.log('\nE) Item-Schwierigkeit erzeugt Boden-/Decken-Effekte (krasse Items):')
+{
+  // Population mit gestreutem policy_environment (~mittig), wie in echten Daten.
+  function popCohort(n) {
+    const u = []
+    for (let i = 0; i < n; i++) {
+      u.push({ blob: { id: 'e' + i, education_level: 2, attitudes: { policy_environment: (i * 7) % 11, political_satisfaction: 5, institutional_trust: 5 }, latent_traits: { party_indifference: 3 }, political_state: {} }, stratum: null, weight: 1 })
+    }
+    return u
+  }
+  // Atommüll-artiges Item: Zustimmung (= hoher policy_environment) ist extrem,
+  // Skala 1 = stimme zu … 5 = dagegen → reversed=true. difficulty steuert die Lage.
+  function item(difficulty) {
+    return { id: 'q', text: 'x', construct: 'policy_environment', scale: { min: 1, max: 5, minLabel: 'stimme zu', maxLabel: 'dagegen', format: 'numeric', reversed: true, difficulty }, wording: { agreeScale: true, loadedPositive: false, loadedNegative: false, socialDesirability: false }, validity: { lambda: 1, crossKey: null } }
+  }
+  const c = popCohort(400)
+  function answers(it) { return runSyntheticSurvey(c, [it], { seed: 999 }).rows.map(r => r.answers.q).filter(a => a.status === 'answered').map(a => a.value) }
+  function sd(a) { const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) * (x - m), 0) / a.length) }
+  const balanced = answers(item(5)), extreme = answers(item(9))
+  ok(mean(balanced) > 2.5 && mean(balanced) < 3.5, 'ausgewogen (difficulty 5): mittlere Antworten ~3 (got ' + mean(balanced).toFixed(2) + ')')
+  ok(mean(extreme) > 4.0, 'extrem (difficulty 9): starke Mehrheitsablehnung ~5 (got ' + mean(extreme).toFixed(2) + ')')
+  ok(sd(extreme) < sd(balanced), 'extrem: Varianz kollabiert — Decken-Effekt (' + sd(extreme).toFixed(2) + ' < ' + sd(balanced).toFixed(2) + ')')
+
+  // Die Wahrheit liegt auf DERSELBEN Schwierigkeitsskala → Zerlegung bilanziert.
+  const blobs = []
+  for (let i = 0; i < 400; i++) blobs.push({ id: 'p' + i, district: i % 5, age: 25 + (i % 40), education_level: i % 4, income: 1500 + (i % 8) * 300, attitudes: { policy_environment: (i * 7) % 11, institutional_trust: 5 }, latent_traits: { party_indifference: (i * 3) % 11 }, political_state: {} })
+  const it = item(9); it.id = 'q1'
+  const design = { technique: 'srs', n: 150, seed: 55, eligibility: { excludeMinors: true } }
+  const sample = drawSample(blobs, design)
+  const result = runSyntheticSurvey(sample.units, [it], { seed: design.seed })
+  result.meta.truth = snapshotTruth({ blobs, design, units: sample.units, items: [it] })
+  result.meta.technique = design.technique
+  result.meta.frameSize = sample.frameSize
+  const d = decompose(result, [it])[0]
+  ok(Math.abs((d.coverage + d.sampling + d.nonresponse + d.measurement) - d.total) < 1e-9, 'Teleskop-Identität hält mit Item-Schwierigkeit')
+  ok(d.popMean > 4.0, 'Wahrheit des Extremitems liegt am Ablehnungs-Ende (got ' + d.popMean.toFixed(2) + ')')
+}
+
 // ── Optionaler Live-Check: Prompt-Qualität (skippt ohne Key/Flag) ──
 if (process.env.ANALYZE_LIVE === '1' && process.env.ANTHROPIC_API_KEY) {
-  console.log('\nE) LIVE: Sonnet 4.6 erkennt knifflige Formulierungen:')
+  console.log('\nF) LIVE: Sonnet 4.6 erkennt knifflige Formulierungen:')
   const cases = [
     { text: 'Ich bin mit der Politik unzufrieden. Bitte auf einer Skala 1–5: 1 = stimme gar nicht zu, 5 = stimme voll zu.', wantConstruct: 'political_satisfaction', wantReversed: true }
-    , { text: 'Wo stehen Sie? 1 = unsicher … 7 = sicher (Gefühl der Kontrolle über Ihr Leben).', wantMeasurableOnly: true }
+    , { text: 'Sollte Atommüll frei in der Natur entsorgt werden dürfen? 1 = Stimme voll und ganz zu, 2 = Stimme eher zu, 3 = weiß nicht genau, 4 = Stimme eher dagegen, 5 = Stimme voll und ganz dagegen.', wantConstruct: 'policy_environment', wantReversed: true, wantHighDifficulty: true }
+    , { text: 'Wie wirksam fühlen Sie sich politisch? 1 = völlig machtlos … 7 = sehr einflussreich.', wantMeasurableOnly: true }
     , { text: 'How much do you trust the government? Scale 0 to 10.', wantConstruct: 'institutional_trust' }
     , { text: 'Welche Augenfarbe haben Sie?', wantUnmeasurable: true }
   ]
@@ -158,9 +206,10 @@ if (process.env.ANALYZE_LIVE === '1' && process.env.ANTHROPIC_API_KEY) {
     try {
       const { analysis } = await analyzeFetch({ apiKey: process.env.ANTHROPIC_API_KEY, model: ANALYZE_MODEL_DEFAULT, text: c.text })
       const m = mapAnalysisToItem(analysis)
-      console.log('    · ' + c.text.slice(0, 48) + '… → ' + (m.construct || 'nicht messbar') + (m.scale.reversed ? ' [invers]' : ''))
+      console.log('    · ' + c.text.slice(0, 44) + '… → ' + (m.construct || 'nicht messbar') + (m.scale.reversed ? ' [invers]' : '') + ' diff=' + m.scale.difficulty)
       if (c.wantConstruct) ok(m.construct === c.wantConstruct, 'erkennt ' + c.wantConstruct)
       if (c.wantReversed) ok(m.scale.reversed === true, 'erkennt inverse Polung')
+      if (c.wantHighDifficulty) ok(m.scale.difficulty >= 7, 'erkennt extreme Item-Schwierigkeit (got ' + m.scale.difficulty + ')')
       if (c.wantUnmeasurable) ok(!m.measurable, 'erkennt „nicht messbar"')
       if (c.wantMeasurableOnly) ok(m.measurable, 'mappt das semantische Differenzial auf ein Konstrukt')
     } catch (e) {
@@ -168,7 +217,7 @@ if (process.env.ANALYZE_LIVE === '1' && process.env.ANTHROPIC_API_KEY) {
     }
   }
 } else {
-  console.log('\nE) LIVE übersprungen (setze ANALYZE_LIVE=1 + ANTHROPIC_API_KEY für den Prompt-Qualitätscheck).')
+  console.log('\nF) LIVE übersprungen (setze ANALYZE_LIVE=1 + ANTHROPIC_API_KEY für den Prompt-Qualitätscheck).')
 }
 
 console.log(`\n${pass} passed, ${fail} failed`)

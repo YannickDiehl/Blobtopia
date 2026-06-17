@@ -112,7 +112,9 @@ export function buildAnalyzeSystem() {
     , '- scale.reversed: true, wenn eine HOHE Zahl der Studierenden-Skala den NIEDRIGEN Konstruktpol meint.'
     , '  Das gilt für invertierte Labels (z. B. „1 = sehr zufrieden, 5 = gar nicht zufrieden") UND für'
     , '  negierte Item-Stämme (z. B. „Ich bin unzufrieden" mit einer Zustimmungsskala → reversed=true,'
-    , '  weil hohe Zustimmung = niedrige Zufriedenheit).'
+    , '  weil hohe Zustimmung = niedrige Zufriedenheit). Siehe die Polungs-Regel unten.'
+    , '- scale.difficulty: die Item-Schwierigkeit (0–10 auf der KONSTRUKTSKALA, „hoch" laut Katalog) —'
+    , '  der Merkmalswert, bei dem ein Befragter GENAU in der Mitte der Antwortskala läge. Siehe unten.'
     , '- wording.agreeScale: true bei einer Zustimmungs-/Ablehnungsskala (stimme zu … stimme nicht zu),'
     , '  unabhängig von der Polung des Stamms (steuert die Akquieszenz-Modellierung).'
     , '- wording.loadedPositive / loadedNegative: true, wenn die Frage suggestiv positiv bzw. negativ'
@@ -124,6 +126,26 @@ export function buildAnalyzeSystem() {
     , '- raw: true nur für age/income.'
     , '- language: erkannte Sprache (z. B. "de", "en") — nur informativ.'
     , '- rationale: EIN kurzer Satz, warum du so zugeordnet hast (Transparenz).'
+    , ''
+    , '### Polung sorgfältig bestimmen (häufige Fehlerquelle — denke das in zwei Schritten durch)'
+    , '1. Welcher Konstruktpol entspricht der ZUSTIMMUNG zur Aussage? Lies den Item-Stamm zusammen mit dem'
+    , '   Katalog-Eintrag „hoch = …". Aussagen können selbst eine Richtung tragen (Zustimmung zu einer'
+    , '   umweltschädlichen Aussage = HOHER Wert auf einem Konstrukt, dessen hoher Pol „Wachstum vor Umwelt" ist).'
+    , '2. An welcher ZAHL der Studierenden-Skala steht dieser (Zustimmungs-)Pol? Steht der HOHE Konstruktpol'
+    , '   an der NIEDRIGEN Zahl, ist reversed=true.'
+    , 'Worked Example: „Sollte Atommüll frei in der Natur entsorgt werden dürfen? 1 = stimme voll zu … 5 = dagegen."'
+    , 'Zustimmung (dürfen) = umweltschädlich = HOHER policy_environment (hoch = Wachstum vor Umwelt). Diese Zustimmung'
+    , 'steht an der Zahl 1 (niedrig). Hoher Konstruktpol an niedriger Zahl ⇒ reversed=true.'
+    , ''
+    , '### Item-Schwierigkeit (difficulty) — damit krasse Items realistische Antworten erzeugen'
+    , 'difficulty ist der Merkmalswert (0–10, „hoch" laut Katalog), bei dem ein Befragter in der MITTE der'
+    , 'Antwortskala läge. Für ein typisches, ausgewogenes Item ≈ 5 — dann verhält sich die Skala linear; das ist'
+    , 'der NORMALFALL, wähle ihn im Zweifel. Verlangt die im Item genannte (Zustimmungs-)Position aber einen'
+    , 'EXTREMEN Merkmalswert (eine Randposition, die kaum jemand hält), setze difficulty nahe an diesen Pol:'
+    , 'z. B. 9, wenn man fast maximal [hoher Pol] sein muss, um zuzustimmen; 1, wenn fast minimal. Worked Example:'
+    , 'Beim Atommüll-Item verlangt Zustimmung einen fast maximalen policy_environment-Wert (extrem umweltschädlich)'
+    , '⇒ difficulty ≈ 9. Dadurch lehnt die große Mehrheit stark ab (Decken-Effekt), während ein lineares Modell'
+    , 'fälschlich mittlere Antworten lieferte. Setze difficulty NICHT extrem bei normalen Meinungsfragen.'
     , ''
     , 'Antworte ausschließlich über das vorgegebene JSON-Schema. Keine Erklärungen außerhalb des JSON.'
   ].join('\n')
@@ -149,8 +171,9 @@ export const ANALYZE_SCHEMA = {
         , maxLabel: { type: 'string' }
         , format: { type: 'string', enum: ['numeric', 'likert', 'binary', 'open'] }
         , reversed: { type: 'boolean' }
+        , difficulty: { type: 'number' }
       }
-      , required: ['min', 'max', 'minLabel', 'maxLabel', 'format', 'reversed']
+      , required: ['min', 'max', 'minLabel', 'maxLabel', 'format', 'reversed', 'difficulty']
     }
     , wording: {
       type: 'object'
@@ -213,6 +236,11 @@ export function mapAnalysisToItem(a) {
   // raw (Alter/Einkommen): echte Größe — offen, außer es wurde ein Bereich genannt.
   if (isRaw) format = (min != null && max != null) ? 'numeric' : 'open'
 
+  // Item-Schwierigkeit (IRT-Schwelle auf der Konstruktskala): 5 = ausgewogen
+  // (lineare Abbildung); Abweichung erzeugt Boden-/Decken-Effekte. Für raw
+  // (Alter/Einkommen) bedeutungslos → neutral 5.
+  const difficulty = isRaw ? 5 : clampNum(sc.difficulty, 0, 10, 5)
+
   const scale = {
     min: min
     , max: max
@@ -220,6 +248,7 @@ export function mapAnalysisToItem(a) {
     , maxLabel: str(sc.maxLabel)
     , format: format
     , reversed: !!sc.reversed
+    , difficulty: difficulty
   }
 
   const w = a.wording || {}
@@ -276,10 +305,14 @@ export async function analyzeFetch({ apiKey, model, text, fetchImpl }) {
     }
     , body: JSON.stringify({
       model: model || ANALYZE_MODEL_DEFAULT
-      , max_tokens: 600
+      // Adaptives Thinking verbraucht Output-Tokens → großzügiges Budget, sonst
+      // bricht das JSON nach dem Denken ab. effort 'medium' bündelt das Denken
+      // (Polung/Schwierigkeit durchdenken) bei moderaten Kosten.
+      , max_tokens: 4000
+      , thinking: { type: 'adaptive' }
       , system: [{ type: 'text', text: buildAnalyzeSystem(), cache_control: { type: 'ephemeral' } }]
       , messages: [{ role: 'user', content: 'Analysiere diese Befragungsfrage:\n\n' + String(text || '').slice(0, 1000) }]
-      , output_config: { format: { type: 'json_schema', schema: ANALYZE_SCHEMA } }
+      , output_config: { effort: 'medium', format: { type: 'json_schema', schema: ANALYZE_SCHEMA } }
     })
   })
 

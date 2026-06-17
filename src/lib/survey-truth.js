@@ -28,7 +28,7 @@
  * reproducible.
  */
 import { drawSample, eligibleFrame } from './survey-sampling.js'
-import { runSyntheticSurvey } from './survey-synthetic.js'
+import { runSyntheticSurvey, latentToItemScale } from './survey-synthetic.js'
 import { CONSTRUCTS_BY_KEY } from './survey-constructs.js'
 import { simulateParticipation, DISPOSITION, FIELD_MODES } from './survey-fieldwork.js'
 
@@ -36,8 +36,6 @@ import { simulateParticipation, DISPOSITION, FIELD_MODES } from './survey-fieldw
 function isRespondentRow(r) {
   return r.disposition == null || r.disposition === DISPOSITION.RESPONDENT
 }
-
-function clamp(n, min, max) { return Math.max(min, Math.min(max, n)) }
 
 function itemKey(item, qi) {
   return item.id || ('item_' + qi)
@@ -61,16 +59,13 @@ export function trueValueOnItemScale(blob, item) {
     if (s.max != null) t = Math.min(s.max, t)
     return t
   }
-  // Polung respektieren (s.reversed): Wahrheit auf DERSELBEN gespiegelten Skala
-  // wie der synthetische Schätzer, damit die Teleskop-Zerlegung bilanziert UND
-  // relativ zu den Labels in die richtige Richtung zeigt.
+  // Nicht-raw: DIESELBE Abbildung wie der synthetische Schätzer (Item-Schwierigkeit
+  // + Polung über latentToItemScale), damit die Teleskop-Zerlegung exakt bilanziert
+  // und die Wahrheit eines extremen Items realistisch am Skalenende liegt.
   if (s.format === 'binary') {
-    const bit = v >= 5 ? 1 : 0
-    return s.reversed ? (1 - bit) : bit
+    return latentToItemScale(v, item) >= 0.5 ? 1 : 0
   }
-  let frac = clamp(v, 0, 10) / 10
-  if (s.reversed) frac = 1 - frac
-  return s.min + frac * (s.max - s.min)
+  return latentToItemScale(v, item)
 }
 
 function meanOf(values) {

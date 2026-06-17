@@ -55,15 +55,21 @@ function gaussian(rng) {
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
 }
 
-// Map a (noisy) stored 0–10 value CONTINUOUSLY onto the item's response scale.
-// Respektiert die Polung: bei invers gepolten Skalen (s.reversed — z. B.
-// „1 = sehr zufrieden; 5 = gar nicht zufrieden" ODER ein negierter Item-Stamm
-// „Ich bin unzufrieden" + Zustimmung) liegt der HOHE Wahrwert an der NIEDRIGEN
-// Zahl, der Bruch wird gespiegelt. Gerundet/geklemmt wird erst NACH dem
-// Hinzufügen der richtungstreuen Akquieszenz (siehe syntheticAnswer).
-function rescaleContinuous(value, item) {
+// Map a latent 0–10 construct value CONTINUOUSLY onto the item's response scale.
+// Zwei Item-Eigenschaften gehen ein:
+//  • difficulty (IRT-Schwelle, 0–10 auf der Konstruktskala): der Merkmalswert, der
+//    auf die MITTE der Antwortskala fällt. 5 = ausgewogen → lineare Abbildung
+//    (Normalfall, rückwärtskompatibel). Eine extreme Schwierigkeit verschiebt die
+//    Rampe und erzeugt mit der Klemmung Boden-/Decken-Effekte: krasse Items (z. B.
+//    „Atommüll frei entsorgen?", difficulty≈9) liefern dann realistisch eine starke
+//    Mehrheitsablehnung mit kollabierter Varianz statt mittlerer Antworten.
+//  • reversed (Polung): bei invers gepolten Skalen/Stämmen liegt der HOHE Wahrwert
+//    an der NIEDRIGEN Zahl, der Bruch wird gespiegelt.
+// Gerundet/geklemmt wird erst NACH der richtungstreuen Akquieszenz (siehe syntheticAnswer).
+export function latentToItemScale(value, item) {
   const s = item.scale || { min: 1, max: 10 }
-  let frac = clamp(value, 0, 10) / 10
+  const diff = (s.difficulty != null && !isNaN(s.difficulty)) ? clamp(s.difficulty, 0, 10) : 5
+  let frac = clamp(0.5 + (clamp(value, 0, 10) - diff) / 10, 0, 1)
   if (s.reversed) frac = 1 - frac
   return s.min + frac * (s.max - s.min)
 }
@@ -146,18 +152,16 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording, sdFactor
   // verschieben den LATENTEN Wert — sie spiegeln also mit der Skalenrichtung.
   // Akquieszenz NICHT: die Ja-Sage-Tendenz wird unten richtungstreu addiert.
   const cShift = vShift + fraShift + sdShift
-  const shifted = clamp(stored + cShift, 0, 10)
-  const noisy = shifted + gaussian(rng) * effNoiseSd
+  const noise = gaussian(rng) * effNoiseSd
   const s = item.scale || { min: 1, max: 10 }
   const format = s.format || 'numeric'
 
   if (format === 'binary') {
     // Binäritems werden nicht in ④ zerlegt (fx=null); Akquieszenz wirkt hier
-    // wie bisher über den Konstruktraum auf die Ja/Nein-Schwelle.
-    const noisyB = clamp(stored + acqShift + cShift, 0, 10) + (noisy - shifted)
-    let bit = noisyB >= 5 ? 1 : 0
-    if (s.reversed) bit = 1 - bit
-    return { status: 'answered', value: bit, verbatim: '', fx: null }
+    // über den Konstruktraum auf die Schwelle. latentToItemScale trägt Polung
+    // UND Item-Schwierigkeit (Schwelle), gibt einen 0–1-Anteil → Ja/Nein.
+    const latentB = clamp(stored + acqShift + cShift, 0, 10) + noise
+    return { status: 'answered', value: latentToItemScale(latentB, item) >= 0.5 ? 1 : 0, verbatim: '', fx: null }
   }
 
   // Richtungstreue Akquieszenz: die Ja-Sage-Tendenz drückt IMMER zum HOHEN Ende
@@ -170,7 +174,8 @@ function syntheticAnswer(blob, item, itemId, runSeed, noiseSd, wording, sdFactor
   // die Akquieszenz steht bewusst außerhalb von f, damit Summe ≡ Messfehler hält.
   const f = (s.max - s.min) / 10 * (s.reversed ? -1 : 1)
   const acqAnswer = acqShift * (s.max - s.min) / 10
-  const baseAnswer = rescaleContinuous(noisy, item)
+  const latent = clamp(stored + cShift, 0, 10) + noise
+  const baseAnswer = latentToItemScale(latent, item)
   const value = clamp(Math.round(baseAnswer + acqAnswer), s.min, s.max)
   return {
     status: 'answered', value: value, verbatim: ''
