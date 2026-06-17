@@ -41,6 +41,22 @@ function itemId(item, qi) {
   return item.id || ('item_' + qi)
 }
 
+// Wert für die CSV-Zelle: bei fehlenden Werten der von der Studierenden
+// deklarierte Code je Art (item.scale.missingLabels), sonst ALLBUS-Default
+// (-9/-8/-7). So trägt auch die CSV (read.csv2) den Code, nicht nur die
+// _status-Sidecar-Spalte. Nichtbefragte/unsupported bleiben leer (System-NA).
+const CSV_DEFAULT_MISSING = { refused: -9, dontknow: -8, unparsed: -7, error: -7 }
+function csvValueFor(a, item) {
+  if (!a) return ''
+  if (a.status === 'answered' || a.status == null) return a.value == null ? '' : a.value
+  const def = CSV_DEFAULT_MISSING[a.status]
+  if (def == null) return ''
+  const declared = (item && item.scale && Array.isArray(item.scale.missingLabels)) ? item.scale.missingLabels : []
+  const kind = a.status === 'refused' ? 'refused' : a.status === 'dontknow' ? 'dontknow' : 'invalid'
+  const m = declared.find(x => x && x.kind === kind && x.value != null)
+  return m ? m.value : def
+}
+
 /**
  * Render the dataset as CSV.
  * @param {Array} rows   runSurvey rows
@@ -76,7 +92,7 @@ export function toCSV(rows, items, opts) {
     for (let qi = 0; qi < items.length; qi++) {
       const id = itemId(items[qi], qi)
       const a = (r.answers && r.answers[id]) || {}
-      row.push(a.value == null ? '' : a.value)
+      row.push(csvValueFor(a, items[qi]))
       if (includeStatus) row.push(a.status || '')
       if (truth) {
         const t = truth.perUnit && truth.perUnit[r.blobId] ? truth.perUnit[r.blobId][id] : null
@@ -96,6 +112,9 @@ export function toCodebook(items) {
     , type: it.type || (it.scale ? it.scale.format : 'offen')
     , scale: it.scale && it.scale.min != null ? (it.scale.min + '-' + it.scale.max + (it.scale.reversed ? ' (invers gepolt)' : ''))
       : (it.choices ? it.choices.join(' / ') : 'offene Zahl')
+    // Studierenden-definierte fehlende Werte (Code = Label), z. B. „8=weiß nicht / 9=keine Angabe".
+    , missing: (it.scale && Array.isArray(it.scale.missingLabels) ? it.scale.missingLabels : [])
+      .map(m => m.value + '=' + m.label).join(' / ')
   }))
 }
 
@@ -104,11 +123,11 @@ export function codebookToCSV(items, constructLabels, opts) {
   opts = opts || {}
   const delim = opts.delimiter || ';'
   const rows = toCodebook(items)
-  const lines = [['variable', 'frage', 'format', 'skala', 'misst'].join(delim)]
+  const lines = [['variable', 'frage', 'format', 'skala', 'misst', 'fehlende'].join(delim)]
   for (let i = 0; i < rows.length; i++) {
     const r = rows[i]
     const label = constructLabels && items[i].construct ? (constructLabels[items[i].construct] || items[i].construct) : ''
-    lines.push([r.variable, csvCell(r.question, delim), r.type, r.scale, csvCell(label, delim)].join(delim))
+    lines.push([r.variable, csvCell(r.question, delim), r.type, r.scale, csvCell(label, delim), csvCell(r.missing, delim)].join(delim))
   }
   return '﻿' + lines.join('\r\n')
 }

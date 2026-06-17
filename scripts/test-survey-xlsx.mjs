@@ -101,6 +101,32 @@ ok(wbDup.data.header.includes('Atommüll') && wbDup.data.header.includes('Atomm�
 const wbKT = buildWorkbook(kRows, kItems, {}, Object.assign({ truth: { perUnit: { a: { q1: 4.8 } } } }, CAT))
 ok(wbKT.data.header.includes('Atommüll_wahr'), 'Dozentenversion: <Kürzel>_wahr-Spalte')
 
+console.log('Studierenden-definierte fehlende Werte → eigene Codes + Type=missing:')
+const mItems = [
+  { id: 'q1', stem: 'Wie zufrieden?', construct: 'political_satisfaction'
+    , scale: { min: 1, max: 5, minLabel: 'sehr zufrieden', maxLabel: 'sehr unzufrieden', format: 'likert'
+      , valueLabels: [{ value: 1, label: 'sehr zufrieden' }, { value: 5, label: 'sehr unzufrieden' }]
+      , missingLabels: [
+        { value: 8, label: 'weiß nicht', kind: 'dontknow' }
+        , { value: 9, label: 'keine Angabe', kind: 'refused' }
+        , { value: 7, label: 'trifft nicht zu', kind: 'notapplicable' } ] } }
+]
+const mRows = [
+  { blobId: 'a', weight: 1, stratum: null, disposition: 'teilgenommen', answers: { q1: { status: 'answered', value: 4 } } }
+  , { blobId: 'b', weight: 1, stratum: null, disposition: 'teilgenommen', answers: { q1: { status: 'dontknow', value: null } } }
+  , { blobId: 'c', weight: 1, stratum: null, disposition: 'teilgenommen', answers: { q1: { status: 'refused', value: null } } }
+]
+const wbM = buildWorkbook(mRows, mItems, {}, CAT)
+const qIdx = wbM.data.header.indexOf('q1')
+ok(wbM.data.rows[1][qIdx] === 8, 'weiß nicht → Studierenden-Code 8 (nicht Default -8)')
+ok(wbM.data.rows[2][qIdx] === 9, 'keine Angabe → Studierenden-Code 9 (nicht Default -9)')
+const LM = wbM.labels.rows
+const findM = (v, val, type) => LM.find(r => r[0] === v && r[2] === String(val) && r[4] === type)
+ok(findM('q1', 8, 'missing')[3] === 'weiß nicht' && findM('q1', 9, 'missing')[3] === 'keine Angabe', 'Labels: 8/9 als Type=missing mit den Wortlauten')
+ok(findM('q1', 7, 'missing') && findM('q1', 7, 'missing')[3] === 'trifft nicht zu', 'Labels: deklariertes „trifft nicht zu" (7) auch mit 0 Vorkommen (Codebuch-Definition)')
+ok(!findM('q1', -9, 'missing') && !findM('q1', -8, 'missing'), 'Default-Codes -9/-8 NICHT zusätzlich deklariert (Studierenden-Schema überschreibt)')
+ok(findM('q1', 1, 'valid') && findM('q1', 5, 'valid') && !findM('q1', 8, 'valid') && !findM('q1', 9, 'valid'), 'gültige Labels rein substanziell (1/5) — Missing-Codes nicht als valid')
+
 console.log('Erzeugte .xlsx ist eine wohlgeformte (STORED) Zip mit den OOXML-Teilen:')
 const bytes = surveyToXlsx(rows, items, { demographics: ['name', 'district'] }, CAT)
 ok(bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04, 'beginnt mit der Zip-Signatur PK\\x03\\x04')

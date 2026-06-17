@@ -31,14 +31,53 @@ import { DISPOSITION } from './survey-fieldwork.js'
 // nicht). Deshalb werden sie NICHT hier importiert, sondern vom Store über opts
 // hereingereicht — so bleibt dieses Modul ohne Seiteneffekte node-testbar.
 
-// Missing-Schema (ALLBUS-/SPSS-Konvention, wie mariposa::set_na/read_spss):
-// verweigert → -9, weiß nicht → -8, unlesbar/Fehler → -7. Nichtbefragte
-// (Unit-Nonresponse) bleiben System-NA (leere Zelle).
-const MISSING_LABELS = Object.freeze([
-  { code: -9, label: 'keine Angabe' }
-  , { code: -8, label: 'weiß nicht' }
-  , { code: -7, label: 'ungültig' }
-])
+// Missing-Schema (ALLBUS-/SPSS-Konvention, wie mariposa::set_na/read_spss).
+// Default-Codes je Art, falls die Studierende keine eigenen vergibt: verweigert
+// → -9, weiß nicht → -8, unlesbar/Fehler → -7. Nichtbefragte (Unit-Nonresponse)
+// bleiben System-NA (leere Zelle). Studierende können Codes + Labels in der Frage
+// selbst anlegen (item.scale.missingLabels, kind-getrieben) — die überschreiben
+// dann die Defaults gleicher Art.
+const DEFAULT_MISSING = Object.freeze({
+  refused: { code: -9, label: 'keine Angabe' }
+  , dontknow: { code: -8, label: 'weiß nicht' }
+  , invalid: { code: -7, label: 'ungültig' }
+})
+
+/**
+ * Missing-Schema eines Items: die vom Studierenden deklarierten Codes/Labels je
+ * Art (item.scale.missingLabels) mit Default-Fallback. `declared` ist die volle
+ * Liste (inkl. notapplicable) fürs Labels-Blatt.
+ */
+function missingSchemeFor(item) {
+  const declared = (item && item.scale && Array.isArray(item.scale.missingLabels)) ? item.scale.missingLabels : []
+  const byKind = {}
+  for (const m of declared) if (m && m.value != null && byKind[m.kind] == null) byKind[m.kind] = { code: m.value, label: m.label }
+  return {
+    refused: byKind.refused || DEFAULT_MISSING.refused
+    , dontknow: byKind.dontknow || DEFAULT_MISSING.dontknow
+    , invalid: byKind.invalid || DEFAULT_MISSING.invalid
+    , declared: declared
+  }
+}
+
+/**
+ * Missing-Label-Zeilen eines Items: ALLE deklarierten Studierenden-Kategorien
+ * (auch mit 0 Vorkommen — Codebuch-Definition), plus die Default-Codes, die
+ * tatsächlich vorkommen und nicht schon deklariert sind.
+ */
+function missingLabelRows(scheme, data) {
+  const out = []
+  const seen = new Set()
+  for (const m of scheme.declared) {
+    if (m == null || m.value == null || seen.has(m.value)) continue
+    seen.add(m.value); out.push({ code: m.value, label: m.label })
+  }
+  for (const def of [scheme.refused, scheme.dontknow, scheme.invalid]) {
+    if (seen.has(def.code)) continue
+    if (data.includes(def.code)) { seen.add(def.code); out.push({ code: def.code, label: def.label }) }
+  }
+  return out
+}
 
 // Disposition → numerische Codes (Labels = die deutschen Strings aus DISPOSITION).
 const DISPO_ORDER = [DISPOSITION.RESPONDENT, DISPOSITION.REFUSED, DISPOSITION.NONCONTACT, DISPOSITION.ATTRITION, DISPOSITION.GONE]
@@ -47,15 +86,15 @@ const DISPO_CODE = DISPO_ORDER.reduce((m, d, i) => { m[d] = i + 1; return m }, {
 
 const LABELS_HEADER = ['Variable', 'Variable_Label', 'Value', 'Value_Label', 'Type', 'Column_Type']
 
-/** Code für eine Item-Antwort: Wert, Missing-Code oder null (System-NA). */
-function answerCell(a) {
+/** Code für eine Item-Antwort: Wert, Missing-Code (Schema des Items) oder null (System-NA). */
+function answerCell(a, scheme) {
   if (!a) return null
   switch (a.status) {
     case 'answered': return a.value
-    case 'refused': return -9
-    case 'dontknow': return -8
+    case 'refused': return scheme.refused.code
+    case 'dontknow': return scheme.dontknow.code
     case 'unparsed':
-    case 'error': return -7
+    case 'error': return scheme.invalid.code
     default: return null // unsupported / unbekannt → System-NA
   }
 }
@@ -163,7 +202,8 @@ export function buildWorkbook(rows, items, design, opts) {
     const id = it.id || ('item_' + qi)
     const varName = uniqueName(itemVarName(it, qi), usedNames)
     const s = it.scale || {}
-    const data = rows.map(r => answerCell(r.answers && r.answers[id]))
+    const scheme = missingSchemeFor(it)
+    const data = rows.map(r => answerCell(r.answers && r.answers[id], scheme))
     // Value-Labels: alle ausformulierten Kategorien (LLM-Analyse); sonst die
     // Endpunkte. Bei offenen/raw Fragen keine.
     let valueLabels = []
@@ -175,9 +215,10 @@ export function buildWorkbook(rows, items, design, opts) {
         if (s.maxLabel && s.max != null) valueLabels.push({ code: s.max, label: s.maxLabel })
       }
     }
-    // Missing-Codes nur deklarieren, wenn sie in den Daten vorkommen (kein
-    // Phantom-„ungültig", keine ungenutzten Codes) — Variablen-Label = reine Frage.
-    const missing = MISSING_LABELS.filter(m => data.includes(m.code))
+    // Missing-Labels: alle von der Studierenden deklarierten Kategorien (auch mit
+    // 0 Vorkommen — Codebuch-Definition), plus Default-Codes, die vorkommen.
+    // Variablen-Label = reine Frage.
+    const missing = missingLabelRows(scheme, data)
     vars.push(v(varName, it.stem || it.text || varName, 'haven_labelled', valueLabels, missing, data))
     if (truth) {
       vars.push(v(varName + '_wahr', 'Wahrer Wert: ' + (it.stem || it.text || varName), '', null, null,

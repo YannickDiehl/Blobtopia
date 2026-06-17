@@ -113,6 +113,15 @@ export function buildAnalyzeSystem() {
     , '  (z. B. 1=„Stimme voll zu", 2=„Stimme eher zu", … 5=„Stimme voll dagegen"). value ist die Zahl der'
     , '  STUDIERENDEN-Skala (nicht spiegeln). Sind nur die Endpunkte beschriftet, liste nur diese zwei; eine'
     , '  reine Zahlenskala ohne Wortlaute → leere Liste []. Bei offenen Zahlenfragen (Alter/Einkommen) → [].'
+    , '- scale.missingLabels: vom Studierenden selbst angelegte FEHLENDE-WERTE-Kategorien als Liste'
+    , '  {value, label, kind} — also nicht-substanzielle Antworten wie „weiß nicht", „keine Angabe",'
+    , '  „verweigert", „möchte nicht antworten", „trifft nicht zu", „ungültig" (sprachunabhängig). value ist'
+    , '  die vom Studierenden vergebene Zahl, label sein Wortlaut, kind ∈ {refused (Verweigerung/keine Angabe),'
+    , '  dontknow (weiß nicht/unentschieden), notapplicable (trifft nicht zu), invalid (ungültig)}. WICHTIG:'
+    , '  Diese Kategorien gehören NICHT in valueLabels und liegen AUSSERHALB von min/max — der Gültig-Bereich'
+    , '  bleibt rein substanziell. Vergibt der Studierende keine fehlenden Werte → leere Liste [].'
+    , '  Worked Example: „… 1 = sehr zufrieden … 5 = sehr unzufrieden, 8 = weiß nicht, 9 = keine Angabe" ⇒'
+    , '  min=1, max=5, valueLabels 1..5; missingLabels=[{8,„weiß nicht",dontknow},{9,„keine Angabe",refused}].'
     , '- scale.format: "numeric" (allgemeine Zahlenskala inkl. semantischem Differenzial und Häufigkeit'
     , '  „nie…immer"), "likert" (Zustimmung 1–5), "binary" (ja/nein), "open" (offene Zahlenangabe Alter/Einkommen).'
     , '- scale.reversed: true, wenn eine HOHE Zahl der Studierenden-Skala den NIEDRIGEN Konstruktpol meint.'
@@ -184,11 +193,24 @@ export const ANALYZE_SCHEMA = {
             , required: ['value', 'label']
           }
         }
+        , missingLabels: {
+          type: 'array'
+          , items: {
+            type: 'object'
+            , additionalProperties: false
+            , properties: {
+              value: { type: 'integer' }
+              , label: { type: 'string' }
+              , kind: { type: 'string', enum: ['refused', 'dontknow', 'notapplicable', 'invalid'] }
+            }
+            , required: ['value', 'label', 'kind']
+          }
+        }
         , format: { type: 'string', enum: ['numeric', 'likert', 'binary', 'open'] }
         , reversed: { type: 'boolean' }
         , difficulty: { type: 'number' }
       }
-      , required: ['min', 'max', 'minLabel', 'maxLabel', 'valueLabels', 'format', 'reversed', 'difficulty']
+      , required: ['min', 'max', 'minLabel', 'maxLabel', 'valueLabels', 'missingLabels', 'format', 'reversed', 'difficulty']
     }
     , wording: {
       type: 'object'
@@ -241,6 +263,34 @@ function mapValueLabels(arr) {
   }
   return out
 }
+
+/**
+ * Studierenden-definierte FEHLENDE-WERTE-Kategorien {value:int, label, kind}.
+ * Leere Labels/Duplikate raus; ein Code, der in den Gültig-Bereich [min,max]
+ * fällt oder einen valueLabels-Wert trifft, wird NICHT als Missing geführt,
+ * sondern als Kollision gemeldet — der Wächter dagegen, dass ein fehlender Wert
+ * still als gültiger Wert in Mittelwerte/Zerlegung rutscht.
+ * @returns {{ missing: Array, conflicts: number[] }}
+ */
+function mapMissingLabels(arr, scale, validValues) {
+  if (!Array.isArray(arr)) return { missing: [], conflicts: [] }
+  const missing = []
+  const conflicts = []
+  const seen = new Set()
+  for (const e of arr) {
+    if (!e || e.value == null) continue
+    const value = Math.round(Number(e.value))
+    if (isNaN(value) || seen.has(value)) continue
+    const label = str(e.label).trim()
+    if (!label) continue
+    const inRange = scale.min != null && scale.max != null && value >= scale.min && value <= scale.max
+    if (inRange || validValues.has(value)) { conflicts.push(value); continue }
+    const kind = ['refused', 'dontknow', 'notapplicable', 'invalid'].includes(e.kind) ? e.kind : 'invalid'
+    seen.add(value)
+    missing.push({ value, label, kind })
+  }
+  return { missing, conflicts }
+}
 function clampNum(v, lo, hi, dflt) {
   const n = Number(v)
   if (isNaN(n)) return dflt
@@ -252,7 +302,7 @@ function clampNum(v, lo, hi, dflt) {
  * Robust gegen unbekannte Konstrukt-Keys: was nicht in der Registry steht, gilt
  * als nicht messbar (die Engine würde es sonst still als „unsupported" kodieren).
  *
- * @returns {{ construct, measurable, scale, wording, validity, suggestion, rationale, raw, language }}
+ * @returns {{ construct, measurable, scale, wording, validity, suggestion, rationale, raw, language, missingConflicts }}
  */
 export function mapAnalysisToItem(a) {
   a = a || {}
@@ -282,10 +332,17 @@ export function mapAnalysisToItem(a) {
     // Alle ausformulierten Antwortkategorien fürs Codebuch (leer bei offenen/raw
     // Fragen). Die Antwort-Engine nutzt sie nicht — nur min/max/difficulty.
     , valueLabels: isRaw ? [] : mapValueLabels(sc.valueLabels)
+    // Studierenden-definierte fehlende Werte (gleich befüllt) — getrennt vom
+    // Gültig-Bereich gehalten; offene/raw Fragen tragen keine.
+    , missingLabels: []
     , format: format
     , reversed: !!sc.reversed
     , difficulty: difficulty
   }
+
+  const validVals = new Set(scale.valueLabels.map(v => v.value))
+  const mm = isRaw ? { missing: [], conflicts: [] } : mapMissingLabels(sc.missingLabels, scale, validVals)
+  scale.missingLabels = mm.missing
 
   const w = a.wording || {}
   const wording = {
@@ -319,6 +376,9 @@ export function mapAnalysisToItem(a) {
     , stem: str(a.stem).trim()
     , raw: isRaw
     , language: str(a.language)
+    // Codes, die als fehlend gemeint waren, aber den Gültig-Bereich treffen —
+    // für eine sichtbare Warnung in der UI (keine stille Degradation).
+    , missingConflicts: mm.conflicts
   }
 }
 

@@ -101,15 +101,51 @@ console.log('\nA) mapAnalysisToItem bildet auf den Engine-Vertrag ab:')
   ok(mvr.scale.valueLabels.length === 0, 'raw/offen → keine Kategorie-Labels')
 }
 
+console.log('\nA2) Studierenden-definierte fehlende Werte (Codes + Labels):')
+{
+  const mm = mapAnalysisToItem(raw({ construct: 'political_satisfaction', measurable: true
+    , scale: { min: 1, max: 5, minLabel: 'zufrieden', maxLabel: 'unzufrieden', format: 'likert', reversed: false
+      , valueLabels: [{ value: 1, label: 'sehr zufrieden' }, { value: 5, label: 'sehr unzufrieden' }]
+      , missingLabels: [{ value: 8, label: 'weiß nicht', kind: 'dontknow' }, { value: 9, label: 'keine Angabe', kind: 'refused' }] } }))
+  ok(mm.scale.missingLabels.length === 2, 'beide fehlenden Werte übernommen')
+  ok(mm.scale.missingLabels.find(m => m.value === 8).kind === 'dontknow', 'kind klassifiziert: 8 = weiß nicht → dontknow')
+  ok(mm.scale.missingLabels.find(m => m.value === 9).kind === 'refused', 'kind klassifiziert: 9 = keine Angabe → refused')
+  ok(mm.missingConflicts.length === 0, 'keine Kollision (8/9 außerhalb 1–5)')
+
+  // Kollisionswächter: ein „fehlender" Code im Gültigbereich wird NICHT als Missing
+  // geführt, sondern gemeldet — sonst rutschte er als gültiger Wert in die Mittelwerte.
+  const mc = mapAnalysisToItem(raw({ construct: 'political_satisfaction', measurable: true
+    , scale: { min: 1, max: 5, minLabel: '', maxLabel: '', format: 'likert', reversed: false, valueLabels: []
+      , missingLabels: [{ value: 3, label: 'unentschieden', kind: 'dontknow' }, { value: 9, label: 'keine Angabe', kind: 'refused' }] } }))
+  ok(mc.scale.missingLabels.length === 1 && mc.scale.missingLabels[0].value === 9, 'Code 3 (im Gültigbereich) NICHT als Missing geführt')
+  ok(mc.missingConflicts.includes(3), 'Code 3 als Kollision gemeldet (sichtbare Warnung)')
+
+  // raw/offen trägt keine fehlenden Werte; Duplikat-Codes werden gefiltert.
+  const mr = mapAnalysisToItem(raw({ construct: 'income', measurable: true, raw: true
+    , scale: { min: null, max: null, minLabel: '', maxLabel: '', format: 'open', reversed: false, valueLabels: []
+      , missingLabels: [{ value: -9, label: 'keine Angabe', kind: 'refused' }] } }))
+  ok(mr.scale.missingLabels.length === 0, 'raw/offen → keine fehlenden Werte (offene Zahl)')
+  const md = mapAnalysisToItem(raw({ construct: 'institutional_trust', measurable: true
+    , scale: { min: 1, max: 5, minLabel: '', maxLabel: '', format: 'likert', reversed: false, valueLabels: []
+      , missingLabels: [{ value: -9, label: 'keine Angabe', kind: 'refused' }, { value: -9, label: 'dup', kind: 'invalid' }, { value: -8, label: '', kind: 'dontknow' }] } }))
+  ok(md.scale.missingLabels.length === 1, 'Duplikat-Code + leeres Label gefiltert')
+
+  const m0 = mapAnalysisToItem(raw({ construct: 'institutional_trust', measurable: true }))
+  ok(Array.isArray(m0.scale.missingLabels) && m0.scale.missingLabels.length === 0 && m0.missingConflicts.length === 0, 'keine Angabe → leere Liste, keine Kollision')
+}
+
 console.log('\nB) Schema + System-Prompt sind vollständig:')
 {
   ok(ANALYZE_SCHEMA.properties.scale.properties.reversed.type === 'boolean', 'Schema hat scale.reversed')
   ok(ANALYZE_SCHEMA.properties.scale.properties.valueLabels.type === 'array', 'Schema hat scale.valueLabels')
+  ok(ANALYZE_SCHEMA.properties.scale.properties.missingLabels.type === 'array', 'Schema hat scale.missingLabels')
+  ok(ANALYZE_SCHEMA.properties.scale.required.includes('missingLabels'), 'missingLabels ist Pflichtfeld der Skala')
   ok(ANALYZE_SCHEMA.required.includes('construct') && ANALYZE_SCHEMA.required.includes('measurable') && ANALYZE_SCHEMA.required.includes('stem'), 'Pflichtfelder gesetzt (inkl. stem)')
   const sys = buildAnalyzeSystem()
   ok(sys.includes('institutional_trust') && sys.includes('environment_over_economy'), 'System-Prompt listet die Konstrukte')
   ok(/reversed/.test(sys) && /unzufrieden/.test(sys), 'System-Prompt erklärt reverse-keyed Stämme')
   ok(/stem/.test(sys) && /valueLabels/.test(sys), 'System-Prompt erklärt stem + valueLabels')
+  ok(/missingLabels/.test(sys) && /weiß nicht/.test(sys), 'System-Prompt erklärt fehlende Werte')
 }
 
 console.log('\nC) analyzeFetch parst die Antwort (gemockter fetch):')
@@ -218,14 +254,16 @@ if (process.env.ANALYZE_LIVE === '1' && process.env.ANTHROPIC_API_KEY) {
     , { text: 'Sollte Atommüll frei in der Natur entsorgt werden dürfen? 1 = Stimme voll und ganz zu, 2 = Stimme eher zu, 3 = weiß nicht genau, 4 = Stimme eher dagegen, 5 = Stimme voll und ganz dagegen.', wantConstruct: 'policy_environment', wantReversed: true, wantHighDifficulty: true, wantValueLabels: 5, wantCleanStem: true }
     , { text: 'Wie wirksam fühlen Sie sich politisch? 1 = völlig machtlos … 7 = sehr einflussreich.', wantMeasurableOnly: true }
     , { text: 'How much do you trust the government? Scale 0 to 10.', wantConstruct: 'institutional_trust' }
+    , { text: 'Wie zufrieden sind Sie mit der Politik? 1 = sehr zufrieden, 5 = sehr unzufrieden, 8 = weiß nicht, 9 = keine Angabe.', wantConstruct: 'political_satisfaction', wantMissing: 2 }
     , { text: 'Welche Augenfarbe haben Sie?', wantUnmeasurable: true }
   ]
   for (const c of cases) {
     try {
       const { analysis } = await analyzeFetch({ apiKey: process.env.ANTHROPIC_API_KEY, model: ANALYZE_MODEL_DEFAULT, text: c.text })
       const m = mapAnalysisToItem(analysis)
-      console.log('    · ' + c.text.slice(0, 44) + '… → ' + (m.construct || 'nicht messbar') + (m.scale.reversed ? ' [invers]' : '') + ' diff=' + m.scale.difficulty + ' vl=' + m.scale.valueLabels.length + ' stem="' + m.stem.slice(0, 40) + '"')
+      console.log('    · ' + c.text.slice(0, 44) + '… → ' + (m.construct || 'nicht messbar') + (m.scale.reversed ? ' [invers]' : '') + ' diff=' + m.scale.difficulty + ' vl=' + m.scale.valueLabels.length + ' miss=' + m.scale.missingLabels.length + ' stem="' + m.stem.slice(0, 40) + '"')
       if (c.wantConstruct) ok(m.construct === c.wantConstruct, 'erkennt ' + c.wantConstruct)
+      if (c.wantMissing) ok(m.scale.missingLabels.length === c.wantMissing && m.scale.missingLabels.every(x => x.value > m.scale.max), 'erfasst ' + c.wantMissing + ' fehlende Werte außerhalb der Skala (got ' + m.scale.missingLabels.length + ')')
       if (c.wantReversed) ok(m.scale.reversed === true, 'erkennt inverse Polung')
       if (c.wantHighDifficulty) ok(m.scale.difficulty >= 7, 'erkennt extreme Item-Schwierigkeit (got ' + m.scale.difficulty + ')')
       if (c.wantValueLabels) ok(m.scale.valueLabels.length === c.wantValueLabels, 'erfasst alle ' + c.wantValueLabels + ' Kategorien (got ' + m.scale.valueLabels.length + ')')

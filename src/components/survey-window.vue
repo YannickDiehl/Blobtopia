@@ -47,7 +47,7 @@
               span Frage wird geprüft …
             span.detect-chip.ok(v-else-if="it.construct")
               b-icon(icon="check-circle", size="is-small")
-              span {{ 'erkannt: ' + constructLabel(it.construct) + ' · ' + scaleLabel(it) }}
+              span {{ 'erkannt: ' + constructLabel(it.construct) + ' · ' + scaleLabel(it) + missingSummary(it) }}
             span.detect-chip.warn(v-else-if="ana(it).state === 'error'")
               b-icon(icon="alert", size="is-small")
               span Analyse nicht möglich
@@ -58,6 +58,8 @@
               b-icon(icon="help-circle-outline", size="is-small")
               span noch nicht geprüft
             button.survey-btn.mini-btn.recheck(v-if="ana(it).state !== 'checking'", @click="checkItem(it)", title="Die Frage vom Institut auswerten lassen") Frage prüfen
+          p.reword-hint.err(v-if="ana(it).conflicts && ana(it).conflicts.length")
+            | Hinweis: Code {{ ana(it).conflicts.join(', ') }} liegt im Gültigbereich der Skala und wird als gültiger Wert behandelt — vergib fehlenden Werten Zahlen außerhalb der Skala (z. B. -9 oder 99).
           p.reword-hint.err(v-if="ana(it).state === 'error'")
             | {{ ana(it).error }} — bitte erneut prüfen (die Auswertung braucht eine Internetverbindung).
           .unmeasurable-hint(v-else-if="ana(it).state === 'unmeasurable'")
@@ -661,7 +663,7 @@ export default {
         const id = it.id
         // Spaltenkopf = Kürzel (wie im .xlsx-Export), Fallback auf die Item-ID.
         const label = (it.name && String(it.name).trim()) || id
-        cols.push({ key: id, label: label, cell: r => this.fmtAnswer(r.answers && r.answers[id]) })
+        cols.push({ key: id, label: label, cell: r => this.fmtAnswer(r.answers && r.answers[id], it) })
       }
       return cols
     }
@@ -867,6 +869,8 @@ export default {
         this._setAnalysis(it.id, {
           state: r.measurable ? 'done' : 'unmeasurable'
           , suggestion: r.suggestion, rationale: r.rationale, correcting: false, text: t
+          // als fehlend gemeinte Codes, die den Gültigbereich treffen → sichtbare Warnung
+          , conflicts: r.missingConflicts || []
         })
       } catch (e) {
         const msg = (e && e.message) ? e.message : 'Analyse fehlgeschlagen.'
@@ -1004,12 +1008,20 @@ export default {
       else this.design.demographics.push(key)
     }
     // Nonresponse stays visible in the matrix — that IS the teaching point.
-    , fmtAnswer(a) {
+    , fmtAnswer(a, item) {
       if (!a) return ''
       if (a.status === 'answered') return a.value
-      if (a.status === 'refused') return 'kA'
-      if (a.status === 'dontknow') return 'wn'
+      // Studierenden-Label zeigen, falls für diese Art angelegt — sonst kA/wn.
+      const declared = (item && item.scale && item.scale.missingLabels) || []
+      if (a.status === 'refused') { const m = declared.find(x => x.kind === 'refused'); return m ? m.label : 'kA' }
+      if (a.status === 'dontknow') { const m = declared.find(x => x.kind === 'dontknow'); return m ? m.label : 'wn' }
       return '—'
+    }
+    // Kurzhinweis im Erkannt-Chip, wie viele fehlende Werte die Studierende
+    // selbst angelegt hat (Transparenz, analog zur Polungs-/Skalen-Anzeige).
+    , missingSummary(it) {
+      const m = it.scale && it.scale.missingLabels
+      return (m && m.length) ? ' · ' + m.length + (m.length === 1 ? ' fehlender Wert' : ' fehlende Werte') : ''
     }
     // ── Run / export ──
     , onRun() {
