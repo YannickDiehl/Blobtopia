@@ -403,14 +403,17 @@ export async function analyzeFetch({ apiKey, model, text, fetchImpl }) {
     }
     , body: JSON.stringify({
       model: model || ANALYZE_MODEL_DEFAULT
-      // Adaptives Thinking verbraucht Output-Tokens → großzügiges Budget, sonst
-      // bricht das JSON nach dem Denken ab. effort 'medium' bündelt das Denken
-      // (Polung/Schwierigkeit durchdenken) bei moderaten Kosten.
-      , max_tokens: 4000
-      , thinking: { type: 'adaptive' }
+      // KEIN adaptives Thinking: empirisch belegt (scripts/experiments/eval-analyze-configs.mjs,
+      // 21-Item-Gold-Korpus über alle Mechanismen) liefert Sonnet 4.6 OHNE Thinking die gleiche
+      // Genauigkeit wie mit (97 % vs. 96 %), bei ~halber Latenz (≈12 s → ≈6 s) und stabiler über
+      // Wiederholungen. Polung UND Item-Schwierigkeit (Boden-/Decken-Effekt) bleiben zu 100 %
+      // erhalten — die didaktisch entscheidenden Mechaniken brauchen die Thinking-Krücke nicht.
+      // Die 2-Schritt-Polungsregel + Schwierigkeits-Sektion im System-Prompt tragen das. Ohne
+      // Thinking reicht das JSON-Budget knapp (~250 Output-Tokens); 1500 ist großzügig.
+      , max_tokens: 1500
       , system: [{ type: 'text', text: buildAnalyzeSystem(), cache_control: { type: 'ephemeral' } }]
       , messages: [{ role: 'user', content: 'Analysiere diese Befragungsfrage:\n\n' + String(text || '').slice(0, 1000) }]
-      , output_config: { effort: 'medium', format: { type: 'json_schema', schema: ANALYZE_SCHEMA } }
+      , output_config: { format: { type: 'json_schema', schema: ANALYZE_SCHEMA } }
     })
   })
 
