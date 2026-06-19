@@ -71,6 +71,19 @@ ok(lines[1].split(';').length === header.length, 'data rows split into the same 
 ok(header.includes('id') && header.includes('weight') && header.includes('district'), 'header has id/weight/demographics')
 ok(header.includes('sat') && header.includes('sat_status') && header.includes('antielite'), 'header has item + status columns')
 
+console.log('CSV: Unit-Nonresponse code (design.nonresponse):')
+const nrRows = [
+  { blobId: 'x', stratum: null, weight: 1, disposition: 'teilgenommen', answers: { sat: { status: 'answered', value: 5 } } }
+  , { blobId: 'y', stratum: null, weight: 1, disposition: 'nicht erreicht', answers: {} }
+]
+const satCol = h => h.indexOf('sat')
+const csvDef = toCSV(nrRows, items).replace(/^\uFEFF/, '').split('\r\n')
+const hdrDef = csvDef[0].split(';')
+ok(csvDef[2].split(';')[satCol(hdrDef)] === '-13', 'CSV: Nichtteilnehmer → Default -13')
+const csvCustom = toCSV(nrRows, items, { nonparticipation: { code: 99, label: 'keine Teilnahme' } }).replace(/^\uFEFF/, '').split('\r\n')
+ok(csvCustom[2].split(';')[satCol(csvCustom[0].split(';'))] === '99', 'CSV: Nichtteilnehmer → eigener Code 99')
+ok(csvDef[1].split(';')[satCol(hdrDef)] === '5', 'CSV: Teilnehmer behält seinen Wert (5)')
+
 console.log('codebook + response summary:')
 const cb = toCodebook(items)
 ok(cb.length === 2 && cb[0].variable === 'sat' && cb[0].scale === '1-10', 'codebook describes variables')

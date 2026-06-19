@@ -77,6 +77,12 @@
           span Item hinzufügen
         p.mini-hint.missing-default-hint
           | Fehlende Werte werden standardmäßig als −9 (Verweigert) und −8 (Weiß nicht) kodiert. Eigene Codes + Labels gibst du direkt in der Frage an — z. B. „… 8 = weiß nicht, 9 = keine Angabe“.
+        .nonresp-block
+          label.nonresp-title(title="Wer gar nicht an der Befragung teilnimmt (Unit-Nonresponse) — gilt für den ganzen Fall, nicht je Frage") Nichtteilnahme (ganzer Fall)
+          .nonresp-row
+            input.survey-input.mini.nonresp-code(type="number", v-model.number="design.nonresponse.code", title="Zahlencode im Datensatz/Export")
+            input.survey-input.nonresp-text(v-model="design.nonresponse.label", maxlength="40", placeholder="Nicht teilgenommen")
+          p.mini-hint Wer gar nicht teilnimmt, bekommt im Export diesen einen Code (Default −13 „Nicht teilgenommen“); der genaue Grund (verweigert / nicht erreicht …) steht zusätzlich in der Spalte „disposition“.
         .panel-block.demo-block
           .block-head
             span.block-title Hintergrundmerkmale erheben
@@ -335,7 +341,7 @@
                 tr(v-for="(r, ri) in result.rows", :key="r.blobId", :class="{ 'row-nonresp': r.disposition && r.disposition !== 'teilgenommen' }")
                   td.idx {{ ri + 1 }}
                   td(v-for="c in tableColumns", :key="c.key") {{ c.cell(r) }}
-          p.mini-hint Fehlende Werte tragen ihr Label (Standard: −9 Verweigert · −8 Weiß nicht) · — = nicht beantwortbar · Nichtteilnehmende (gedämpft) zeigen ihren Dispositionsgrund (im Export: −13 Nicht teilgenommen)
+          p.mini-hint Fehlende Werte tragen ihr Label (Standard: −9 Verweigert · −8 Weiß nicht) · — = nicht beantwortbar · Nichtteilnehmende (gedämpft) zeigen ihren Dispositionsgrund (im Export: {{ design.nonresponse.code }} {{ design.nonresponse.label }})
           .error-banner(v-if="unsupportedItems.length") Für {{ unsupportedItems.join(', ') }} kamen keine Antworten — die Frage ließ sich nicht eindeutig zuordnen. Formuliere sie im Fragebogen etwas konkreter (z. B. zu Zufriedenheit, Vertrauen oder einer Einstellung).
           button.survey-btn.primary(@click="surveyStore.exportXlsx()")
             b-icon(icon="download", size="is-small")
@@ -532,6 +538,9 @@ export default {
         , withinClusterN: null
         , fieldMode: 'personal'
         , contactAttempts: 2
+        // Unit-Nonresponse: Code + Label auf Studien-Ebene (Default -13 „Nicht
+        // teilgenommen"), anpassbar wie die Item-Missings.
+        , nonresponse: { code: -13, label: 'Nicht teilgenommen' }
         , longitudinal: { type: 'cross', waveYears: [] }
       }
     }
@@ -762,6 +771,9 @@ export default {
         this.design.quotas = d.quotas ? Object.assign({}, d.quotas) : {}
         this.design.fieldMode = d.fieldMode || 'personal'
         this.design.contactAttempts = d.contactAttempts != null ? d.contactAttempts : 2
+        this.design.nonresponse = d.nonresponse
+          ? { code: Number.isInteger(d.nonresponse.code) ? d.nonresponse.code : -13, label: d.nonresponse.label || 'Nicht teilgenommen' }
+          : { code: -13, label: 'Nicht teilgenommen' }
         this.design.longitudinal = d.longitudinal
           ? { type: d.longitudinal.type || 'cross', waveYears: (d.longitudinal.waveYears || []).slice() }
           : { type: 'cross', waveYears: [] }
@@ -925,6 +937,10 @@ export default {
         , withinClusterN: Number(this.design.withinClusterN) || null
         , fieldMode: this.design.fieldMode || 'personal'
         , contactAttempts: Math.max(1, Math.min(4, Number(this.design.contactAttempts) || 2))
+        , nonresponse: {
+          code: Number.isInteger(this.design.nonresponse.code) ? this.design.nonresponse.code : -13
+          , label: (this.design.nonresponse.label && String(this.design.nonresponse.label).trim()) || 'Nicht teilgenommen'
+        }
         , longitudinal: {
           type: this.design.longitudinal.type || 'cross'
           , waveYears: this.design.longitudinal.waveYears.slice()
@@ -1324,6 +1340,37 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
   color: var(--inst-graphit)
   margin-bottom: 0.4rem
   line-height: 1.15
+
+// ── Fragebogen: Nichtteilnahme-Code/Label auf Studien-Ebene ──
+.nonresp-block
+  margin: 0.2rem 0 0.6rem
+  padding: 0.45rem 0.55rem
+  background: rgba(255, 252, 244, 0.7)
+  border: 1.5px solid #ece1c8
+  border-radius: 4px
+
+  .nonresp-title
+    display: block
+    font-family: var(--inst-hand)
+    font-size: 0.85rem
+    color: var(--inst-graphit)
+    margin-bottom: 0.3rem
+
+  .nonresp-row
+    display: flex
+    gap: 0.4rem
+    align-items: center
+    margin-bottom: 0.35rem
+
+  .nonresp-code
+    width: 4.4rem
+    flex: 0 0 auto
+
+  .nonresp-text
+    flex: 1 1 auto
+
+  .mini-hint
+    margin-bottom: 0
 
 // ── Fragebogen: Items als Formblatt-Fragen ──
 .item-card

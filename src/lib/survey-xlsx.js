@@ -45,8 +45,18 @@ const DEFAULT_MISSING = Object.freeze({
 // Unit-Nonresponse (die Einheit hat gar nicht teilgenommen → kein Interview, keine
 // Item-Daten): EIN eigener Code, getrennt von der Item-Verweigerung (-9). -13 folgt
 // der ALLBUS-Konvention („keine …-Teilnahme"); der genaue Grund (verweigert / nicht
-// erreicht / panel-ausfall …) steht in der Disposition-Spalte (1–5).
-const NONPARTICIPATION = Object.freeze({ code: -13, label: 'Nicht teilgenommen' })
+// erreicht / panel-ausfall …) steht in der Disposition-Spalte (1–5). Code + Label
+// sind auf Studien-Ebene anpassbar (design.nonresponse) — der Default greift, wenn
+// nichts gesetzt ist.
+const DEFAULT_NONPARTICIPATION = Object.freeze({ code: -13, label: 'Nicht teilgenommen' })
+
+/** Studien-Code/Label für Nichtteilnahme (design.nonresponse) mit Default-Fallback. */
+function nonparticipationFrom(design) {
+  const n = design && design.nonresponse
+  const code = (n && Number.isInteger(n.code)) ? n.code : DEFAULT_NONPARTICIPATION.code
+  const label = (n && n.label != null && String(n.label).trim()) ? String(n.label).trim() : DEFAULT_NONPARTICIPATION.label
+  return { code, label }
+}
 
 /**
  * Missing-Schema eines Items: die vom Studierenden deklarierten Codes/Labels je
@@ -70,14 +80,14 @@ function missingSchemeFor(item) {
  * (auch mit 0 Vorkommen — Codebuch-Definition), plus die Default-Codes, die
  * tatsächlich vorkommen und nicht schon deklariert sind.
  */
-function missingLabelRows(scheme, data) {
+function missingLabelRows(scheme, data, nonpart) {
   const out = []
   const seen = new Set()
   for (const m of scheme.declared) {
     if (m == null || m.value == null || seen.has(m.value)) continue
     seen.add(m.value); out.push({ code: m.value, label: m.label })
   }
-  for (const def of [scheme.refused, scheme.dontknow, scheme.invalid, NONPARTICIPATION]) {
+  for (const def of [scheme.refused, scheme.dontknow, scheme.invalid, nonpart]) {
     if (seen.has(def.code)) continue
     if (data.includes(def.code)) { seen.add(def.code); out.push({ code: def.code, label: def.label }) }
   }
@@ -93,10 +103,10 @@ const LABELS_HEADER = ['Variable', 'Variable_Label', 'Value', 'Value_Label', 'Ty
 
 /**
  * Code für eine Item-Antwort: Wert, Item-Missing-Code (Schema des Items),
- * Unit-Nonresponse-Code (-13, wenn die Einheit nicht teilgenommen hat) oder
- * null (System-NA).
+ * Unit-Nonresponse-Code (Studien-Code, wenn die Einheit nicht teilgenommen hat)
+ * oder null (System-NA).
  */
-function answerCell(a, scheme, disposition) {
+function answerCell(a, scheme, disposition, nonpart) {
   if (a) {
     switch (a.status) {
       case 'answered': return a.value
@@ -109,7 +119,7 @@ function answerCell(a, scheme, disposition) {
   }
   // Kein (auswertbares) Antwort-Objekt: Unit-Nonresponse bekommt den eigenen
   // Code; sonst echtes System-NA (z. B. unsupported bei Teilnehmenden).
-  if (!a && disposition && disposition !== DISPOSITION.RESPONDENT) return NONPARTICIPATION.code
+  if (!a && disposition && disposition !== DISPOSITION.RESPONDENT) return nonpart.code
   return null
 }
 
@@ -181,6 +191,8 @@ export function buildWorkbook(rows, items, design, opts) {
   const districtNames = opts.districtNames || []
   const educationLabels = opts.educationLabels || []
   const partyNames = opts.partyNames || []
+  // Unit-Nonresponse-Code/Label dieser Studie (Default -13 / „Nicht teilgenommen").
+  const nonpart = nonparticipationFrom(design)
 
   // Fall-ID: stabil je Blob (im Panel über Wellen hinweg dieselbe Nummer).
   const idMap = new Map()
@@ -217,7 +229,7 @@ export function buildWorkbook(rows, items, design, opts) {
     const varName = uniqueName(itemVarName(it, qi), usedNames)
     const s = it.scale || {}
     const scheme = missingSchemeFor(it)
-    const data = rows.map(r => answerCell(r.answers && r.answers[id], scheme, r.disposition))
+    const data = rows.map(r => answerCell(r.answers && r.answers[id], scheme, r.disposition, nonpart))
     // Value-Labels: alle ausformulierten Kategorien (LLM-Analyse); sonst die
     // Endpunkte. Bei offenen/raw Fragen keine.
     let valueLabels = []
@@ -232,7 +244,7 @@ export function buildWorkbook(rows, items, design, opts) {
     // Missing-Labels: alle von der Studierenden deklarierten Kategorien (auch mit
     // 0 Vorkommen — Codebuch-Definition), plus Default-Codes, die vorkommen.
     // Variablen-Label = reine Frage.
-    const missing = missingLabelRows(scheme, data)
+    const missing = missingLabelRows(scheme, data, nonpart)
     vars.push(v(varName, it.stem || it.text || varName, 'haven_labelled', valueLabels, missing, data))
     if (truth) {
       vars.push(v(varName + '_wahr', 'Wahrer Wert: ' + (it.stem || it.text || varName), '', null, null,

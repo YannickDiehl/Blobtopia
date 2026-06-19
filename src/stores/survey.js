@@ -51,6 +51,12 @@ const DEFAULT_DESIGN = () => ({
   // Erwünschtheit (Konstanten in survey-fieldwork.js)
   , fieldMode: 'personal'
   , contactAttempts: 2
+  // Unit-Nonresponse (die Einheit hat gar nicht teilgenommen): EIN Code + Label
+  // auf STUDIEN-Ebene — anders als die Item-Missings (-9/-8) gehört das nicht in
+  // eine einzelne Frage, sondern zum ganzen Fall. Default -13 „Nicht teilgenommen"
+  // (ALLBUS-Konvention); von der Studierenden anpassbar wie die Item-Missings. Der
+  // genaue Grund (verweigert/nicht erreicht/…) bleibt in der disposition-Spalte.
+  , nonresponse: { code: -13, label: 'Nicht teilgenommen' }
   // Längsschnitt: 'cross' | 'trend' | 'panel'; weitere Wellen als Sim-Jahre
   , longitudinal: { type: 'cross', waveYears: [] }
 })
@@ -431,7 +437,7 @@ export const useSurveyStore = defineStore('survey', {
 
     , exportCsv() {
       if (!this.result) return
-      const csv = toCSV(this.result.rows, this.items)
+      const csv = toCSV(this.result.rows, this.items, { nonparticipation: this.design.nonresponse })
       downloadText(csv, 'blobtopia-befragung.csv', 'text/csv')
     }
     // Labelgetreuer .xlsx-Export im mariposa-Format (Data + Labels), per
@@ -465,7 +471,7 @@ export const useSurveyStore = defineStore('survey', {
         })
         truth = { perUnit }
       }
-      const csv = toCSV(rows, this.items, { truth })
+      const csv = toCSV(rows, this.items, { truth, nonparticipation: this.design.nonresponse })
       downloadText(csv, 'blobtopia-befragung-dozentenversion.csv', 'text/csv')
     }
     // Dozentenversion als .xlsx (zusätzliche `<id>_wahr`-Spalten). Bei

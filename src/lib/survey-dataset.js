@@ -43,12 +43,13 @@ function itemId(item, qi) {
 
 // Wert für die CSV-Zelle: bei fehlenden Werten der von der Studierenden
 // deklarierte Code je Art (item.scale.missingLabels), sonst ALLBUS-Default
-// (-9/-8/-7). Unit-Nonresponse (nicht teilgenommen) bekommt -13 (Grund in der
-// disposition-Spalte). So trägt auch die CSV (read.csv2) die Codes, nicht nur
-// die _status-Sidecar-Spalte. Unsupported bleibt leer (System-NA).
+// (-9/-8/-7). Unit-Nonresponse (nicht teilgenommen) bekommt den Studien-Code
+// (Default -13, Grund in der disposition-Spalte). So trägt auch die CSV
+// (read.csv2) die Codes, nicht nur die _status-Sidecar-Spalte. Unsupported
+// bleibt leer (System-NA).
 const CSV_DEFAULT_MISSING = { refused: -9, dontknow: -8, unparsed: -7, error: -7 }
-const CSV_NONPARTICIPATION = -13
-function csvValueFor(a, item, disposition) {
+const CSV_DEFAULT_NONPARTICIPATION = -13
+function csvValueFor(a, item, disposition, nonpartCode) {
   if (a && a.status && a.status !== 'answered') {
     const def = CSV_DEFAULT_MISSING[a.status]
     if (def == null) return '' // unsupported → System-NA
@@ -58,8 +59,8 @@ function csvValueFor(a, item, disposition) {
     return m ? m.value : def
   }
   if (a && a.status === 'answered') return a.value == null ? '' : a.value
-  // kein/leeres Antwort-Objekt: Unit-Nonresponse → -13, sonst leer.
-  if (disposition && disposition !== 'teilgenommen') return CSV_NONPARTICIPATION
+  // kein/leeres Antwort-Objekt: Unit-Nonresponse → Studien-Code, sonst leer.
+  if (disposition && disposition !== 'teilgenommen') return nonpartCode
   return a && a.value != null ? a.value : ''
 }
 
@@ -67,12 +68,14 @@ function csvValueFor(a, item, disposition) {
  * Render the dataset as CSV.
  * @param {Array} rows   runSurvey rows
  * @param {Array} items  questionnaire items
- * @param {Object} [opts] { delimiter=';', decimal=',', includeStatus=true, bom=true, truth }
+ * @param {Object} [opts] { delimiter=';', decimal=',', includeStatus=true, bom=true, truth, nonparticipation }
  *   Defaults are German-Excel-native (semicolon-separated, comma decimals) so
  *   cells split correctly on a German locale. For R use read.csv2(); for a
  *   point/comma format pass { delimiter: ',', decimal: '.' }.
  *   `truth` (the snapshot from survey-truth.js) adds a `<item>_wahr` column per
  *   item — the instructor-only export; the student CSV never passes it.
+ *   `nonparticipation` = { code, label } aus dem Design — Code für Einheiten,
+ *   die gar nicht teilgenommen haben (Default -13).
  * @returns {string} CSV text (UTF-8 BOM, CRLF line endings)
  */
 export function toCSV(rows, items, opts) {
@@ -81,6 +84,8 @@ export function toCSV(rows, items, opts) {
   const decimal = opts.decimal || ','
   const includeStatus = opts.includeStatus !== false
   const truth = opts.truth || null
+  const nonpartCode = (opts.nonparticipation && opts.nonparticipation.code != null)
+    ? opts.nonparticipation.code : CSV_DEFAULT_NONPARTICIPATION
   const bom = opts.bom !== false ? '﻿' : ''
   const demoCols = datasetColumns(rows)
 
@@ -98,7 +103,7 @@ export function toCSV(rows, items, opts) {
     for (let qi = 0; qi < items.length; qi++) {
       const id = itemId(items[qi], qi)
       const a = (r.answers && r.answers[id]) || {}
-      row.push(csvValueFor(a, items[qi], r.disposition))
+      row.push(csvValueFor(a, items[qi], r.disposition, nonpartCode))
       if (includeStatus) row.push(a.status || '')
       if (truth) {
         const t = truth.perUnit && truth.perUnit[r.blobId] ? truth.perUnit[r.blobId][id] : null

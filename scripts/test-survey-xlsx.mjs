@@ -63,6 +63,19 @@ ok(find('district', 2, 'valid') && find('district', 2, 'valid')[3] === 'Hafen' &
 ok(L.filter(r => r[0] === 'district' && r[4] === 'valid').length === 5, 'Distrikt: alle 5 Kategorien (nicht datengetrieben gekürzt)')
 ok(find('disposition', 1, 'valid')[3] === 'teilgenommen' && find('disposition', 3, 'valid')[3] === 'nicht erreicht', 'Disposition: 1=teilgenommen, 3=nicht erreicht (kommen vor)')
 ok(!find('disposition', 2, 'valid') && !find('disposition', 4, 'valid') && !find('disposition', 5, 'valid'), 'Disposition: 2/4/5 NICHT deklariert (kein Panel-Ballast im Querschnitt)')
+
+console.log('Unit-Nonresponse: Studierenden-Code/Label (design.nonresponse) übersteuert -13:')
+const wbN = buildWorkbook(rows, items, { demographics: ['name', 'district'], nonresponse: { code: 99, label: 'keine Teilnahme' } }, CAT)
+const qN = wbN.data.header.indexOf('q1')
+ok(wbN.data.rows[2][qN] === 99, 'Nichtteilnehmer-Item trägt den eigenen Code 99 (nicht -13)')
+const LN = wbN.labels.rows
+const findN = (v, val, type) => LN.find(r => r[0] === v && r[2] === String(val) && r[4] === type)
+ok(findN('q1', 99, 'missing') && findN('q1', 99, 'missing')[3] === 'keine Teilnahme', 'Labels: 99 = „keine Teilnahme" (eigenes Label)')
+ok(!findN('q1', -13, 'missing'), 'Default -13 NICHT mehr deklariert, wenn ein eigener Code gesetzt ist')
+// Robustheit: ungültiger Code / leeres Label fallen auf den Default zurück.
+const wbF = buildWorkbook(rows, items, { demographics: ['name'], nonresponse: { code: 1.5, label: '  ' } }, CAT)
+ok(wbF.data.rows[2][wbF.data.header.indexOf('q1')] === -13, 'nicht-ganzzahliger Code → Fallback -13')
+ok(wbF.labels.rows.find(r => r[0] === 'q1' && r[2] === '-13' && r[4] === 'missing')[3] === 'Nicht teilgenommen', 'leeres Label → Fallback „Nicht teilgenommen"')
 const nameRows = L.filter(r => r[0] === 'name')
 ok(nameRows.length === 1 && nameRows[0][1] === 'Name' && nameRows[0][4] === '' && nameRows[0][5] === ''
   , 'name: reine Variable-Label-Zeile (kein Code, Column_Type leer)')
