@@ -332,10 +332,10 @@
                   th #
                   th(v-for="c in tableColumns", :key="c.key") {{ c.label }}
               tbody
-                tr(v-for="(r, ri) in result.rows", :key="r.blobId")
+                tr(v-for="(r, ri) in result.rows", :key="r.blobId", :class="{ 'row-nonresp': r.disposition && r.disposition !== 'teilgenommen' }")
                   td.idx {{ ri + 1 }}
                   td(v-for="c in tableColumns", :key="c.key") {{ c.cell(r) }}
-          p.mini-hint Fehlende Werte tragen ihr Label (Standard: −9 Verweigert · −8 Weiß nicht) · — = nicht beantwortbar (kein Konstrukt)
+          p.mini-hint Fehlende Werte tragen ihr Label (Standard: −9 Verweigert · −8 Weiß nicht) · — = nicht beantwortbar · Nichtteilnehmende (gedämpft) zeigen ihren Dispositionsgrund (im Export: −13 Nicht teilgenommen)
           .error-banner(v-if="unsupportedItems.length") Für {{ unsupportedItems.join(', ') }} kamen keine Antworten — die Frage ließ sich nicht eindeutig zuordnen. Formuliere sie im Fragebogen etwas konkreter (z. B. zu Zufriedenheit, Vertrauen oder einer Einstellung).
           button.survey-btn.primary(@click="surveyStore.exportXlsx()")
             b-icon(icon="download", size="is-small")
@@ -665,7 +665,7 @@ export default {
         const id = it.id
         // Spaltenkopf = Kürzel (wie im .xlsx-Export), Fallback auf die Item-ID.
         const label = (it.name && String(it.name).trim()) || id
-        cols.push({ key: id, label: label, cell: r => this.fmtAnswer(r.answers && r.answers[id], it) })
+        cols.push({ key: id, label: label, cell: r => this.fmtAnswer(r.answers && r.answers[id], it, r.disposition) })
       }
       return cols
     }
@@ -1010,15 +1010,21 @@ export default {
       else this.design.demographics.push(key)
     }
     // Nonresponse stays visible in the matrix — that IS the teaching point.
-    , fmtAnswer(a, item) {
-      if (!a) return ''
-      if (a.status === 'answered') return a.value
-      // Studierenden-Label zeigen, falls für diese Art angelegt — sonst der
-      // kohärente Default (Verweigert / Weiß nicht), passend zum xlsx-Fallback.
-      const declared = (item && item.scale && item.scale.missingLabels) || []
-      if (a.status === 'refused') { const m = declared.find(x => x.kind === 'refused'); return m ? m.label : 'Verweigert' }
-      if (a.status === 'dontknow') { const m = declared.find(x => x.kind === 'dontknow'); return m ? m.label : 'Weiß nicht' }
-      return '—'
+    , fmtAnswer(a, item, disposition) {
+      if (a) {
+        if (a.status === 'answered') return a.value
+        // Studierenden-Label zeigen, falls für diese Art angelegt — sonst der
+        // kohärente Default (Verweigert / Weiß nicht), passend zum xlsx-Fallback.
+        const declared = (item && item.scale && item.scale.missingLabels) || []
+        if (a.status === 'refused') { const m = declared.find(x => x.kind === 'refused'); return m ? m.label : 'Verweigert' }
+        if (a.status === 'dontknow') { const m = declared.find(x => x.kind === 'dontknow'); return m ? m.label : 'Weiß nicht' }
+        if (a.status) return '—' // unsupported / unbekannt → nicht beantwortbar
+        if (a.value != null) return a.value // Altbestand: Wert ohne Status
+      }
+      // Kein Antwort-Objekt = Unit-Nonresponse: den Dispositionsgrund zeigen
+      // (keine Leerstelle); im Export trägt das Item -13 (Nicht teilgenommen).
+      if (disposition && disposition !== 'teilgenommen') return disposition
+      return ''
     }
     // Kurzhinweis im Erkannt-Chip, wie viele fehlende Werte die Studierende
     // selbst angelegt hat (Transparenz, analog zur Polungs-/Skalen-Anzeige).
@@ -1850,6 +1856,12 @@ select.survey-input
     color: #27332a
     &.idx
       color: #8a9882
+
+  // Nichtteilnehmende (Unit-Nonresponse) gedämpft + kursiv — die Item-Zellen
+  // tragen den Dispositionsgrund, sind aber klar von echten Antworten abgesetzt.
+  tr.row-nonresp td
+    color: #9aa392
+    font-style: italic
 
 .demo-block
   margin-top: 0.6rem

@@ -33,15 +33,20 @@ import { DISPOSITION } from './survey-fieldwork.js'
 
 // Missing-Schema (ALLBUS-/SPSS-Konvention, wie mariposa::set_na/read_spss).
 // Default-Codes + Labels je Art, falls die Studierende keine eigenen vergibt:
-// Verweigert → -9, Weiß nicht → -8, Ungültig → -7. Nichtbefragte (Unit-Nonresponse)
-// bleiben System-NA (leere Zelle). Studierende können Codes + Labels in der Frage
-// selbst anlegen (item.scale.missingLabels, kind-getrieben) — die überschreiben
-// dann die Defaults gleicher Art. „Verweigert" deckt sich mit der Unit-Disposition.
+// Verweigert → -9, Weiß nicht → -8, Ungültig → -7 (Item-Ebene). Studierende
+// können Codes + Labels in der Frage selbst anlegen (item.scale.missingLabels,
+// kind-getrieben) — die überschreiben dann die Defaults gleicher Art.
 const DEFAULT_MISSING = Object.freeze({
   refused: { code: -9, label: 'Verweigert' }
   , dontknow: { code: -8, label: 'Weiß nicht' }
   , invalid: { code: -7, label: 'Ungültig' }
 })
+
+// Unit-Nonresponse (die Einheit hat gar nicht teilgenommen → kein Interview, keine
+// Item-Daten): EIN eigener Code, getrennt von der Item-Verweigerung (-9). -13 folgt
+// der ALLBUS-Konvention („keine …-Teilnahme"); der genaue Grund (verweigert / nicht
+// erreicht / panel-ausfall …) steht in der Disposition-Spalte (1–5).
+const NONPARTICIPATION = Object.freeze({ code: -13, label: 'Nicht teilgenommen' })
 
 /**
  * Missing-Schema eines Items: die vom Studierenden deklarierten Codes/Labels je
@@ -72,7 +77,7 @@ function missingLabelRows(scheme, data) {
     if (m == null || m.value == null || seen.has(m.value)) continue
     seen.add(m.value); out.push({ code: m.value, label: m.label })
   }
-  for (const def of [scheme.refused, scheme.dontknow, scheme.invalid]) {
+  for (const def of [scheme.refused, scheme.dontknow, scheme.invalid, NONPARTICIPATION]) {
     if (seen.has(def.code)) continue
     if (data.includes(def.code)) { seen.add(def.code); out.push({ code: def.code, label: def.label }) }
   }
@@ -86,17 +91,26 @@ const DISPO_CODE = DISPO_ORDER.reduce((m, d, i) => { m[d] = i + 1; return m }, {
 
 const LABELS_HEADER = ['Variable', 'Variable_Label', 'Value', 'Value_Label', 'Type', 'Column_Type']
 
-/** Code für eine Item-Antwort: Wert, Missing-Code (Schema des Items) oder null (System-NA). */
-function answerCell(a, scheme) {
-  if (!a) return null
-  switch (a.status) {
-    case 'answered': return a.value
-    case 'refused': return scheme.refused.code
-    case 'dontknow': return scheme.dontknow.code
-    case 'unparsed':
-    case 'error': return scheme.invalid.code
-    default: return null // unsupported / unbekannt → System-NA
+/**
+ * Code für eine Item-Antwort: Wert, Item-Missing-Code (Schema des Items),
+ * Unit-Nonresponse-Code (-13, wenn die Einheit nicht teilgenommen hat) oder
+ * null (System-NA).
+ */
+function answerCell(a, scheme, disposition) {
+  if (a) {
+    switch (a.status) {
+      case 'answered': return a.value
+      case 'refused': return scheme.refused.code
+      case 'dontknow': return scheme.dontknow.code
+      case 'unparsed':
+      case 'error': return scheme.invalid.code
+      default: break // unsupported → unten als System-NA
+    }
   }
+  // Kein (auswertbares) Antwort-Objekt: Unit-Nonresponse bekommt den eigenen
+  // Code; sonst echtes System-NA (z. B. unsupported bei Teilnehmenden).
+  if (!a && disposition && disposition !== DISPOSITION.RESPONDENT) return NONPARTICIPATION.code
+  return null
 }
 
 function isRawItem(item) {
@@ -203,7 +217,7 @@ export function buildWorkbook(rows, items, design, opts) {
     const varName = uniqueName(itemVarName(it, qi), usedNames)
     const s = it.scale || {}
     const scheme = missingSchemeFor(it)
-    const data = rows.map(r => answerCell(r.answers && r.answers[id], scheme))
+    const data = rows.map(r => answerCell(r.answers && r.answers[id], scheme, r.disposition))
     // Value-Labels: alle ausformulierten Kategorien (LLM-Analyse); sonst die
     // Endpunkte. Bei offenen/raw Fragen keine.
     let valueLabels = []

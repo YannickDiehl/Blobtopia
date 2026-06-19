@@ -43,7 +43,7 @@ ok(eq(wb.data.header, ['id', 'name', 'district', 'q1', 'q2', 'weight', 'stratum'
   , 'Reihenfolge id · name · Soziodemo · q1..qn · weight · stratum · disposition')
 ok(eq(wb.data.rows[0], [1, 'Bina', 2, 4, 2400, 11.3, null, 1]), 'Teilnehmerin: Codes inkl. Distrikt-Code 2 (Hafen)')
 ok(eq(wb.data.rows[1], [2, 'Cor', 0, -8, -9, 11.3, null, 1]), 'weiß nicht → -8, verweigert → -9, Zentrum → 0')
-ok(eq(wb.data.rows[2], [3, 'Dex', 4, null, null, 11.3, null, 3]), 'nicht erreicht: Items System-NA (null), Disposition-Code 3')
+ok(eq(wb.data.rows[2], [3, 'Dex', 4, -13, -13, 11.3, null, 3]), 'nicht erreicht (Unit-Nonresponse): Items = -13 (Nicht teilgenommen), Disposition-Code 3')
 
 console.log('Labels-Blatt: Stamm + alle Kategorien + nur vorkommende Missings:')
 const L = wb.labels.rows
@@ -54,6 +54,7 @@ ok(find('q1', 1, 'valid')[3] === 'sehr unzufrieden' && find('q1', 3, 'valid')[3]
 ok(find('q1', 1, 'valid')[1] === 'Wie zufrieden sind Sie mit der Politik?', 'q1: Variable_Label = reiner Fragestamm (ohne Skala)')
 ok(find('q1', -8, 'missing') && find('q1', -8, 'missing')[3] === 'Weiß nicht', 'q1: -8 = „Weiß nicht" (Default, kommt vor → deklariert)')
 ok(!find('q1', -9, 'missing') && !find('q1', -7, 'missing'), 'q1: -9/-7 NICHT deklariert (kommen nicht vor — kein Phantom)')
+ok(find('q1', -13, 'missing') && find('q1', -13, 'missing')[3] === 'Nicht teilgenommen', 'q1: -13 = „Nicht teilgenommen" (Unit-Nonresponse, kommt durch Dex vor)')
 ok(L.filter(r => r[0] === 'q1').every(r => r[5] === 'haven_labelled'), 'q1 durchgehend Column_Type haven_labelled')
 ok(!L.some(r => r[0] === 'q2' && r[4] === 'valid') && find('q2', -9, 'missing') && !find('q2', -8, 'missing'), 'q2 (offen): keine Value-Labels, nur das vorkommende -9')
 ok(find('q2', -9, 'missing')[3] === 'Verweigert', 'q2: Default -9 = „Verweigert" (kohärenter Fallback, deckt sich mit der Unit-Disposition)')

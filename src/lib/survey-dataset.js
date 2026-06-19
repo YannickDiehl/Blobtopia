@@ -43,18 +43,24 @@ function itemId(item, qi) {
 
 // Wert für die CSV-Zelle: bei fehlenden Werten der von der Studierenden
 // deklarierte Code je Art (item.scale.missingLabels), sonst ALLBUS-Default
-// (-9/-8/-7). So trägt auch die CSV (read.csv2) den Code, nicht nur die
-// _status-Sidecar-Spalte. Nichtbefragte/unsupported bleiben leer (System-NA).
+// (-9/-8/-7). Unit-Nonresponse (nicht teilgenommen) bekommt -13 (Grund in der
+// disposition-Spalte). So trägt auch die CSV (read.csv2) die Codes, nicht nur
+// die _status-Sidecar-Spalte. Unsupported bleibt leer (System-NA).
 const CSV_DEFAULT_MISSING = { refused: -9, dontknow: -8, unparsed: -7, error: -7 }
-function csvValueFor(a, item) {
-  if (!a) return ''
-  if (a.status === 'answered' || a.status == null) return a.value == null ? '' : a.value
-  const def = CSV_DEFAULT_MISSING[a.status]
-  if (def == null) return ''
-  const declared = (item && item.scale && Array.isArray(item.scale.missingLabels)) ? item.scale.missingLabels : []
-  const kind = a.status === 'refused' ? 'refused' : a.status === 'dontknow' ? 'dontknow' : 'invalid'
-  const m = declared.find(x => x && x.kind === kind && x.value != null)
-  return m ? m.value : def
+const CSV_NONPARTICIPATION = -13
+function csvValueFor(a, item, disposition) {
+  if (a && a.status && a.status !== 'answered') {
+    const def = CSV_DEFAULT_MISSING[a.status]
+    if (def == null) return '' // unsupported → System-NA
+    const declared = (item && item.scale && Array.isArray(item.scale.missingLabels)) ? item.scale.missingLabels : []
+    const kind = a.status === 'refused' ? 'refused' : a.status === 'dontknow' ? 'dontknow' : 'invalid'
+    const m = declared.find(x => x && x.kind === kind && x.value != null)
+    return m ? m.value : def
+  }
+  if (a && a.status === 'answered') return a.value == null ? '' : a.value
+  // kein/leeres Antwort-Objekt: Unit-Nonresponse → -13, sonst leer.
+  if (disposition && disposition !== 'teilgenommen') return CSV_NONPARTICIPATION
+  return a && a.value != null ? a.value : ''
 }
 
 /**
@@ -92,7 +98,7 @@ export function toCSV(rows, items, opts) {
     for (let qi = 0; qi < items.length; qi++) {
       const id = itemId(items[qi], qi)
       const a = (r.answers && r.answers[id]) || {}
-      row.push(csvValueFor(a, items[qi]))
+      row.push(csvValueFor(a, items[qi], r.disposition))
       if (includeStatus) row.push(a.status || '')
       if (truth) {
         const t = truth.perUnit && truth.perUnit[r.blobId] ? truth.perUnit[r.blobId][id] : null
