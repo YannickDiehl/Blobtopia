@@ -154,9 +154,16 @@
                 option(value="district") Distrikt
                 option(value="education_level") Bildung
               label Anzahl Klumpen
-              input.survey-input(type="number", min="1", v-model.number="design.numClusters")
+              input.survey-input(type="number", min="1", :max="clusterPreview ? clusterPreview.totalClusters : null", v-model.number="design.numClusters")
               label Pro Klumpen ziehen (leer = alle, zweistufig)
               input.survey-input(type="number", min="1", v-model.number="design.withinClusterN", placeholder="alle")
+              p.mini-hint.cluster-size(v-if="clusterPreview")
+                template(v-if="clusterPreview.within")
+                  | ≈ <b>{{ clusterPreview.estimate }}</b> Befragte = {{ clusterPreview.k }} Klumpen × je {{ clusterPreview.within }}. Die Größe kommt aus Klumpenzahl × Ziehung pro Klumpen — nicht aus einem festen n.
+                template(v-else)
+                  | ≈ <b>{{ clusterPreview.estimate }}</b> Befragte ({{ clusterPreview.minN }}–{{ clusterPreview.maxN }} je nach gezogenen Klumpen) = alle Mitglieder von {{ clusterPreview.k }} der {{ clusterPreview.totalClusters }} Klumpen. Die Klumpenzahl bestimmt die Größe — nicht ein n.
+              p.mini-hint.cluster-warn(v-if="clusterPreview && clusterPreview.k < 2")
+                | ⚠ Mit nur einem Klumpen lässt sich die Streuung zwischen den Klumpen nicht schätzen, und bei unterschiedlich großen Klumpen ist die Schätzung verzerrt. Wähle mindestens 2 Klumpen.
             .params(v-else-if="design.technique === 'systematic'")
               p.mini-hint Jede k-te Einheit aus dem geordneten Rahmen, zufälliger Start.
               label Stichprobengröße (n)
@@ -695,6 +702,34 @@ export default {
         , attempts: this.design.contactAttempts
         , burden: questionnaireBurden(this.localItems)
       })
+    }
+    // Live-Größenvorschau der Klumpenstichprobe: bei Klumpen bestimmt
+    // Klumpenzahl × Klumpengröße (bzw. × Ziehung pro Klumpen) die Stichprobe —
+    // NICHT ein festes n. Macht das vor dem Ziehen sichtbar und nennt die
+    // ehrliche Spannweite (kleinste vs. größte Klumpen).
+    , clusterPreview() {
+      if (this.design.technique !== 'cluster') return null
+      const v = this.design.clusterVar || 'district'
+      const acc = b => (v === 'education_level' ? b.education_level : b.district)
+      const sizes = {}
+      for (const b of this.frameBlobs) { const k = String(acc(b)); sizes[k] = (sizes[k] || 0) + 1 }
+      const clusterSizes = Object.values(sizes)
+      const totalClusters = clusterSizes.length
+      if (!totalClusters) return { totalClusters: 0, k: 0, estimate: 0, minN: 0, maxN: 0, within: null }
+      const k = Math.min(Math.max(1, Number(this.design.numClusters) || 1), totalClusters)
+      const within = Number(this.design.withinClusterN) || null
+      const sorted = clusterSizes.slice().sort((a, b) => a - b)
+      const sumOf = arr => arr.reduce((a, b) => a + b, 0)
+      if (within) {
+        // zweistufig: je Klumpen min(within, Klumpengröße)
+        const minN = sumOf(sorted.slice(0, k).map(s => Math.min(within, s)))
+        const maxN = sumOf(sorted.slice(totalClusters - k).map(s => Math.min(within, s)))
+        return { totalClusters, k, within, estimate: Math.round((minN + maxN) / 2), minN, maxN }
+      }
+      const minN = sumOf(sorted.slice(0, k))
+      const maxN = sumOf(sorted.slice(totalClusters - k))
+      const mean = Math.round(k * this.frameBlobs.length / totalClusters)
+      return { totalClusters, k, within: null, estimate: mean, minN, maxN }
     }
     , longTypes() {
       return [
@@ -1340,6 +1375,14 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
   color: var(--inst-graphit)
   margin-bottom: 0.4rem
   line-height: 1.15
+
+  &.cluster-size
+    margin-top: 0.35rem
+    color: var(--inst-tinte, var(--inst-graphit))
+
+  &.cluster-warn
+    color: var(--inst-stempelrot)
+    font-weight: 600
 
 // ── Fragebogen: Nichtteilnahme-Code/Label auf Studien-Ebene ──
 .nonresp-block
