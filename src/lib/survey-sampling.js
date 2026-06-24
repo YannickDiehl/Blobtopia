@@ -145,18 +145,69 @@ function srs(frame, n, rng) {
     .map(b => ({ blob: b, weight: k > 0 ? frame.length / k : 0, stratum: null }))
 }
 
+/**
+ * Largest-remainder (Hamilton) allocation with capacity caps. Splits a target
+ * sample size n across strata so the parts ALWAYS sum to n (or to the total
+ * available capacity when n exceeds it) — unlike independent rounding, which
+ * drifts, and unlike floor-division for equal allocation, which silently drops
+ * the remainder. `proportional` weights strata by size, `equal` gives each the
+ * same share. Whole units go first as floors, then the remainder lands on the
+ * strata with the largest fractional part; a stratum that hits its capacity is
+ * skipped and its surplus is redistributed to strata that still have room — so
+ * the realized n matches the request even when a stratum is too small to fill.
+ * @param {number} n
+ * @param {Array} sizes  [{ key, size }]
+ * @param {string} mode  'proportional' | 'equal'
+ * @returns {Object} key -> n_h
+ */
+export function allocateLargestRemainder(n, sizes, mode) {
+  const H = sizes.length
+  const totalCap = sizes.reduce((a, s) => a + s.size, 0)
+  const target = Math.max(0, Math.min(n, totalCap))
+  const out = {}
+  for (const s of sizes) out[s.key] = 0
+  if (!H || target === 0) return out
+
+  const totalSize = totalCap || 1
+  const parts = sizes.map(s => {
+    const ideal = mode === 'equal' ? target / H : target * s.size / totalSize
+    return { key: s.key, size: s.size, n: Math.min(s.size, Math.floor(ideal)), frac: ideal - Math.floor(ideal) }
+  })
+  let assigned = parts.reduce((a, p) => a + p.n, 0)
+  // Give out the remaining units, largest fractional part first; loop so that
+  // capacity-driven deficits are redistributed until target is met or every
+  // stratum is saturated. Ties: larger stratum, then key — fully deterministic.
+  while (assigned < target) {
+    const cand = parts.filter(p => p.n < p.size)
+    if (!cand.length) break
+    cand.sort((a, b) => (b.frac - a.frac) || (b.size - a.size) || (a.key < b.key ? -1 : 1))
+    for (const p of cand) {
+      if (assigned >= target) break
+      p.n += 1; assigned += 1
+      p.frac = 0 // served this pass; further passes round-robin by size
+    }
+  }
+  for (const p of parts) out[p.key] = p.n
+  return out
+}
+
 // ── Stratified sample (proportional [default] or equal allocation) ──────────
 function stratified(frame, n, vars, allocation, rng, design) {
   const groups = groupBy(frame, b => strataKey(b, vars, design))
   const keys = Array.from(groups.keys())
-  const N = frame.length
   const out = []
+  // Explicit per-stratum counts pass straight through; a 'proportional'/'equal'
+  // string is resolved by largest-remainder so the realized n matches the request.
+  let alloc
+  if (allocation && typeof allocation === 'object') {
+    alloc = allocation
+  } else {
+    const sizes = keys.map(k => ({ key: k, size: groups.get(k).length }))
+    alloc = allocateLargestRemainder(n, sizes, allocation === 'equal' ? 'equal' : 'proportional')
+  }
   for (const k of keys) {
     const stratum = groups.get(k)
-    let nh
-    if (allocation && typeof allocation === 'object') nh = allocation[k] != null ? allocation[k] : 0
-    else if (allocation === 'equal') nh = Math.floor(n / keys.length)
-    else nh = Math.round(n * stratum.length / N)         // proportional
+    let nh = alloc[k] != null ? alloc[k] : 0
     nh = Math.min(nh, stratum.length)
     const drawn = shuffle(stratum, rng).slice(0, nh)
     const w = nh > 0 ? stratum.length / nh : 0            // design weight = N_h / n_h

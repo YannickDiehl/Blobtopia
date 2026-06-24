@@ -3,7 +3,7 @@
  * Run:  node scripts/test-survey-sampling.mjs
  */
 import {
-  SAMPLING, drawSample, eligibleFrame, realizedDistribution, makeRng
+  SAMPLING, drawSample, eligibleFrame, realizedDistribution, makeRng, allocateLargestRemainder
 } from '../src/lib/survey-sampling.js'
 
 let pass = 0, fail = 0
@@ -50,6 +50,42 @@ const sDist = realizedDistribution(s.units, 'district')
 ok(Object.keys(sDist).length === 5, 'all 5 district strata represented (' + JSON.stringify(sDist) + ')')
 ok(s.units.every(u => u.weight > 0), 'every unit carries a positive design weight')
 ok(s.units.every(u => u.blob.age >= 18), 'no minors in stratified sample')
+// design weight = N_h / n_h, per stratum
+{
+  const adultsByDistrict = {}
+  for (const b of POP) if (b.age >= 18) adultsByDistrict[b.district] = (adultsByDistrict[b.district] || 0) + 1
+  const nhByD = sDist
+  const wOk = s.units.every(u => Math.abs(u.weight - adultsByDistrict[u.blob.district] / nhByD[u.blob.district]) < 1e-9)
+  ok(wOk, 'stratified design weight = N_h / n_h in every stratum')
+}
+
+console.log('Stratified allocation sums exactly to n (largest-remainder):')
+for (const alloc of ['proportional', 'equal']) {
+  let allHit = true
+  for (const nReq of [13, 17, 23, 24, 26, 31, 47]) { // deliberately NOT divisible by 5
+    const r = drawSample(POP, { technique: SAMPLING.STRATIFIED, n: nReq, strataVars: ['district'], allocation: alloc, seed: 5 })
+    if (r.realizedN !== nReq) { allHit = false; console.log('     ✗ ' + alloc + ' n=' + nReq + ' → ' + r.realizedN) }
+  }
+  ok(allHit, alloc + ' allocation realizes exactly the requested n for all tested sizes')
+}
+console.log('allocateLargestRemainder (capacity + deficit redistribution):')
+{
+  // a tiny stratum cannot hold its equal share → surplus must go elsewhere, total still = n
+  const sizes = [{ key: 'a', size: 2 }, { key: 'b', size: 100 }, { key: 'c', size: 100 }]
+  const al = allocateLargestRemainder(30, sizes, 'equal')
+  const sum = al.a + al.b + al.c
+  ok(sum === 30, 'equal alloc with a too-small stratum still sums to n (' + JSON.stringify(al) + ')')
+  ok(al.a <= 2, 'a small stratum is never over-allocated beyond its capacity')
+  const prop = allocateLargestRemainder(30, sizes, 'proportional')
+  ok(prop.a + prop.b + prop.c === 30, 'proportional alloc sums to n with a tiny stratum (' + JSON.stringify(prop) + ')')
+  // n larger than total capacity → allocate the whole frame, no overflow
+  const cap = allocateLargestRemainder(1000, sizes, 'proportional')
+  ok(cap.a === 2 && cap.b === 100 && cap.c === 100, 'n > capacity allocates the whole frame, capped per stratum')
+  // determinism
+  const a1 = allocateLargestRemainder(23, sizes, 'proportional')
+  const a2 = allocateLargestRemainder(23, sizes, 'proportional')
+  ok(JSON.stringify(a1) === JSON.stringify(a2), 'allocation is deterministic')
+}
 
 console.log('Cluster (2 of 5 districts):')
 const c = drawSample(POP, { technique: SAMPLING.CLUSTER, clusterVar: 'district', numClusters: 2, seed: 3 })
