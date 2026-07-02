@@ -78,7 +78,7 @@
         //- Kodierungsdetails betreffen erst den Export nach R — eingeklappt,
         //- damit der Einstieg (Frage schreiben) nicht mit Codes beginnt.
         .panel-block.coding-block
-          .block-head(@click="codingOpen = !codingOpen")
+          .block-head.is-toggle(@click="codingOpen = !codingOpen")
             span.block-title Fehlende Werte
             span.block-meta {{ design.itemMissing.refused.code }} · {{ design.itemMissing.dontknow.code }} · {{ design.nonresponse.code }}
             b-icon(:icon="codingOpen ? 'chevron-up' : 'chevron-down'", size="is-small")
@@ -111,7 +111,7 @@
       .survey-section(v-else-if="step === 'sample'")
         //- ① Grundgesamtheit eingrenzen
         .panel-block
-          .block-head(@click="filtersOpen = !filtersOpen")
+          .block-head.is-toggle(@click="filtersOpen = !filtersOpen")
             span.block-title ① Grundgesamtheit eingrenzen
             span.block-meta {{ frameBlobs.length }} Blobs
             b-icon(:icon="filtersOpen ? 'chevron-up' : 'chevron-down'", size="is-small")
@@ -1894,6 +1894,19 @@ select.survey-input
 // ── Stichprobe: §-Abschnitte des Ziehungsplans ──
 .panel-block
   margin-bottom: 0.7rem
+  // WICHTIG: Bulma (via Buefy) definiert global .panel-block als flex row
+  // mit Padding — das quetschte unsere Kapitelköpfe als schmale Seitenspalte
+  // NEBEN den Inhalt (umbrechende Titel, zerfallende Metas). Explizit
+  // zurücksetzen, damit die Kopfzeile-über-Inhalt-Struktur greift.
+  display: block
+  padding: 0
+  border-bottom: none
+  justify-content: initial
+
+  // Auch Bulmas Checkbox-Abstand in .panel-block neutralisieren — den
+  // Abstand in den Blob-Zeilen (⑤ manuell) regelt das flex-gap.
+  input[type="checkbox"]
+    margin-inline-end: 0
 
   .block-head
     display: flex
@@ -1902,6 +1915,13 @@ select.survey-input
     padding: 0.3rem 0
     border-bottom: 1.5px solid rgba(141, 127, 99, 0.45)
     cursor: default
+
+  // Zusammenklappbare Köpfe (Grundgesamtheit, Fehlende Werte): als klickbar
+  // erkennbar — Zeiger + Titel färbt beim Überfahren zur Tinte.
+  .block-head.is-toggle
+    cursor: pointer
+    &:hover .block-title
+      color: var(--inst-tinte)
 
   .block-title
     font-weight: 800
@@ -1927,10 +1947,6 @@ select.survey-input
   // sichtbar, auch wenn der Blick noch oben beim Button hängt (plus Scroll).
   &.draw-flash
     animation: draw-flash 1.6s ease-out
-
-  // Kodierung & fehlende Werte: zusammenklappbarer Experten-Block
-  &.coding-block .block-head
-    cursor: pointer
 
 @keyframes draw-flash
   0%
@@ -2262,7 +2278,8 @@ select.survey-input
     font-size: 0.68rem
 
   .comp-label
-    width: 90px
+    // Breit genug für „Industriezone" — Platz ist seit dem Bulma-Fix da.
+    width: 112px
     color: var(--inst-tinte-soft)
     white-space: nowrap
     overflow: hidden
@@ -2311,7 +2328,7 @@ select.survey-input
     font-size: 0.68rem
 
   .alloc-label
-    width: 100px
+    width: 112px
     color: var(--inst-tinte-soft)
     white-space: nowrap
     overflow: hidden
