@@ -169,10 +169,20 @@
               .chips.var-chips
                 span.chip(v-for="v in varOptionsFor(['district', 'education_level'])", :key="v.key", :class="{ active: design.clusterVar === v.key }", @click="design.clusterVar = v.key") {{ v.label }} ({{ v.groups }})
               p.mini-hint.cluster-note(v-if="design.clusterVar === 'education_level'") Bildungsgruppen sind kein natürlicher Klumpen — echte Klumpen hängen räumlich oder organisatorisch zusammen (Distrikte, Schulklassen). Probier aus, was passiert.
-              p.mini-hint(v-if="clusterGroups") Deine Klumpen: {{ clusterGroups }}
-              label Anzahl Klumpen
-              input.survey-input(type="number", min="1", :max="clusterPreview ? clusterPreview.totalClusters : null", v-model.number="design.numClusters")
-              label Pro Klumpen ziehen (leer = alle, zweistufig)
+              //- Los-Karten: alle Klumpen; nach dem Ziehen stempeln sich die
+              //- gewählten auf denselben Karten — vorher/nachher in einem Bild.
+              .cluster-cards(v-if="clusterCards")
+                .cluster-card(v-for="c in clusterCards", :key="c.key", :class="{ drawn: c.drawn }")
+                  span.cc-mark(v-if="c.drawn") gezogen
+                  span.cc-name {{ c.label }}
+                  span.cc-size {{ c.size }} Blobs
+              label(v-if="clusterCards") Wie viele der {{ clusterCards.length }} Klumpen zieht das Los?
+              .chips.seg-chips(v-if="clusterCards")
+                span.chip(v-for="k in clusterCards.length", :key="k", :class="{ active: design.numClusters === k }", @click="design.numClusters = k") {{ k }}
+              p.mini-hint(v-if="clusterCards && !(drawnClusters && drawnClusters.length)") Welche {{ design.numClusters }} es werden, entscheidet das Los (Seed) — „Stichprobe ziehen" deckt es auf.
+              p.mini-hint.cluster-drawn(v-else-if="drawnClusters && drawnClusters.length")
+                | Das Los hat entschieden: <b>{{ drawnClusters.join(' + ') }}</b>
+              label Pro gezogenem Klumpen befragen (leer = alle, zweistufig)
               input.survey-input(type="number", min="1", v-model.number="design.withinClusterN", placeholder="alle")
               p.mini-hint.cluster-size(v-if="clusterPreview")
                 template(v-if="clusterPreview.within")
@@ -854,20 +864,26 @@ export default {
         , framePct: Math.round(100 * frameCounts[k] / fN)
       }))
     }
-    // Klumpen-Liste mit Größen — macht die Klumpen-Variable greifbar,
-    // BEVOR gezogen wird („Grüntal (60) · Sonnenberg (63) · …").
-    , clusterGroups() {
+    // Klumpen als LOS-KARTEN: alle Gruppen mit Größe, und nach dem Ziehen
+    // stempeln sich auf DENSELBEN Karten die, die das Los gewählt hat —
+    // vorher/nachher in einem Bild.
+    , clusterCards() {
+      if (this.design.technique !== 'cluster') return null
       const v = this.design.clusterVar || 'district'
       const acc = ACCESSORS[v] || (b => b[v])
       const counts = {}
       for (const b of this.frameBlobs) { const k = String(acc(b)); counts[k] = (counts[k] || 0) + 1 }
       const keys = Object.keys(counts).sort()
       if (!keys.length) return null
-      return keys.map(k => this.categoryLabel(v, k) + ' (' + counts[k] + ')').join(' · ')
+      const drawn = new Set()
+      if (this.lastSample && this.lastSample.technique === 'cluster') {
+        for (const u of this.lastSample.units) if (u.stratum != null) drawn.add(String(u.stratum))
+      }
+      return keys.map(k => ({ key: k, label: this.categoryLabel(v, k), size: counts[k], drawn: drawn.has(k) }))
     }
     // Klumpen: WELCHE Klumpen es geworden sind (nicht nur wie viele).
     , drawnClusters() {
-      if (this.design.technique !== 'cluster' || !this.lastSample) return null
+      if (this.design.technique !== 'cluster' || !this.lastSample || this.lastSample.technique !== 'cluster') return null
       const v = this.design.clusterVar || 'district'
       const seen = []
       for (const u of this.lastSample.units) {
@@ -951,6 +967,12 @@ export default {
       if (t === 'quota' && !Object.values(this.design.quotas || {}).some(v => v > 0)) {
         this.fillQuotasProportional()
       }
+    }
+    // Klumpen-Variable gewechselt (5 Distrikte ↔ 4 Bildungsgruppen): die
+    // gewählte Klumpenzahl darf die neue Gruppenzahl nicht übersteigen.
+    , 'design.clusterVar'() {
+      const cards = this.clusterCards
+      if (cards && this.design.numClusters > cards.length) this.design.numClusters = cards.length
     }
   }
   , methods: {
@@ -1998,9 +2020,59 @@ select.survey-input
 .var-chips
   margin-bottom: 0.45rem
 
+// Klumpenzahl als Knopfreihe (1…N) — ungültige Werte sind unmöglich
+.seg-chips
+  margin-bottom: 0.35rem
+
 // Bildung als Klumpen: Lehr-Hinweis, kein Verbot
 .mini-hint.cluster-note
   color: var(--inst-stempelrot)
+
+// ── Klumpen als Los-Karten: gezogene stempeln sich blau ──
+.cluster-cards
+  display: flex
+  flex-wrap: wrap
+  gap: 0.4rem
+  margin: 0.35rem 0 0.5rem
+
+.cluster-card
+  position: relative
+  display: flex
+  flex-direction: column
+  min-width: 84px
+  padding: 0.3rem 0.5rem
+  border: 1.5px solid rgba(43, 58, 85, 0.3)
+  border-radius: 4px
+  background: rgba(255, 255, 255, 0.5)
+
+  .cc-name
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.7rem
+    font-weight: 600
+    color: var(--inst-tinte)
+
+  .cc-size
+    font-family: var(--inst-hand)
+    font-size: 0.78rem
+    color: var(--inst-graphit)
+
+  .cc-mark
+    position: absolute
+    top: -8px
+    right: -6px
+    padding: 1px 5px
+    border-radius: 3px
+    background: var(--inst-stempelblau)
+    color: #fff
+    font-size: 0.55rem
+    font-weight: 800
+    letter-spacing: 0.5px
+    text-transform: uppercase
+    transform: rotate(-6deg)
+
+  &.drawn
+    border-color: var(--inst-stempelblau)
+    background: rgba(43, 58, 85, 0.08)
 
 .params
   margin-top: 0.4rem
