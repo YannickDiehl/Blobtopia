@@ -142,15 +142,14 @@
               input(type="radio", :value="t.key", v-model="design.technique")
               span {{ t.label }}
               span.tech-desc {{ t.desc }}
+              span.tech-desc.tech-trade {{ t.trade }}
             .params(v-if="design.technique === 'srs'")
               label Stichprobengröße (n)
               input.survey-input(type="number", min="1", v-model.number="design.n")
             .params(v-else-if="design.technique === 'stratified'")
-              label Schichtungsvariable
-              select.survey-input(v-model="design.strataVar")
-                option(value="district") Distrikt
-                option(value="education_level") Bildung
-                option(value="age_group") Altersgruppe
+              label Wonach teilst du die Blobs ein?
+              .chips.var-chips
+                span.chip(v-for="v in varOptionsFor(['district', 'education_level', 'age_group'])", :key="v.key", :class="{ active: design.strataVar === v.key }", @click="design.strataVar = v.key") {{ v.label }} ({{ v.groups }})
               label Allokation
               select.survey-input(v-model="design.allocation")
                 option(value="proportional") proportional (Schichten nach ihrer Größe)
@@ -166,10 +165,11 @@
                   span.alloc-count {{ r.Nh }} im Rahmen
                   span.alloc-n → zieht {{ r.nh }}
             .params(v-else-if="design.technique === 'cluster'")
-              label Klumpen-Variable
-              select.survey-input(v-model="design.clusterVar")
-                option(value="district") Distrikt
-                option(value="education_level") Bildung
+              label Was zählt als ein Klumpen?
+              .chips.var-chips
+                span.chip(v-for="v in varOptionsFor(['district', 'education_level'])", :key="v.key", :class="{ active: design.clusterVar === v.key }", @click="design.clusterVar = v.key") {{ v.label }} ({{ v.groups }})
+              p.mini-hint.cluster-note(v-if="design.clusterVar === 'education_level'") Bildungsgruppen sind kein natürlicher Klumpen — echte Klumpen hängen räumlich oder organisatorisch zusammen (Distrikte, Schulklassen). Probier aus, was passiert.
+              p.mini-hint(v-if="clusterGroups") Deine Klumpen: {{ clusterGroups }}
               label Anzahl Klumpen
               input.survey-input(type="number", min="1", :max="clusterPreview ? clusterPreview.totalClusters : null", v-model.number="design.numClusters")
               label Pro Klumpen ziehen (leer = alle, zweistufig)
@@ -186,10 +186,9 @@
               label Stichprobengröße (n)
               input.survey-input(type="number", min="1", v-model.number="design.n")
             .params(v-else-if="design.technique === 'quota'")
-              label Schichtungsvariable
-              select.survey-input(v-model="design.strataVar", @change="fillQuotasProportional")
-                option(value="district") Distrikt
-                option(value="education_level") Bildung
+              label Wonach teilst du die Blobs ein?
+              .chips.var-chips
+                span.chip(v-for="v in varOptionsFor(['district', 'education_level'])", :key="v.key", :class="{ active: design.strataVar === v.key }", @click="design.strataVar = v.key; fillQuotasProportional()") {{ v.label }} ({{ v.groups }})
               label Soll-Zellen (editierbar)
               .quota-row(v-for="c in quotaCells", :key="c.key")
                 span.quota-label {{ c.label }} ({{ c.count }})
@@ -536,13 +535,15 @@ import { DISTRICT_NAMES, PARTY_NAMES, EDUCATION_LABELS } from '@/lib/blob-adapte
 
 function clone(x) { return JSON.parse(JSON.stringify(x)) }
 
-const TECHNIQUES = [
-  { key: 'srs', label: 'Einfache Zufallsstichprobe', desc: 'Jede Person im Rahmen hat dieselbe Chance, gezogen zu werden.' }
-  , { key: 'stratified', label: 'Geschichtete Stichprobe', desc: 'Rahmen in Gruppen (Schichten) teilen, in jeder gezielt ziehen — nichts wird übersehen.' }
-  , { key: 'cluster', label: 'Klumpenstichprobe', desc: 'Ganze Gruppen (z. B. Distrikte) ziehen und darin befragen — spart Wege, kostet Streuung.' }
-  , { key: 'systematic', label: 'Systematische Auswahl', desc: 'Jede k-te Person aus der Liste, zufälliger Start.' }
-  , { key: 'quota', label: 'Quotenstichprobe', desc: 'Vorgegebene Anzahl je Gruppe auffüllen — keine Zufallsauswahl.' }
-  , { key: 'manual', label: 'Manuell selbst auswählen', desc: 'Du entscheidest allein, wer befragt wird — spüre die Verzerrung.' }
+// Verfahrens-Namen; Bild- und Stärke·Preis-Zeilen entstehen live in der
+// computed `techniques()` — mit den echten Zahlen des aktuellen Rahmens.
+const TECHNIQUE_LABELS = [
+  { key: 'srs', label: 'Einfache Zufallsstichprobe' }
+  , { key: 'stratified', label: 'Geschichtete Stichprobe' }
+  , { key: 'cluster', label: 'Klumpenstichprobe' }
+  , { key: 'systematic', label: 'Systematische Auswahl' }
+  , { key: 'quota', label: 'Quotenstichprobe' }
+  , { key: 'manual', label: 'Manuell selbst auswählen' }
 ]
 
 export default {
@@ -558,7 +559,6 @@ export default {
       , drawFlash: false
       , compVar: 'district'
       , search: ''
-      , techniques: TECHNIQUES
       , passwordAttempt: ''
       , passwordError: false
       , simB: 500
@@ -673,6 +673,54 @@ export default {
         byGroup[c.group].items.push({ key: c.key, label: c.label })
       }
       return groups
+    }
+    // Verfahrens-Liste mit LEBENDEN Texten: Zeile 1 = konkretes Bild mit den
+    // echten Zahlen des Rahmens (reagiert auf Filter und n), Zeile 2 =
+    // Stärke · Preis. So werden die sechs Verfahren vergleichbar, ohne dass
+    // die Wahl Vorwissen voraussetzt.
+    , techniques() {
+      const frameN = this.frameBlobs.length
+      const n = Math.min(Number(this.design.n) || 0, frameN) || Number(this.design.n) || 0
+      const k = frameN && n ? Math.max(1, Math.floor(frameN / Math.min(n, frameN))) : 10
+      // Klumpen: Gruppenzahl der gewählten Klumpen-Variable im Rahmen
+      const accC = ACCESSORS[this.design.clusterVar || 'district'] || (b => b.district)
+      const clusterKeys = new Set()
+      for (const b of this.frameBlobs) clusterKeys.add(String(accC(b)))
+      const totalClusters = clusterKeys.size || 5
+      const numClusters = Math.min(Math.max(1, Number(this.design.numClusters) || 1), totalClusters)
+      const clusterWord = (this.design.clusterVar || 'district') === 'district' ? 'Distrikte' : 'Gruppen'
+      // Quote: ein greifbares Soll-Beispiel aus der ersten Zelle
+      const qc = this.quotaCells
+      const qEx = frameN && qc.length
+        ? qc[0].label + ': ' + Math.max(1, Math.round((n || 40) * qc[0].count / frameN))
+        : 'Grüntal: 6'
+      const texts = {
+        srs: {
+          desc: 'Lostrommel mit allen ' + frameN + ' Namen deines Rahmens — du ziehst ' + (n || '…') + ' blind heraus.'
+          , trade: 'Stark: unverzerrt, einfach · Schwach: kleine Gruppen können zufällig ganz fehlen'
+        }
+        , stratified: {
+          desc: 'Erst die ' + frameN + ' nach Gruppen auf Stapel sortieren, dann aus jedem Stapel passend viele ziehen.'
+          , trade: 'Stark: jede Gruppe sicher vertreten, genauer · Preis: du musst die Gruppen vorher kennen'
+        }
+        , cluster: {
+          desc: 'Du fährst nur in ' + numClusters + ' der ' + totalClusters + ' ' + clusterWord + ' und befragst dort.'
+          , trade: 'Stark: wenig Wege im Feld · Preis: Nachbarn ähneln sich — weniger Information pro Interview'
+        }
+        , systematic: {
+          desc: 'Die Liste der ' + frameN + ' durchgehen und jede ' + k + '. Person nehmen — Start per Los.'
+          , trade: 'Stark: schnell, ohne Lostrommel · Achtung: die Listen-Reihenfolge darf kein Muster haben'
+        }
+        , quota: {
+          desc: 'Sollzahlen je Gruppe vorgeben (z. B. ' + qEx + ') — genommen wird, wer greifbar ist.'
+          , trade: 'Stark: billig, schnell · Preis: kein Zufall — der Fehler ist nicht bezifferbar'
+        }
+        , manual: {
+          desc: 'Du kreuzt unten in ⑤ selbst an — wie Freunde auf dem Campus fragen.'
+          , trade: 'Lehrstück: Bequemlichkeitsauswahl = eingebaute Verzerrung'
+        }
+      }
+      return TECHNIQUE_LABELS.map(t => Object.assign({}, t, texts[t.key]))
     }
     , quotaCells() {
       const v = this.design.strataVar || 'district'
@@ -805,6 +853,17 @@ export default {
         , pct: Math.round(100 * (sampleCounts[k] || 0) / sN)
         , framePct: Math.round(100 * frameCounts[k] / fN)
       }))
+    }
+    // Klumpen-Liste mit Größen — macht die Klumpen-Variable greifbar,
+    // BEVOR gezogen wird („Grüntal (60) · Sonnenberg (63) · …").
+    , clusterGroups() {
+      const v = this.design.clusterVar || 'district'
+      const acc = ACCESSORS[v] || (b => b[v])
+      const counts = {}
+      for (const b of this.frameBlobs) { const k = String(acc(b)); counts[k] = (counts[k] || 0) + 1 }
+      const keys = Object.keys(counts).sort()
+      if (!keys.length) return null
+      return keys.map(k => this.categoryLabel(v, k) + ' (' + counts[k] + ')').join(' · ')
     }
     // Klumpen: WELCHE Klumpen es geworden sind (nicht nur wie viele).
     , drawnClusters() {
@@ -1172,6 +1231,17 @@ export default {
       // dist is keyed by the first strata var (district by default)
       const v = (this.design.strataVar) || 'district'
       return this.categoryLabel(v, k)
+    }
+    // Wählbare Einteilungs-Merkmale als Chips — mit der LIVE-Gruppenzahl im
+    // Rahmen, damit die Wahl zeigt, was sie erzeugt („Bildung (4)").
+    , varOptionsFor(keys) {
+      const labels = { district: 'Distrikt', education_level: 'Bildung', age_group: 'Alter' }
+      return keys.map(k => {
+        const acc = ACCESSORS[k] || (b => b[k])
+        const seen = new Set()
+        for (const b of this.frameBlobs) seen.add(String(acc(b)))
+        return { key: k, label: labels[k] || k, groups: seen.size }
+      })
     }
     // Lesbares Label für einen Kategorienwert eines Merkmals (geteilt von
     // Zusammensetzung, Allokations-Vorschau, Klumpen-Chips und dist).
@@ -1918,6 +1988,19 @@ select.survey-input
     font-size: 0.82rem
     color: var(--inst-graphit)
     line-height: 1.1
+
+  span.tech-trade
+    padding-top: 0.1rem
+    font-size: 0.78rem
+    color: var(--inst-tinte-soft)
+
+// Merkmal-Chips der Variablenwahl (Schichtung/Klumpen/Quote)
+.var-chips
+  margin-bottom: 0.45rem
+
+// Bildung als Klumpen: Lehr-Hinweis, kein Verbot
+.mini-hint.cluster-note
+  color: var(--inst-stempelrot)
 
 .params
   margin-top: 0.4rem
