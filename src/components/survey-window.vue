@@ -489,7 +489,7 @@ import { useSimulationStore } from '@/stores/simulation'
 import draggablePanel from '@/mixins/draggable-panel'
 import { analyzeItem } from '@/lib/survey-llm-analyze'
 import { CONSTRUCTS, CONSTRUCTS_BY_KEY } from '@/lib/survey-constructs'
-import { planSampleSize } from '@/lib/survey-sampling'
+import { planSampleSize, allocateLargestRemainder } from '@/lib/survey-sampling'
 import { FIELD_MODES, expectedResponseRate, questionnaireBurden } from '@/lib/survey-fieldwork'
 import { calibratedEstimate } from '@/lib/survey-weighting'
 import { datasetColumns } from '@/lib/survey-dataset'
@@ -783,6 +783,14 @@ export default {
       deep: true
       , handler() { this.surveyStore.SET_DESIGN(this.canonicalDesign()) }
     }
+    // Quote: leere Soll-Zellen sofort proportional vorbelegen. Ohne das zeigte
+    // die UI Nullen, während der Store beim Ziehen still proportional auffüllte
+    // — was Studierende sehen, muss dem entsprechen, was gezogen wird.
+    , 'design.technique'(t) {
+      if (t === 'quota' && !Object.values(this.design.quotas || {}).some(v => v > 0)) {
+        this.fillQuotasProportional()
+      }
+    }
   }
   , methods: {
     initFromStore() {
@@ -859,12 +867,11 @@ export default {
       this.design.quotas[key] = isNaN(v) ? 0 : Math.max(0, v)
     }
     , fillQuotasProportional() {
+      // Largest-Remainder statt Zellen-Rundung: die Soll-Zellen summieren
+      // GARANTIERT auf n (Math.round je Zelle driftete um ±1–2).
       const total = Number(this.design.n) || 0
-      const cells = this.quotaCells
-      const frameN = Math.max(1, this.frameBlobs.length)
-      const q = {}
-      for (const c of cells) q[c.key] = Math.round(total * c.count / frameN)
-      this.design.quotas = q
+      const sizes = this.quotaCells.map(c => ({ key: c.key, size: c.count }))
+      this.design.quotas = allocateLargestRemainder(total, sizes, 'proportional')
     }
     , blankItem(i) {
       return {
@@ -1144,10 +1151,10 @@ export default {
       return Math.max(0, Math.min(100, ((v - range[0]) / (range[1] - range[0])) * 100))
     }
     , fmt(v) {
-      return v == null ? '—' : v.toFixed(2)
+      return v == null ? '—' : v.toFixed(2).replace('.', ',')
     }
     , signed(v) {
-      return v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(2)
+      return v == null ? '—' : (v >= 0 ? '+' : '') + v.toFixed(2).replace('.', ',')
     }
     , deltaClass(v) {
       if (v == null) return ''

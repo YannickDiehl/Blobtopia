@@ -10,7 +10,7 @@
  */
 import { defineStore } from 'pinia'
 import {
-  SAMPLING, drawSample, eligibleFrame, realizedDistribution, ACCESSORS
+  SAMPLING, drawSample, eligibleFrame, realizedDistribution, ACCESSORS, allocateLargestRemainder
 } from '@/lib/survey-sampling'
 import { toCSV, codebookToCSV } from '@/lib/survey-dataset'
 import { surveyToXlsx } from '@/lib/survey-xlsx'
@@ -78,11 +78,9 @@ function buildDrawDesign(design, blobs) {
     const frame = eligibleFrame(blobs, Object.assign({}, d.eligibility, { filter: d.filter, manualExclude: d.manualExclude }))
     const counts = {}
     for (const b of frame) { const k = String(acc(b)); counts[k] = (counts[k] || 0) + 1 }
-    const quotas = {}
-    for (const k of Object.keys(counts)) {
-      quotas[k] = Math.round((d.n || 0) * counts[k] / Math.max(1, frame.length))
-    }
-    d.quotas = quotas
+    // Largest-Remainder: die Zellen summieren garantiert auf n (Rundung je
+    // Zelle driftete um ±1–2 — dieselbe Arithmetik wie bei der Schichtung).
+    d.quotas = allocateLargestRemainder(d.n || 0, Object.keys(counts).map(k => ({ key: k, size: counts[k] })), 'proportional')
   }
   return d
 }
