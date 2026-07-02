@@ -75,14 +75,22 @@
         button.survey-btn.add-btn(@click="addItem")
           b-icon(icon="plus", size="is-small")
           span Item hinzufügen
-        p.mini-hint.missing-default-hint
-          | Fehlende Werte werden standardmäßig als −9 (Verweigert) und −8 (Weiß nicht) kodiert. Eigene Codes + Labels gibst du direkt in der Frage an — z. B. „… 8 = weiß nicht, 9 = keine Angabe“.
-        .nonresp-block
-          label.nonresp-title(title="Wer gar nicht an der Befragung teilnimmt (Unit-Nonresponse) — gilt für den ganzen Fall, nicht je Frage") Nichtteilnahme (ganzer Fall)
-          .nonresp-row
-            input.survey-input.mini.nonresp-code(type="number", v-model.number="design.nonresponse.code", title="Zahlencode im Datensatz/Export")
-            input.survey-input.nonresp-text(v-model="design.nonresponse.label", maxlength="40", placeholder="Nicht teilgenommen")
-          p.mini-hint Wer gar nicht teilnimmt, bekommt im Export diesen einen Code (Default −13 „Nicht teilgenommen“); der genaue Grund (verweigert / nicht erreicht …) steht zusätzlich in der Spalte „disposition“.
+        //- Kodierungsdetails betreffen erst den Export nach R — eingeklappt,
+        //- damit der Einstieg (Frage schreiben) nicht mit Codes beginnt.
+        .panel-block.coding-block
+          .block-head(@click="codingOpen = !codingOpen")
+            span.block-title Kodierung &amp; fehlende Werte
+            span.block-meta −9 · −8 · {{ design.nonresponse.code }}
+            b-icon(:icon="codingOpen ? 'chevron-up' : 'chevron-down'", size="is-small")
+          .block-body(v-if="codingOpen")
+            p.mini-hint.missing-default-hint
+              | Fehlende Werte werden standardmäßig als −9 (Verweigert) und −8 (Weiß nicht) kodiert. Eigene Codes + Labels gibst du direkt in der Frage an — z. B. „… 8 = weiß nicht, 9 = keine Angabe“.
+            .nonresp-block
+              label.nonresp-title(title="Wer gar nicht an der Befragung teilnimmt (Unit-Nonresponse) — gilt für den ganzen Fall, nicht je Frage") Nichtteilnahme (ganzer Fall)
+              .nonresp-row
+                input.survey-input.mini.nonresp-code(type="number", v-model.number="design.nonresponse.code", title="Zahlencode im Datensatz/Export")
+                input.survey-input.nonresp-text(v-model="design.nonresponse.label", maxlength="40", placeholder="Nicht teilgenommen")
+              p.mini-hint Wer gar nicht teilnimmt, bekommt im Export diesen einen Code (Default −13 „Nicht teilgenommen“); der genaue Grund (verweigert / nicht erreicht …) steht zusätzlich in der Spalte „disposition“.
         .panel-block.demo-block
           .block-head
             span.block-title Hintergrundmerkmale erheben
@@ -130,9 +138,10 @@
           .block-head
             span.block-title ② Ziehungsverfahren
           .block-body
-            label.radio-row(v-for="t in techniques", :key="t.key", :class="{ active: design.technique === t.key }")
+            label.radio-row.tech-row(v-for="t in techniques", :key="t.key", :class="{ active: design.technique === t.key }")
               input(type="radio", :value="t.key", v-model="design.technique")
               span {{ t.label }}
+              span.tech-desc {{ t.desc }}
             .params(v-if="design.technique === 'srs'")
               label Stichprobengröße (n)
               input.survey-input(type="number", min="1", v-model.number="design.n")
@@ -181,7 +190,7 @@
               label Gesamtgröße (n)
               input.survey-input(type="number", min="1", v-model.number="design.n", @change="fillQuotasProportional")
             .params(v-else-if="design.technique === 'manual'")
-              p.mini-hint Wähle die Blobs unten von Hand aus — beobachte, wie deine Auswahl von der Grundgesamtheit abweicht.
+              p.mini-hint Wähle die Blobs unten im Abschnitt ⑤ per Häkchen aus — und beobachte dort live, wie deine Auswahl von der Grundgesamtheit abweicht.
             .params(v-if="design.technique !== 'manual'")
               label Seed (Reproduzierbarkeit)
               input.survey-input(type="number", v-model.number="design.seed")
@@ -192,6 +201,7 @@
                 span ±
                 input.survey-input.mini(type="number", step="0.1", min="0.1", v-model.number="planE")
                 span.planner-result → mindestens {{ plannedN != null ? plannedN : '—' }} Befragte
+                button.survey-btn.mini-btn.apply-n(v-if="plannedN != null && plannedN !== design.n", @click="design.n = plannedN", title="Empfehlung als Stichprobengröße übernehmen") als n übernehmen
               .planner-explain
                 span.explain-toggle(@click="planExplain = !planExplain") {{ planExplain ? '▾' : '▸' }} Was heißt das?
                 .explain-body(v-if="planExplain")
@@ -252,7 +262,7 @@
               p.mini-hint(v-else) Trend: Jede Welle ist eine frische Ziehung mit demselben Design.
 
         //- ⑤ Auswahl / Realisierung
-        .panel-block
+        .panel-block(ref="realizedBlock", :class="{ 'draw-flash': drawFlash }")
           .block-head
             span.block-title ⑤ {{ design.technique === 'manual' ? 'Blobs selbst auswählen' : 'Realisierte Stichprobe' }}
             span.block-meta n = {{ sampleN }} / {{ frameBlobs.length }}
@@ -277,7 +287,7 @@
 
       //- ═══════════ ERGEBNIS (inkl. Erhebung) ═══════════
       .survey-section(v-else-if="step === 'results'")
-        p.hint Die Stichprobe wird synthetisch befragt — kostenlos, reproduzierbar, inkl. modellierter Fragebogeneffekte.
+        p.hint Das Institut schickt seine Interviewer:innen los — die Ergebnisse liegen sofort vor. Gleiche Studie, gleicher Seed: exakt derselbe Datensatz.
         .info-item
           span.info-label Items im Fragebogen
           span.info-value {{ localItems.length }}
@@ -333,10 +343,11 @@
           .calib-row
             label.radio-row(:class="{ active: calib.enabled }")
               input(type="checkbox", :checked="calib.enabled", @change="surveyStore.SET_CALIB({ enabled: $event.target.checked })")
-              span Post-Stratifizierung (an wahre Randverteilungen)
+              span Post-Stratifizierung (an die Randverteilungen der Grundgesamtheit)
             .chips(v-if="calib.enabled")
               span.chip(:class="{ active: calibHasVar('district') }", @click="toggleCalibVar('district')") Distrikt
               span.chip(:class="{ active: calibHasVar('education_level') }", @click="toggleCalibVar('education_level')") Bildung
+            p.mini-hint(v-if="calib.enabled") Antwortende werden so gewichtet, dass die gewählten Merkmale in der Stichprobe wieder der Grundgesamtheit entsprechen — das gleicht selektive Ausfälle aus.
             p.mini-hint(v-if="calib.enabled && calibration && calibration.uncovered > 0") Achtung: {{ calibration.uncovered }} Rahmen-Einheiten liegen in Zellen ohne Antwortende — Gewichtung kann leere Zellen nicht füllen.
           .data-table-wrap
             table.data-table
@@ -499,12 +510,12 @@ import { DISTRICT_NAMES, PARTY_NAMES, EDUCATION_LABELS } from '@/lib/blob-adapte
 function clone(x) { return JSON.parse(JSON.stringify(x)) }
 
 const TECHNIQUES = [
-  { key: 'srs', label: 'Einfache Zufallsstichprobe' }
-  , { key: 'stratified', label: 'Geschichtete Stichprobe' }
-  , { key: 'cluster', label: 'Klumpenstichprobe' }
-  , { key: 'systematic', label: 'Systematische Auswahl' }
-  , { key: 'quota', label: 'Quotenstichprobe' }
-  , { key: 'manual', label: 'Manuell selbst auswählen' }
+  { key: 'srs', label: 'Einfache Zufallsstichprobe', desc: 'Jede Person im Rahmen hat dieselbe Chance, gezogen zu werden.' }
+  , { key: 'stratified', label: 'Geschichtete Stichprobe', desc: 'Rahmen in Gruppen (Schichten) teilen, in jeder gezielt ziehen — nichts wird übersehen.' }
+  , { key: 'cluster', label: 'Klumpenstichprobe', desc: 'Ganze Gruppen (z. B. Distrikte) ziehen und darin befragen — spart Wege, kostet Streuung.' }
+  , { key: 'systematic', label: 'Systematische Auswahl', desc: 'Jede k-te Person aus der Liste, zufälliger Start.' }
+  , { key: 'quota', label: 'Quotenstichprobe', desc: 'Vorgegebene Anzahl je Gruppe auffüllen — keine Zufallsauswahl.' }
+  , { key: 'manual', label: 'Manuell selbst auswählen', desc: 'Du entscheidest allein, wer befragt wird — spüre die Verzerrung.' }
 ]
 
 export default {
@@ -516,6 +527,9 @@ export default {
   , data() {
     return {
       filtersOpen: true
+      , codingOpen: false
+      , drawFlash: false
+      , compVar: 'district'
       , search: ''
       , techniques: TECHNIQUES
       , passwordAttempt: ''
@@ -1025,6 +1039,15 @@ export default {
     , onPreview() {
       this.surveyStore.SET_DESIGN(this.canonicalDesign())
       this.surveyStore.previewSample()
+      // Die realisierte Stichprobe (⑤) liegt unterhalb von Feldarbeit und
+      // Längsschnitt — ohne Scroll wirkt der Klick folgenlos.
+      this.$nextTick(() => {
+        const el = this.$refs.realizedBlock
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        this.drawFlash = true
+        clearTimeout(this._flashTimer)
+        this._flashTimer = setTimeout(() => { this.drawFlash = false }, 1600)
+      })
     }
     , isPicked(b) {
       return this.design.manualInclude.indexOf(b.id) >= 0
@@ -1658,6 +1681,21 @@ select.survey-input
   .block-body
     padding: 0.5rem 0.1rem 0.1rem
 
+  // Nach „Stichprobe ziehen": kurzer Stempel-Puls auf ⑤ — der Erfolg ist
+  // sichtbar, auch wenn der Blick noch oben beim Button hängt (plus Scroll).
+  &.draw-flash
+    animation: draw-flash 1.6s ease-out
+
+  // Kodierung & fehlende Werte: zusammenklappbarer Experten-Block
+  &.coding-block .block-head
+    cursor: pointer
+
+@keyframes draw-flash
+  0%
+    background: rgba(43, 58, 85, 0.14)
+  100%
+    background: transparent
+
 .filter-group
   margin-bottom: 0.5rem
 
@@ -1748,6 +1786,23 @@ select.survey-input
     color: var(--inst-tinte)
     span
       border-color: var(--inst-handrot)
+
+// Verfahren mit Einzeiler: der Rotstift-Kreis bleibt am Namen, die
+// Erklärung rutscht als Handnotiz in die zweite Zeile.
+.radio-row.tech-row
+  flex-wrap: wrap
+  padding-bottom: 0.28rem
+
+  span.tech-desc
+    flex: 1 1 100%
+    border: none
+    border-radius: 0
+    padding: 0 12px
+    transform: none
+    font-family: var(--inst-hand)
+    font-size: 0.82rem
+    color: var(--inst-graphit)
+    line-height: 1.1
 
 .params
   margin-top: 0.4rem
