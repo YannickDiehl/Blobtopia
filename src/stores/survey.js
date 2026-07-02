@@ -57,6 +57,10 @@ const DEFAULT_DESIGN = () => ({
   // (ALLBUS-Konvention); von der Studierenden anpassbar wie die Item-Missings. Der
   // genaue Grund (verweigert/nicht erreicht/…) bleibt in der disposition-Spalte.
   , nonresponse: { code: -13, label: 'Nicht teilgenommen' }
+  // Item-Missings (Verweigert/Weiß nicht) studienweit anpassbar — Fallback
+  // für ALLE Fragen; eine per-Frage-Deklaration im Fragetext überschreibt das.
+  // Ungültig (-7) bleibt fest. Spiegelt design.nonresponse (Fall-Ebene).
+  , itemMissing: { refused: { code: -9, label: 'Verweigert' }, dontknow: { code: -8, label: 'Weiß nicht' } }
   // Längsschnitt: 'cross' | 'trend' | 'panel'; weitere Wellen als Sim-Jahre
   , longitudinal: { type: 'cross', waveYears: [] }
 })
@@ -435,7 +439,7 @@ export const useSurveyStore = defineStore('survey', {
 
     , exportCsv() {
       if (!this.result) return
-      const csv = toCSV(this.result.rows, this.items, { nonparticipation: this.design.nonresponse })
+      const csv = toCSV(this.result.rows, this.items, { nonparticipation: this.design.nonresponse, itemMissing: this.design.itemMissing })
       downloadText(csv, 'blobtopia-befragung.csv', 'text/csv')
     }
     // Labelgetreuer .xlsx-Export im mariposa-Format (Data + Labels), per
@@ -469,7 +473,7 @@ export const useSurveyStore = defineStore('survey', {
         })
         truth = { perUnit }
       }
-      const csv = toCSV(rows, this.items, { truth, nonparticipation: this.design.nonresponse })
+      const csv = toCSV(rows, this.items, { truth, nonparticipation: this.design.nonresponse, itemMissing: this.design.itemMissing })
       downloadText(csv, 'blobtopia-befragung-dozentenversion.csv', 'text/csv')
     }
     // Dozentenversion als .xlsx (zusätzliche `<id>_wahr`-Spalten). Bei

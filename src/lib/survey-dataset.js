@@ -49,9 +49,22 @@ function itemId(item, qi) {
 // bleibt leer (System-NA).
 const CSV_DEFAULT_MISSING = { refused: -9, dontknow: -8, unparsed: -7, error: -7 }
 const CSV_DEFAULT_NONPARTICIPATION = -13
-function csvValueFor(a, item, disposition, nonpartCode) {
+// Studienweite Item-Missing-Codes (design.itemMissing) über die ALLBUS-Defaults,
+// per-Frage weiterhin überschreibbar. unparsed/error bleiben auf -7.
+function csvMissingCodes(itemMissing) {
+  const im = itemMissing || {}
+  const pick = (kind, dflt) => (im[kind] && Number.isInteger(im[kind].code)) ? im[kind].code : dflt
+  return {
+    refused: pick('refused', CSV_DEFAULT_MISSING.refused)
+    , dontknow: pick('dontknow', CSV_DEFAULT_MISSING.dontknow)
+    , unparsed: CSV_DEFAULT_MISSING.unparsed
+    , error: CSV_DEFAULT_MISSING.error
+  }
+}
+function csvValueFor(a, item, disposition, nonpartCode, missingCodes) {
+  const codes = missingCodes || CSV_DEFAULT_MISSING
   if (a && a.status && a.status !== 'answered') {
-    const def = CSV_DEFAULT_MISSING[a.status]
+    const def = codes[a.status]
     if (def == null) return '' // unsupported → System-NA
     const declared = (item && item.scale && Array.isArray(item.scale.missingLabels)) ? item.scale.missingLabels : []
     const kind = a.status === 'refused' ? 'refused' : a.status === 'dontknow' ? 'dontknow' : 'invalid'
@@ -86,6 +99,7 @@ export function toCSV(rows, items, opts) {
   const truth = opts.truth || null
   const nonpartCode = (opts.nonparticipation && opts.nonparticipation.code != null)
     ? opts.nonparticipation.code : CSV_DEFAULT_NONPARTICIPATION
+  const missingCodes = csvMissingCodes(opts.itemMissing)
   const bom = opts.bom !== false ? '﻿' : ''
   const demoCols = datasetColumns(rows)
 
@@ -103,7 +117,7 @@ export function toCSV(rows, items, opts) {
     for (let qi = 0; qi < items.length; qi++) {
       const id = itemId(items[qi], qi)
       const a = (r.answers && r.answers[id]) || {}
-      row.push(csvValueFor(a, items[qi], r.disposition, nonpartCode))
+      row.push(csvValueFor(a, items[qi], r.disposition, nonpartCode, missingCodes))
       if (includeStatus) row.push(a.status || '')
       if (truth) {
         const t = truth.perUnit && truth.perUnit[r.blobId] ? truth.perUnit[r.blobId][id] : null

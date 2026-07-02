@@ -80,24 +80,24 @@
         .panel-block.coding-block
           .block-head(@click="codingOpen = !codingOpen")
             span.block-title Fehlende Werte
-            span.block-meta −9 · −8 · {{ design.nonresponse.code }}
+            span.block-meta {{ design.itemMissing.refused.code }} · {{ design.itemMissing.dontknow.code }} · {{ design.nonresponse.code }}
             b-icon(:icon="codingOpen ? 'chevron-up' : 'chevron-down'", size="is-small")
           .block-body(v-if="codingOpen")
-            p.mini-hint So werden fehlende Angaben im Datensatz kodiert. Für einzelne Fragen vergibst du eigene Codes direkt im Fragetext (z. B. „… 8 = weiß nicht“).
+            p.mini-hint So werden fehlende Angaben im Datensatz kodiert — frei wählbar. Für einzelne Fragen kannst du Codes zusätzlich direkt im Fragetext vergeben (z. B. „… 8 = weiß nicht“); die gewinnen dann für diese Frage.
             .missing-legend
-              .missing-card
-                span.mc-code −9
-                span.mc-label Verweigert
-                span.mc-scope je Frage
-              .missing-card
-                span.mc-code −8
-                span.mc-label Weiß nicht
-                span.mc-scope je Frage
+              .missing-card.editable(title="Wer die Antwort verweigert — gilt je Frage, frei wählbar")
+                input.mc-code.mc-input(type="number", v-model.number="design.itemMissing.refused.code", title="Zahlencode im Export")
+                input.mc-label.mc-input(v-model="design.itemMissing.refused.label", maxlength="40", placeholder="Verweigert", title="Label im Export")
+                span.mc-scope.edit je Frage
+              .missing-card.editable(title="Wer „weiß nicht“ antwortet — gilt je Frage, frei wählbar")
+                input.mc-code.mc-input(type="number", v-model.number="design.itemMissing.dontknow.code", title="Zahlencode im Export")
+                input.mc-label.mc-input(v-model="design.itemMissing.dontknow.label", maxlength="40", placeholder="Weiß nicht", title="Label im Export")
+                span.mc-scope.edit je Frage
               .missing-card.editable(title="Wer gar nicht teilgenommen hat (Unit-Nonresponse) — gilt für den ganzen Fall, frei wählbar")
                 input.mc-code.mc-input(type="number", v-model.number="design.nonresponse.code", title="Zahlencode im Export")
                 input.mc-label.mc-input(v-model="design.nonresponse.label", maxlength="40", placeholder="Nicht teilgenommen", title="Label im Export")
-                span.mc-scope.edit ganzer Fall · frei wählbar
-            p.mini-hint −9/−8 gelten je Frage; wer gar nicht teilnimmt, bekommt den dritten Code (der genaue Grund steht zusätzlich in der Spalte „disposition“).
+                span.mc-scope.edit ganzer Fall
+            p.mini-hint Die ersten beiden gelten je Frage (Item-Nonresponse); wer gar nicht teilnimmt, bekommt den dritten Code (der genaue Grund steht zusätzlich in der Spalte „disposition“).
         .panel-block.demo-block
           .block-head
             span.block-title Hintergrundmerkmale erheben
@@ -605,6 +605,8 @@ export default {
         // Unit-Nonresponse: Code + Label auf Studien-Ebene (Default -13 „Nicht
         // teilgenommen"), anpassbar wie die Item-Missings.
         , nonresponse: { code: -13, label: 'Nicht teilgenommen' }
+        // Item-Missings (Verweigert/Weiß nicht) studienweit anpassbar.
+        , itemMissing: { refused: { code: -9, label: 'Verweigert' }, dontknow: { code: -8, label: 'Weiß nicht' } }
         , longitudinal: { type: 'cross', waveYears: [] }
       }
     }
@@ -974,6 +976,7 @@ export default {
         this.design.nonresponse = d.nonresponse
           ? { code: Number.isInteger(d.nonresponse.code) ? d.nonresponse.code : -13, label: d.nonresponse.label || 'Nicht teilgenommen' }
           : { code: -13, label: 'Nicht teilgenommen' }
+        this.design.itemMissing = this.hydrateItemMissing(d.itemMissing)
         this.design.longitudinal = d.longitudinal
           ? { type: d.longitudinal.type || 'cross', waveYears: (d.longitudinal.waveYears || []).slice() }
           : { type: 'cross', waveYears: [] }
@@ -1117,6 +1120,21 @@ export default {
       const prev = this.analysis[id] || {}
       this.analysis = Object.assign({}, this.analysis, { [id]: Object.assign({}, prev, patch) })
     }
+    // Item-Missing-Voreinstellung (Verweigert/Weiß nicht) aus der Studie
+    // hydratisieren bzw. sanieren — Codes fest ganzzahlig, Labels nichtleer.
+    , hydrateItemMissing(im) {
+      const one = (v, dc, dl) => ({
+        code: (v && Number.isInteger(v.code)) ? v.code : dc
+        , label: (v && v.label != null && String(v.label).trim()) ? String(v.label) : dl
+      })
+      return {
+        refused: one(im && im.refused, -9, 'Verweigert')
+        , dontknow: one(im && im.dontknow, -8, 'Weiß nicht')
+      }
+    }
+    , canonicalItemMissing() {
+      return this.hydrateItemMissing(this.design.itemMissing)
+    }
     , canonicalDesign() {
       return {
         technique: this.design.technique
@@ -1140,6 +1158,7 @@ export default {
           code: Number.isInteger(this.design.nonresponse.code) ? this.design.nonresponse.code : -13
           , label: (this.design.nonresponse.label && String(this.design.nonresponse.label).trim()) || 'Nicht teilgenommen'
         }
+        , itemMissing: this.canonicalItemMissing()
         , longitudinal: {
           type: this.design.longitudinal.type || 'cross'
           , waveYears: this.design.longitudinal.waveYears.slice()
@@ -1588,17 +1607,16 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
     color: var(--inst-tinte, var(--inst-graphit))
 
 // ── Fragebogen: fehlende Werte als Codebuch-Karten ──
-// Zwei feste Item-Missings (−9/−8) + eine editierbare Fall-Nichtteilnahme,
-// jede Karte im Formblatt-Stil: gestempelter Code, Label, Reichweiten-Tag.
+// Drei editierbare Codes (Verweigert/Weiß nicht je Frage, Nichtteilnahme
+// ganzer Fall), jede Karte im Formblatt-Stil: Code + Label + Reichweiten-Tag.
 .missing-legend
-  display: flex
-  flex-wrap: wrap
-  gap: 0.45rem
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr))
+  gap: 0.4rem
   margin: 0.4rem 0 0.5rem
 
 .missing-card
-  flex: 1 1 0
-  min-width: 92px
+  min-width: 0
   display: flex
   flex-direction: column
   align-items: flex-start
@@ -1630,12 +1648,9 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
     text-transform: uppercase
     color: var(--inst-beschriftung)
 
-  // Editierbare Karte (Nichtteilnahme): Inputs statt fester Text, blau
-  // gerahmt als „hier kannst du eingreifen“-Signal. Etwas breiter, damit
-  // ein langes Label wie „Nicht teilgenommen“ hineinpasst.
+  // Editierbare Karte: Inputs statt fester Text, blau gerahmt als „hier
+  // kannst du eingreifen“-Signal (alle drei Codes sind frei wählbar).
   &.editable
-    flex: 1.7 1 0
-    min-width: 130px
     border-color: rgba(51, 81, 142, 0.5)
     border-style: dashed
     background: rgba(51, 81, 142, 0.05)

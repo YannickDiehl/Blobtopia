@@ -59,18 +59,41 @@ function nonparticipationFrom(design) {
 }
 
 /**
- * Missing-Schema eines Items: die vom Studierenden deklarierten Codes/Labels je
- * Art (item.scale.missingLabels) mit Default-Fallback. `declared` ist die volle
- * Liste (inkl. notapplicable) fürs Labels-Blatt.
+ * Studienweite Item-Missing-Defaults (design.itemMissing) für Verweigert/Weiß
+ * nicht mit Fallback auf die ALLBUS-Codes. Anpassbar wie die Nichtteilnahme,
+ * gilt für ALLE Items — eine per-Frage-Deklaration (missingLabels) überschreibt
+ * das aber weiterhin. Ungültig (-7) bleibt fest (nicht studienweit editierbar).
  */
-function missingSchemeFor(item) {
+function itemMissingFrom(design) {
+  const im = design && design.itemMissing
+  const pick = (kind, dflt) => {
+    const v = im && im[kind]
+    const code = (v && Number.isInteger(v.code)) ? v.code : dflt.code
+    const label = (v && v.label != null && String(v.label).trim()) ? String(v.label).trim() : dflt.label
+    return { code, label }
+  }
+  return {
+    refused: pick('refused', DEFAULT_MISSING.refused)
+    , dontknow: pick('dontknow', DEFAULT_MISSING.dontknow)
+    , invalid: DEFAULT_MISSING.invalid
+  }
+}
+
+/**
+ * Missing-Schema eines Items: die vom Studierenden deklarierten Codes/Labels je
+ * Art (item.scale.missingLabels) mit Fallback auf die STUDIENWEITEN Defaults
+ * (design.itemMissing). `declared` ist die volle Liste (inkl. notapplicable)
+ * fürs Labels-Blatt.
+ */
+function missingSchemeFor(item, defaults) {
+  const dflt = defaults || DEFAULT_MISSING
   const declared = (item && item.scale && Array.isArray(item.scale.missingLabels)) ? item.scale.missingLabels : []
   const byKind = {}
   for (const m of declared) if (m && m.value != null && byKind[m.kind] == null) byKind[m.kind] = { code: m.value, label: m.label }
   return {
-    refused: byKind.refused || DEFAULT_MISSING.refused
-    , dontknow: byKind.dontknow || DEFAULT_MISSING.dontknow
-    , invalid: byKind.invalid || DEFAULT_MISSING.invalid
+    refused: byKind.refused || dflt.refused
+    , dontknow: byKind.dontknow || dflt.dontknow
+    , invalid: byKind.invalid || dflt.invalid
     , declared: declared
   }
 }
@@ -193,6 +216,8 @@ export function buildWorkbook(rows, items, design, opts) {
   const partyNames = opts.partyNames || []
   // Unit-Nonresponse-Code/Label dieser Studie (Default -13 / „Nicht teilgenommen").
   const nonpart = nonparticipationFrom(design)
+  // Studienweite Item-Missing-Defaults (-9/-8/-7), per-Frage überschreibbar.
+  const itemMissing = itemMissingFrom(design)
 
   // Fall-ID: stabil je Blob (im Panel über Wellen hinweg dieselbe Nummer).
   const idMap = new Map()
@@ -228,7 +253,7 @@ export function buildWorkbook(rows, items, design, opts) {
     const id = it.id || ('item_' + qi)
     const varName = uniqueName(itemVarName(it, qi), usedNames)
     const s = it.scale || {}
-    const scheme = missingSchemeFor(it)
+    const scheme = missingSchemeFor(it, itemMissing)
     const data = rows.map(r => answerCell(r.answers && r.answers[id], scheme, r.disposition, nonpart))
     // Value-Labels: alle ausformulierten Kategorien (LLM-Analyse); sonst die
     // Endpunkte. Bei offenen/raw Fragen keine.
