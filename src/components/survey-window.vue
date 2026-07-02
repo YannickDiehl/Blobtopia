@@ -138,11 +138,9 @@
           .block-head
             span.block-title ② Ziehungsverfahren
           .block-body
-            label.radio-row.tech-row(v-for="t in techniques", :key="t.key", :class="{ active: design.technique === t.key }")
+            label.radio-row(v-for="t in techniques", :key="t.key", :class="{ active: design.technique === t.key }")
               input(type="radio", :value="t.key", v-model="design.technique")
               span {{ t.label }}
-              span.tech-desc {{ t.desc }}
-              span.tech-desc.tech-trade {{ t.trade }}
             .params(v-if="design.technique === 'srs'")
               label Stichprobengröße (n)
               input.survey-input(type="number", min="1", v-model.number="design.n")
@@ -169,19 +167,20 @@
               .chips.var-chips
                 span.chip(v-for="v in varOptionsFor(['district', 'education_level'])", :key="v.key", :class="{ active: design.clusterVar === v.key }", @click="design.clusterVar = v.key") {{ v.label }} ({{ v.groups }})
               p.mini-hint.cluster-note(v-if="design.clusterVar === 'education_level'") Bildungsgruppen sind kein natürlicher Klumpen — echte Klumpen hängen räumlich oder organisatorisch zusammen (Distrikte, Schulklassen). Probier aus, was passiert.
-              //- Los-Karten: alle Klumpen; nach dem Ziehen stempeln sich die
-              //- gewählten auf denselben Karten — vorher/nachher in einem Bild.
-              .cluster-cards(v-if="clusterCards")
-                .cluster-card(v-for="c in clusterCards", :key="c.key", :class="{ drawn: c.drawn }")
-                  span.cc-mark(v-if="c.drawn") gezogen
-                  span.cc-name {{ c.label }}
-                  span.cc-size {{ c.size }} Blobs
               label(v-if="clusterCards") Wie viele der {{ clusterCards.length }} Klumpen zieht das Los?
               .chips.seg-chips(v-if="clusterCards")
                 span.chip(v-for="k in clusterCards.length", :key="k", :class="{ active: design.numClusters === k }", @click="design.numClusters = k") {{ k }}
-              p.mini-hint(v-if="clusterCards && !(drawnClusters && drawnClusters.length)") Welche {{ design.numClusters }} es werden, entscheidet das Los (Seed) — „Stichprobe ziehen" deckt es auf.
-              p.mini-hint.cluster-drawn(v-else-if="drawnClusters && drawnClusters.length")
-                | Das Los hat entschieden: <b>{{ drawnClusters.join(' + ') }}</b>
+              label Seed (Reproduzierbarkeit)
+              input.survey-input(type="number", v-model.number="design.seed")
+              //- Live-Los: die Karten zeigen VORAB, welche Klumpen der aktuelle
+              //- Seed trifft — Anzahl oder Seed ändern, die Stempel springen.
+              .cluster-cards(v-if="clusterCards")
+                .cluster-card(v-for="c in clusterCards", :key="c.key", :class="{ drawn: c.chosen }")
+                  span.cc-mark(v-if="c.chosen") Los
+                  span.cc-name {{ c.label }}
+                  span.cc-size {{ c.size }} Blobs
+              p.mini-hint.cluster-drawn(v-if="chosenClusterNames")
+                | Das Los trifft: <b>{{ chosenClusterNames }}</b> — ändere den Seed und sieh, wie es andere Klumpen trifft. Gleicher Seed = gleiche Wahl (Zufall, aber reproduzierbar).
               label Pro gezogenem Klumpen befragen (leer = alle, zweistufig)
               input.survey-input(type="number", min="1", v-model.number="design.withinClusterN", placeholder="alle")
               p.mini-hint.cluster-size(v-if="clusterPreview")
@@ -208,7 +207,8 @@
               input.survey-input(type="number", min="1", v-model.number="design.n", @change="fillQuotasProportional")
             .params(v-else-if="design.technique === 'manual'")
               p.mini-hint Wähle die Blobs unten im Abschnitt ⑤ per Häkchen aus — und beobachte dort live, wie deine Auswahl von der Grundgesamtheit abweicht.
-            .params(v-if="design.technique !== 'manual'")
+            //- Klumpen hat den Seed oben bei den Los-Karten (Live-Vorschau)
+            .params(v-if="design.technique !== 'manual' && design.technique !== 'cluster'")
               label Seed (Reproduzierbarkeit)
               input.survey-input(type="number", v-model.number="design.seed")
             .planner(v-if="['srs', 'stratified', 'systematic'].includes(design.technique)")
@@ -536,7 +536,7 @@ import { useSimulationStore } from '@/stores/simulation'
 import draggablePanel from '@/mixins/draggable-panel'
 import { analyzeItem } from '@/lib/survey-llm-analyze'
 import { CONSTRUCTS, CONSTRUCTS_BY_KEY } from '@/lib/survey-constructs'
-import { planSampleSize, allocateLargestRemainder, ACCESSORS } from '@/lib/survey-sampling'
+import { planSampleSize, allocateLargestRemainder, ACCESSORS, drawSample } from '@/lib/survey-sampling'
 import { FIELD_MODES, expectedResponseRate, questionnaireBurden } from '@/lib/survey-fieldwork'
 import { calibratedEstimate } from '@/lib/survey-weighting'
 import { datasetColumns } from '@/lib/survey-dataset'
@@ -545,9 +545,7 @@ import { DISTRICT_NAMES, PARTY_NAMES, EDUCATION_LABELS } from '@/lib/blob-adapte
 
 function clone(x) { return JSON.parse(JSON.stringify(x)) }
 
-// Verfahrens-Namen; Bild- und Stärke·Preis-Zeilen entstehen live in der
-// computed `techniques()` — mit den echten Zahlen des aktuellen Rahmens.
-const TECHNIQUE_LABELS = [
+const TECHNIQUES = [
   { key: 'srs', label: 'Einfache Zufallsstichprobe' }
   , { key: 'stratified', label: 'Geschichtete Stichprobe' }
   , { key: 'cluster', label: 'Klumpenstichprobe' }
@@ -569,6 +567,7 @@ export default {
       , drawFlash: false
       , compVar: 'district'
       , search: ''
+      , techniques: TECHNIQUES
       , passwordAttempt: ''
       , passwordError: false
       , simB: 500
@@ -683,54 +682,6 @@ export default {
         byGroup[c.group].items.push({ key: c.key, label: c.label })
       }
       return groups
-    }
-    // Verfahrens-Liste mit LEBENDEN Texten: Zeile 1 = konkretes Bild mit den
-    // echten Zahlen des Rahmens (reagiert auf Filter und n), Zeile 2 =
-    // Stärke · Preis. So werden die sechs Verfahren vergleichbar, ohne dass
-    // die Wahl Vorwissen voraussetzt.
-    , techniques() {
-      const frameN = this.frameBlobs.length
-      const n = Math.min(Number(this.design.n) || 0, frameN) || Number(this.design.n) || 0
-      const k = frameN && n ? Math.max(1, Math.floor(frameN / Math.min(n, frameN))) : 10
-      // Klumpen: Gruppenzahl der gewählten Klumpen-Variable im Rahmen
-      const accC = ACCESSORS[this.design.clusterVar || 'district'] || (b => b.district)
-      const clusterKeys = new Set()
-      for (const b of this.frameBlobs) clusterKeys.add(String(accC(b)))
-      const totalClusters = clusterKeys.size || 5
-      const numClusters = Math.min(Math.max(1, Number(this.design.numClusters) || 1), totalClusters)
-      const clusterWord = (this.design.clusterVar || 'district') === 'district' ? 'Distrikte' : 'Gruppen'
-      // Quote: ein greifbares Soll-Beispiel aus der ersten Zelle
-      const qc = this.quotaCells
-      const qEx = frameN && qc.length
-        ? qc[0].label + ': ' + Math.max(1, Math.round((n || 40) * qc[0].count / frameN))
-        : 'Grüntal: 6'
-      const texts = {
-        srs: {
-          desc: 'Lostrommel mit allen ' + frameN + ' Namen deines Rahmens — du ziehst ' + (n || '…') + ' blind heraus.'
-          , trade: 'Stark: unverzerrt, einfach · Schwach: kleine Gruppen können zufällig ganz fehlen'
-        }
-        , stratified: {
-          desc: 'Erst die ' + frameN + ' nach Gruppen auf Stapel sortieren, dann aus jedem Stapel passend viele ziehen.'
-          , trade: 'Stark: jede Gruppe sicher vertreten, genauer · Preis: du musst die Gruppen vorher kennen'
-        }
-        , cluster: {
-          desc: 'Du fährst nur in ' + numClusters + ' der ' + totalClusters + ' ' + clusterWord + ' und befragst dort.'
-          , trade: 'Stark: wenig Wege im Feld · Preis: Nachbarn ähneln sich — weniger Information pro Interview'
-        }
-        , systematic: {
-          desc: 'Die Liste der ' + frameN + ' durchgehen und jede ' + k + '. Person nehmen — Start per Los.'
-          , trade: 'Stark: schnell, ohne Lostrommel · Achtung: die Listen-Reihenfolge darf kein Muster haben'
-        }
-        , quota: {
-          desc: 'Sollzahlen je Gruppe vorgeben (z. B. ' + qEx + ') — genommen wird, wer greifbar ist.'
-          , trade: 'Stark: billig, schnell · Preis: kein Zufall — der Fehler ist nicht bezifferbar'
-        }
-        , manual: {
-          desc: 'Du kreuzt unten in ⑤ selbst an — wie Freunde auf dem Campus fragen.'
-          , trade: 'Lehrstück: Bequemlichkeitsauswahl = eingebaute Verzerrung'
-        }
-      }
-      return TECHNIQUE_LABELS.map(t => Object.assign({}, t, texts[t.key]))
     }
     , quotaCells() {
       const v = this.design.strataVar || 'district'
@@ -864,9 +815,10 @@ export default {
         , framePct: Math.round(100 * frameCounts[k] / fN)
       }))
     }
-    // Klumpen als LOS-KARTEN: alle Gruppen mit Größe, und nach dem Ziehen
-    // stempeln sich auf DENSELBEN Karten die, die das Los gewählt hat —
-    // vorher/nachher in einem Bild.
+    // Klumpen als LOS-KARTEN mit LIVE-VORSCHAU: die Ziehung ist seed-
+    // deterministisch, also lässt sich VORAB exakt zeigen, welche Klumpen
+    // „Stichprobe ziehen" treffen wird — Anzahl oder Seed ändern, und die
+    // Los-Stempel springen auf andere Karten.
     , clusterCards() {
       if (this.design.technique !== 'cluster') return null
       const v = this.design.clusterVar || 'district'
@@ -875,11 +827,26 @@ export default {
       for (const b of this.frameBlobs) { const k = String(acc(b)); counts[k] = (counts[k] || 0) + 1 }
       const keys = Object.keys(counts).sort()
       if (!keys.length) return null
-      const drawn = new Set()
-      if (this.lastSample && this.lastSample.technique === 'cluster') {
-        for (const u of this.lastSample.units) if (u.stratum != null) drawn.add(String(u.stratum))
-      }
-      return keys.map(k => ({ key: k, label: this.categoryLabel(v, k), size: counts[k], drawn: drawn.has(k) }))
+      const chosen = new Set()
+      try {
+        // Exakt die Ziehung des Feldlaufs: gleicher Rahmen (frameBlobs ist
+        // bereits eligibility-gefiltert), gleicher Seed, gleiche rng-Folge.
+        const s = drawSample(this.frameBlobs, {
+          technique: 'cluster'
+          , seed: this.design.seed
+          , clusterVar: v
+          , numClusters: Math.min(Math.max(1, Number(this.design.numClusters) || 1), keys.length)
+          , eligibility: { excludeMinors: false }
+        })
+        for (const u of s.units) if (u.stratum != null) chosen.add(String(u.stratum))
+      } catch (_e) { /* Vorschau ist optional */ }
+      return keys.map(k => ({ key: k, label: this.categoryLabel(v, k), size: counts[k], chosen: chosen.has(k) }))
+    }
+    , chosenClusterNames() {
+      const cards = this.clusterCards
+      if (!cards) return null
+      const c = cards.filter(x => x.chosen).map(x => x.label)
+      return c.length ? c.join(' + ') : null
     }
     // Klumpen: WELCHE Klumpen es geworden sind (nicht nur wie viele).
     , drawnClusters() {
@@ -1993,28 +1960,6 @@ select.survey-input
     color: var(--inst-tinte)
     span
       border-color: var(--inst-handrot)
-
-// Verfahren mit Einzeiler: der Rotstift-Kreis bleibt am Namen, die
-// Erklärung rutscht als Handnotiz in die zweite Zeile.
-.radio-row.tech-row
-  flex-wrap: wrap
-  padding-bottom: 0.28rem
-
-  span.tech-desc
-    flex: 1 1 100%
-    border: none
-    border-radius: 0
-    padding: 0 12px
-    transform: none
-    font-family: var(--inst-hand)
-    font-size: 0.82rem
-    color: var(--inst-graphit)
-    line-height: 1.1
-
-  span.tech-trade
-    padding-top: 0.1rem
-    font-size: 0.78rem
-    color: var(--inst-tinte-soft)
 
 // Merkmal-Chips der Variablenwahl (Schichtung/Klumpen/Quote)
 .var-chips
