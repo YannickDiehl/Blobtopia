@@ -153,10 +153,18 @@
                 option(value="age_group") Altersgruppe
               label Allokation
               select.survey-input(v-model="design.allocation")
-                option(value="proportional") proportional
-                option(value="equal") gleich
+                option(value="proportional") proportional (Schichten nach ihrer Größe)
+                option(value="equal") gleich (jede Schicht gleich viele)
               label Stichprobengröße (n)
               input.survey-input(type="number", min="1", v-model.number="design.n")
+              //- Live-Vorschau: dieselbe Largest-Remainder-Arithmetik wie die
+              //- Ziehung — so sieht man VOR dem Ziehen, was die Allokation tut.
+              .alloc-preview(v-if="stratPreview")
+                p.mini-hint So verteilt sich dein n auf die Schichten:
+                .alloc-row(v-for="r in stratPreview", :key="r.key")
+                  span.alloc-label {{ r.label }}
+                  span.alloc-count {{ r.Nh }} im Rahmen
+                  span.alloc-n → zieht {{ r.nh }}
             .params(v-else-if="design.technique === 'cluster'")
               label Klumpen-Variable
               select.survey-input(v-model="design.clusterVar")
@@ -267,12 +275,31 @@
             span.block-title ⑤ {{ design.technique === 'manual' ? 'Blobs selbst auswählen' : 'Realisierte Stichprobe' }}
             span.block-meta n = {{ sampleN }} / {{ frameBlobs.length }}
           .block-body
-            .dist(v-if="dist && Object.keys(dist).length")
-              .dist-row(v-for="(c, k) in dist", :key="k")
-                span.dist-key {{ distLabel(k) }}
-                span.dist-bar
-                  span.dist-fill(:style="{ width: distPct(c) + '%' }")
-                span.dist-val {{ c }}
+            p.mini-hint.cluster-drawn(v-if="drawnClusters && drawnClusters.length")
+              | Gezogene Klumpen: <b>{{ drawnClusters.join(', ') }}</b>
+            //- Wer ist drin? Rahmen vs. Stichprobe je Merkmal — bei Klumpen,
+            //- Quote und manueller Auswahl DER Moment, in dem Verzerrung
+            //- sichtbar wird (z. B. fehlende Bildungsgruppen).
+            .comp(v-if="composition")
+              .comp-head
+                span.comp-title Wer ist drin?
+                .chips.comp-chips
+                  span.chip(v-for="cv in compVars", :key="cv.key", :class="{ active: compVar === cv.key }", @click="compVar = cv.key") {{ cv.label }}
+              .comp-legend
+                span.leg
+                  span.swatch.frame
+                  | Grundgesamtheit
+                span.leg
+                  span.swatch.sample
+                  | Stichprobe
+              .comp-row(v-for="row in composition", :key="row.key", :title="'Grundgesamtheit ' + row.framePct + ' % · Stichprobe ' + row.pct + ' % (' + row.n + ' Blobs)'")
+                span.comp-label {{ row.label }}
+                span.comp-bars
+                  span.comp-bar.frame
+                    span.comp-fill(:style="{ width: row.framePct + '%' }")
+                  span.comp-bar.sample
+                    span.comp-fill(:style="{ width: row.pct + '%' }")
+                span.comp-val {{ row.pct }} % ({{ row.n }})
             input.survey-input.search(v-model="search", :placeholder="design.technique === 'manual' ? 'Kandidaten durchsuchen …' : 'In der Stichprobe suchen …'")
             .blob-list
               .blob-row(v-for="b in shownBlobs", :key="b.id", :class="{ picked: design.technique === 'manual' && isPicked(b) }")
@@ -500,7 +527,7 @@ import { useSimulationStore } from '@/stores/simulation'
 import draggablePanel from '@/mixins/draggable-panel'
 import { analyzeItem } from '@/lib/survey-llm-analyze'
 import { CONSTRUCTS, CONSTRUCTS_BY_KEY } from '@/lib/survey-constructs'
-import { planSampleSize, allocateLargestRemainder } from '@/lib/survey-sampling'
+import { planSampleSize, allocateLargestRemainder, ACCESSORS } from '@/lib/survey-sampling'
 import { FIELD_MODES, expectedResponseRate, questionnaireBurden } from '@/lib/survey-fieldwork'
 import { calibratedEstimate } from '@/lib/survey-weighting'
 import { datasetColumns } from '@/lib/survey-dataset'
@@ -633,10 +660,6 @@ export default {
       const total = q ? this.listBlobs.filter(b => (b.name || b.id).toLowerCase().indexOf(q) >= 0).length : this.listBlobs.length
       return Math.max(0, total - 120)
     }
-    , distMax() {
-      if (!this.dist) return 1
-      return Math.max(1, ...Object.keys(this.dist).map(k => this.dist[k]))
-    }
     , demographicsCatalog() {
       return DEMOGRAPHICS
     }
@@ -744,6 +767,71 @@ export default {
       const maxN = sumOf(sorted.slice(totalClusters - k))
       const mean = Math.round(k * this.frameBlobs.length / totalClusters)
       return { totalClusters, k, within: null, estimate: mean, minN, maxN }
+    }
+    // ── „Wer ist drin?": Zusammensetzung der realisierten Stichprobe ──
+    // Rahmen vs. Stichprobe je Merkmal — macht sichtbar, WEN das Design
+    // adressiert (bei Klumpen/Quote/manuell der eigentliche Lernmoment).
+    , compVars() {
+      return [
+        { key: 'district', label: 'Distrikt' }
+        , { key: 'education_level', label: 'Bildung' }
+        , { key: 'age_group', label: 'Alter' }
+        , { key: 'party', label: 'Partei' }
+      ]
+    }
+    , sampleBlobs() {
+      if (this.design.technique === 'manual') {
+        const ids = new Set(this.design.manualInclude)
+        return this.frameBlobs.filter(b => ids.has(b.id))
+      }
+      return this.lastSample ? this.lastSample.units.map(u => u.blob) : []
+    }
+    , composition() {
+      const sample = this.sampleBlobs
+      if (!sample.length) return null
+      const v = this.compVar
+      const acc = ACCESSORS[v] || (b => b[v])
+      const frameCounts = {}
+      const sampleCounts = {}
+      for (const b of this.frameBlobs) { const k = String(acc(b)); frameCounts[k] = (frameCounts[k] || 0) + 1 }
+      for (const b of sample) { const k = String(acc(b)); sampleCounts[k] = (sampleCounts[k] || 0) + 1 }
+      const keys = Object.keys(frameCounts).sort()
+      const fN = Math.max(1, this.frameBlobs.length)
+      const sN = Math.max(1, sample.length)
+      return keys.map(k => ({
+        key: k
+        , label: this.categoryLabel(v, k)
+        , n: sampleCounts[k] || 0
+        , pct: Math.round(100 * (sampleCounts[k] || 0) / sN)
+        , framePct: Math.round(100 * frameCounts[k] / fN)
+      }))
+    }
+    // Klumpen: WELCHE Klumpen es geworden sind (nicht nur wie viele).
+    , drawnClusters() {
+      if (this.design.technique !== 'cluster' || !this.lastSample) return null
+      const v = this.design.clusterVar || 'district'
+      const seen = []
+      for (const u of this.lastSample.units) {
+        if (u.stratum != null && seen.indexOf(u.stratum) < 0) seen.push(u.stratum)
+      }
+      return seen.map(k => this.categoryLabel(v, k))
+    }
+    // Geschichtet: Allokations-Vorschau VOR dem Ziehen — dieselbe
+    // Largest-Remainder-Arithmetik wie die Ziehung selbst.
+    , stratPreview() {
+      if (this.design.technique !== 'stratified') return null
+      const v = this.design.strataVar || 'district'
+      const acc = ACCESSORS[v] || (b => b[v])
+      const counts = {}
+      for (const b of this.frameBlobs) { const k = String(acc(b)); counts[k] = (counts[k] || 0) + 1 }
+      const keys = Object.keys(counts).sort()
+      if (!keys.length) return null
+      const alloc = allocateLargestRemainder(
+        Number(this.design.n) || 0
+        , keys.map(k => ({ key: k, size: counts[k] }))
+        , this.design.allocation === 'equal' ? 'equal' : 'proportional'
+      )
+      return keys.map(k => ({ key: k, label: this.categoryLabel(v, k), Nh: counts[k], nh: alloc[k] || 0 }))
     }
     , longTypes() {
       return [
@@ -1040,13 +1128,22 @@ export default {
       this.surveyStore.SET_DESIGN(this.canonicalDesign())
       this.surveyStore.previewSample()
       // Die realisierte Stichprobe (⑤) liegt unterhalb von Feldarbeit und
-      // Längsschnitt — ohne Scroll wirkt der Klick folgenlos.
+      // Längsschnitt — ohne Scroll wirkt der Klick folgenlos. Bewusst NUR den
+      // Fenster-Body scrollen (scrollIntoView würde die ganze Seite schieben).
       this.$nextTick(() => {
-        const el = this.$refs.realizedBlock
-        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
         this.drawFlash = true
         clearTimeout(this._flashTimer)
         this._flashTimer = setTimeout(() => { this.drawFlash = false }, 1600)
+        // Instant statt smooth: programmatische smooth-Scrolls direkt nach
+        // einem Render-Flush verwirft Chrome hier stillschweigend.
+        clearTimeout(this._scrollTimer)
+        this._scrollTimer = setTimeout(() => {
+          const el = this.$refs.realizedBlock
+          const body = el && el.closest ? el.closest('.survey-body') : null
+          if (el && body) {
+            body.scrollTop = el.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 8
+          }
+        }, 80)
       })
     }
     , isPicked(b) {
@@ -1074,12 +1171,19 @@ export default {
     , distLabel(k) {
       // dist is keyed by the first strata var (district by default)
       const v = (this.design.strataVar) || 'district'
+      return this.categoryLabel(v, k)
+    }
+    // Lesbares Label für einen Kategorienwert eines Merkmals (geteilt von
+    // Zusammensetzung, Allokations-Vorschau, Klumpen-Chips und dist).
+    , categoryLabel(v, k) {
       if (v === 'district') return this.districtName(Number(k))
       if (v === 'education_level') return this.eduLabel(Number(k))
-      return k
-    }
-    , distPct(c) {
-      return Math.round(100 * c / this.distMax)
+      if (v === 'age_group') {
+        const m = { 0: 'unter 30', 1: '30–59', 2: '60+' }
+        return m[k] != null ? m[k] : String(k)
+      }
+      if (v === 'party') return (k == null || k === 'null' || k === '') ? 'Parteilos' : String(k)
+      return String(k)
     }
     // ── Hintergrundmerkmale ──
     , isDemoOn(key) {
@@ -1414,6 +1518,9 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
     color: var(--inst-stempelrot)
     font-weight: 600
 
+  &.cluster-drawn
+    color: var(--inst-tinte, var(--inst-graphit))
+
 // ── Fragebogen: Nichtteilnahme-Code/Label auf Studien-Ebene ──
 .nonresp-block
   margin: 0.2rem 0 0.6rem
@@ -1542,6 +1649,7 @@ select.survey-input
   .planner-row
     display: flex
     align-items: center
+    flex-wrap: wrap
     gap: 0.35rem
     font-family: var(--inst-schreibmaschine)
     font-size: 0.75rem
@@ -1549,6 +1657,9 @@ select.survey-input
   .planner-result
     font-weight: 600
     color: var(--inst-tinte)
+    white-space: nowrap
+  .apply-n
+    flex: none
 
   // Ausklappbare Erklärung „Was heißt das?“ — Symbole in Alltagssprache
   .planner-explain
@@ -1680,6 +1791,10 @@ select.survey-input
 
   .block-body
     padding: 0.5rem 0.1rem 0.1rem
+    // Flex-Item im Seitenlabel-Layout: ohne min-width dürfte es nie unter
+    // seine Inhaltsbreite schrumpfen — Block ⑤ schob das Fenster sonst
+    // horizontal auf (Suche/Liste liefen über den rechten Rand hinaus).
+    min-width: 0
 
   // Nach „Stichprobe ziehen": kurzer Stempel-Puls auf ⑤ — der Erfolg ist
   // sichtbar, auch wenn der Blick noch oben beim Button hängt (plus Scroll).
@@ -1926,42 +2041,121 @@ select.survey-input
     color: var(--inst-tinte)
     font-weight: 600
 
-// Bleistift-Balken (Ziehungsprotokoll)
-.dist
-  margin-bottom: 0.5rem
+// ── „Wer ist drin?": Rahmen (Bleistift) vs. Stichprobe (Stempelblau) ──
+.comp
+  margin-bottom: 0.55rem
 
-  .dist-row
+  .comp-head
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    margin-bottom: 0.3rem
+
+  .comp-title
+    font-family: var(--inst-hand)
+    font-size: 0.95rem
+    font-weight: 600
+    color: var(--inst-tinte)
+    flex: none
+
+  .comp-chips
+    margin-left: auto
+
+  .comp-legend
+    display: flex
+    gap: 0.8rem
+    margin-bottom: 0.35rem
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.62rem
+    color: var(--inst-tinte-soft)
+
+    .leg
+      display: inline-flex
+      align-items: center
+      gap: 0.25rem
+
+    .swatch
+      display: inline-block
+      width: 14px
+      height: 7px
+      border-radius: 2px
+      &.frame
+        background: repeating-linear-gradient(45deg, rgba(90, 95, 105, 0.55) 0 2px, rgba(90, 95, 105, 0.22) 2px 4px)
+      &.sample
+        background: var(--inst-stempelblau)
+        opacity: 0.85
+
+  .comp-row
     display: flex
     align-items: center
     gap: 0.4rem
-    margin-bottom: 0.25rem
+    margin-bottom: 0.3rem
     font-family: var(--inst-schreibmaschine)
     font-size: 0.68rem
 
-  .dist-key
+  .comp-label
     width: 90px
     color: var(--inst-tinte-soft)
     white-space: nowrap
     overflow: hidden
     text-overflow: ellipsis
 
-  .dist-bar
+  .comp-bars
     flex: 1
-    height: 10px
+    display: flex
+    flex-direction: column
+    gap: 2px
+
+  .comp-bar
+    display: block
+    height: 7px
     background: rgba(43, 58, 85, 0.07)
     border-radius: 2px
     overflow: hidden
 
-  .dist-fill
-    display: block
-    height: 100%
-    background: repeating-linear-gradient(45deg, rgba(90, 95, 105, 0.55) 0 2px, rgba(90, 95, 105, 0.22) 2px 4px)
-    border-right: 1.5px solid rgba(70, 75, 85, 0.7)
+    .comp-fill
+      display: block
+      height: 100%
 
-  .dist-val
-    width: 28px
+    &.frame .comp-fill
+      background: repeating-linear-gradient(45deg, rgba(90, 95, 105, 0.55) 0 2px, rgba(90, 95, 105, 0.22) 2px 4px)
+      border-right: 1.5px solid rgba(70, 75, 85, 0.7)
+
+    &.sample .comp-fill
+      background: var(--inst-stempelblau)
+      opacity: 0.85
+
+  .comp-val
+    width: 64px
     text-align: right
     color: var(--inst-tinte)
+
+// ── Geschichtet: Allokations-Vorschau (Schicht → Rahmen → zieht n_h) ──
+.alloc-preview
+  margin-top: 0.35rem
+
+  .alloc-row
+    display: flex
+    align-items: center
+    gap: 0.4rem
+    padding: 0.08rem 0
+    font-family: var(--inst-schreibmaschine)
+    font-size: 0.68rem
+
+  .alloc-label
+    width: 100px
+    color: var(--inst-tinte-soft)
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+
+  .alloc-count
+    color: var(--inst-graphit)
+
+  .alloc-n
+    margin-left: auto
+    color: var(--inst-tinte)
+    font-weight: 600
 
 .results-divider
   border-top: 2px dashed rgba(141, 127, 99, 0.4)
