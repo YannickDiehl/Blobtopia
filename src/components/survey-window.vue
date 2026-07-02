@@ -79,18 +79,25 @@
         //- damit der Einstieg (Frage schreiben) nicht mit Codes beginnt.
         .panel-block.coding-block
           .block-head(@click="codingOpen = !codingOpen")
-            span.block-title Kodierung &amp; fehlende Werte
+            span.block-title Fehlende Werte
             span.block-meta −9 · −8 · {{ design.nonresponse.code }}
             b-icon(:icon="codingOpen ? 'chevron-up' : 'chevron-down'", size="is-small")
           .block-body(v-if="codingOpen")
-            p.mini-hint.missing-default-hint
-              | Fehlende Werte werden standardmäßig als −9 (Verweigert) und −8 (Weiß nicht) kodiert. Eigene Codes + Labels gibst du direkt in der Frage an — z. B. „… 8 = weiß nicht, 9 = keine Angabe“.
-            .nonresp-block
-              label.nonresp-title(title="Wer gar nicht an der Befragung teilnimmt (Unit-Nonresponse) — gilt für den ganzen Fall, nicht je Frage") Nichtteilnahme (ganzer Fall)
-              .nonresp-row
-                input.survey-input.mini.nonresp-code(type="number", v-model.number="design.nonresponse.code", title="Zahlencode im Datensatz/Export")
-                input.survey-input.nonresp-text(v-model="design.nonresponse.label", maxlength="40", placeholder="Nicht teilgenommen")
-              p.mini-hint Wer gar nicht teilnimmt, bekommt im Export diesen einen Code (Default −13 „Nicht teilgenommen“); der genaue Grund (verweigert / nicht erreicht …) steht zusätzlich in der Spalte „disposition“.
+            p.mini-hint So werden fehlende Angaben im Datensatz kodiert. Für einzelne Fragen vergibst du eigene Codes direkt im Fragetext (z. B. „… 8 = weiß nicht“).
+            .missing-legend
+              .missing-card
+                span.mc-code −9
+                span.mc-label Verweigert
+                span.mc-scope je Frage
+              .missing-card
+                span.mc-code −8
+                span.mc-label Weiß nicht
+                span.mc-scope je Frage
+              .missing-card.editable(title="Wer gar nicht teilgenommen hat (Unit-Nonresponse) — gilt für den ganzen Fall, frei wählbar")
+                input.mc-code.mc-input(type="number", v-model.number="design.nonresponse.code", title="Zahlencode im Export")
+                input.mc-label.mc-input(v-model="design.nonresponse.label", maxlength="40", placeholder="Nicht teilgenommen", title="Label im Export")
+                span.mc-scope.edit ganzer Fall · frei wählbar
+            p.mini-hint −9/−8 gelten je Frage; wer gar nicht teilnimmt, bekommt den dritten Code (der genaue Grund steht zusätzlich in der Spalte „disposition“).
         .panel-block.demo-block
           .block-head
             span.block-title Hintergrundmerkmale erheben
@@ -1580,36 +1587,82 @@ $korn: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='
   &.cluster-drawn
     color: var(--inst-tinte, var(--inst-graphit))
 
-// ── Fragebogen: Nichtteilnahme-Code/Label auf Studien-Ebene ──
-.nonresp-block
-  margin: 0.2rem 0 0.6rem
-  padding: 0.45rem 0.55rem
+// ── Fragebogen: fehlende Werte als Codebuch-Karten ──
+// Zwei feste Item-Missings (−9/−8) + eine editierbare Fall-Nichtteilnahme,
+// jede Karte im Formblatt-Stil: gestempelter Code, Label, Reichweiten-Tag.
+.missing-legend
+  display: flex
+  flex-wrap: wrap
+  gap: 0.45rem
+  margin: 0.4rem 0 0.5rem
+
+.missing-card
+  flex: 1 1 0
+  min-width: 92px
+  display: flex
+  flex-direction: column
+  align-items: flex-start
+  gap: 0.15rem
+  padding: 0.4rem 0.5rem
   background: rgba(255, 252, 244, 0.7)
   border: 1.5px solid #ece1c8
   border-radius: 4px
 
-  .nonresp-title
-    display: block
+  .mc-code
+    font-family: var(--inst-schreibmaschine)
+    font-size: 1.05rem
+    font-weight: 700
+    color: var(--inst-stempelrot)
+    letter-spacing: 0.5px
+
+  .mc-label
     font-family: var(--inst-hand)
-    font-size: 0.85rem
-    color: var(--inst-graphit)
-    margin-bottom: 0.3rem
+    font-size: 0.92rem
+    color: var(--inst-tinte)
+    line-height: 1.05
 
-  .nonresp-row
-    display: flex
-    gap: 0.4rem
-    align-items: center
-    margin-bottom: 0.35rem
+  .mc-scope
+    margin-top: 0.15rem
+    font-family: var(--inst-druck)
+    font-size: 0.55rem
+    font-weight: 700
+    letter-spacing: 0.6px
+    text-transform: uppercase
+    color: var(--inst-beschriftung)
 
-  .nonresp-code
-    width: 4.4rem
-    flex: 0 0 auto
+  // Editierbare Karte (Nichtteilnahme): Inputs statt fester Text, blau
+  // gerahmt als „hier kannst du eingreifen“-Signal. Etwas breiter, damit
+  // ein langes Label wie „Nicht teilgenommen“ hineinpasst.
+  &.editable
+    flex: 1.7 1 0
+    min-width: 130px
+    border-color: rgba(51, 81, 142, 0.5)
+    border-style: dashed
+    background: rgba(51, 81, 142, 0.05)
 
-  .nonresp-text
-    flex: 1 1 auto
+  .mc-input
+    border: none
+    background: transparent
+    border-bottom: 1.5px dotted var(--inst-linie)
+    border-radius: 0
+    padding: 0 0 1px
+    outline: none
+    width: 100%
+    box-sizing: border-box
+    &:focus
+      border-bottom: 2px solid var(--inst-stempelblau)
 
-  .mini-hint
-    margin-bottom: 0
+  input.mc-code
+    color: var(--inst-stempelblau)
+    max-width: 3.4rem
+
+  input.mc-label
+    font-family: var(--inst-hand)
+    font-size: 0.92rem
+    color: var(--inst-tinte)
+
+  .mc-scope.edit
+    color: var(--inst-stempelblau)
 
 // ── Fragebogen: Items als Formblatt-Fragen ──
 .item-card
